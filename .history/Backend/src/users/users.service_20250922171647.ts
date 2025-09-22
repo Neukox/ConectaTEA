@@ -84,16 +84,16 @@ export class UsersService {
       });
 
       // Se for profissional, criar perfil profissional automaticamente
-      if (tipoUpperCase === "PROFISSIONAL") {
+      if (tipoUpperCase === 'PROFISSIONAL') {
         await prisma.profissional.create({
           data: {
             usuario_id: novoUsuario.id,
-            especialidade: "",
-            registro_profissional: "",
-            titulo: "",
-            formacaoAcademica: "",
-            sobre: "",
-            codigoIdentificacao: `PROF${novoUsuario.id.toString().padStart(4, "0")}`,
+            especialidade: '',
+            registro_profissional: '',
+            titulo: '',
+            formacaoAcademica: '',
+            sobre: '',
+            codigoIdentificacao: `PROF${novoUsuario.id.toString().padStart(4, '0')}`,
           },
         });
       }

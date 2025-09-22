@@ -13,7 +13,7 @@ export declare class CriancasService {
             dataDeNascimento: Date;
             genero: string;
             diagnostico: string;
-            parentesco: import(".prisma/client").$Enums.Parentesco;
+            parentesco: import("@prisma/client").$Enums.Parentesco;
             observacoes: string;
             responsavel: {
                 name: string;
@@ -33,7 +33,7 @@ export declare class CriancasService {
             dataNascimento: string;
             genero: string;
             diagnostico: string;
-            parentesco: import(".prisma/client").$Enums.Parentesco;
+            parentesco: import("@prisma/client").$Enums.Parentesco;
             observacoes: string;
             responsavel: {
                 id: number;
@@ -55,7 +55,7 @@ export declare class CriancasService {
             genero: string;
             diagnostico: string;
             observacoes: string;
-            parentesco: import(".prisma/client").$Enums.Parentesco;
+            parentesco: import("@prisma/client").$Enums.Parentesco;
             responsavel: {
                 id: number;
                 nome: string;
@@ -75,7 +75,7 @@ export declare class CriancasService {
             genero: string;
             diagnostico: string;
             observacoes: string;
-            parentesco: import(".prisma/client").$Enums.Parentesco;
+            parentesco: import("@prisma/client").$Enums.Parentesco;
             responsavel: {
                 id: number;
                 nome: string;

@@ -10,24 +10,24 @@ export declare class UsersController {
             id: number;
             name: string;
             email: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
         };
     }>;
     findAll(): Promise<{
         name: string;
         email: string;
+        tipo: import("@prisma/client").$Enums.UserType;
         id: number;
-        tipo: import(".prisma/client").$Enums.UserType;
     }[]>;
     findOne(id: string): Promise<{
         message: string;
         data: {
             name: string;
             email: string;
-            id: number;
             telefone: string;
             endereco: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
+            id: number;
         };
     }>;
     update(id: string, updateUserDto: UpdateUserDto, req: any): Promise<{
@@ -35,20 +35,20 @@ export declare class UsersController {
         data: {
             name: string;
             email: string;
-            id: number;
             telefone: string;
             endereco: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
+            id: number;
         };
     }>;
     remove(id: string): Promise<{
         name: string;
         email: string | null;
         password: string;
-        id: number;
         telefone: string | null;
         endereco: string | null;
-        tipo: import(".prisma/client").$Enums.UserType;
+        tipo: import("@prisma/client").$Enums.UserType;
         criado_em: Date;
+        id: number;
     }>;
 }

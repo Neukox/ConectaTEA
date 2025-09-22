@@ -1,13 +1,9 @@
-import {
-  Injectable,
-  ConflictException,
-  BadRequestException,
-} from "@nestjs/common";
-import * as bcrypt from "bcrypt";
-import { PrismaService } from "../prisma/prisma.service";
-import { CreateUserDto } from "./dto/create-user.dto";
-import { UpdateUserDto } from "./dto/update-user.dto";
-import { UserType } from "@prisma/client";
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserType } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -16,45 +12,43 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     const { name, email, password, tipo } = createUserDto;
 
-    console.log("=== DEBUG REGISTRO ===");
-    console.log("Dados recebidos:", { name, email, password: "***", tipo });
+    console.log('=== DEBUG REGISTRO ===');
+    console.log('Dados recebidos:', { name, email, password: '***', tipo });
 
     // Validações básicas
     if (!name || !name.trim()) {
-      throw new BadRequestException("Nome é obrigatório.");
+      throw new BadRequestException('Nome é obrigatório.');
     }
 
     if (!email || !email.trim()) {
-      throw new BadRequestException("Email é obrigatório.");
+      throw new BadRequestException('Email é obrigatório.');
     }
 
     if (!password || password.length < 6) {
-      throw new BadRequestException("Senha deve ter pelo menos 6 caracteres.");
+      throw new BadRequestException('Senha deve ter pelo menos 6 caracteres.');
     }
 
     if (!tipo || !tipo.trim()) {
-      throw new BadRequestException("Tipo de usuário é obrigatório.");
+      throw new BadRequestException('Tipo de usuário é obrigatório.');
     }
 
     // Verificar email trimmed
     const emailTrimmed = email.trim().toLowerCase();
-
+    
     // Regex para validação de e-mail
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(emailTrimmed)) {
-      throw new BadRequestException("Email inválido.");
+      throw new BadRequestException('Email inválido.');
     }
 
     // Converter tipo para maiúscula e validar
     const tipoUpperCase = tipo.toUpperCase();
-    console.log("Tipo convertido:", tipoUpperCase);
-    console.log("UserType values:", Object.values(UserType));
-
+    console.log('Tipo convertido:', tipoUpperCase);
+    console.log('UserType values:', Object.values(UserType));
+    
     if (!Object.values(UserType).includes(tipoUpperCase as UserType)) {
-      console.log("Tipo inválido detectado");
-      throw new BadRequestException(
-        "Tipo de usuário inválido. Use: PROFISSIONAL ou RESPONSAVEL."
-      );
+      console.log('Tipo inválido detectado');
+      throw new BadRequestException('Tipo de usuário inválido. Use: PROFISSIONAL ou RESPONSAVEL.');
     }
 
     // Verificar se email já existe
@@ -63,51 +57,29 @@ export class UsersService {
     });
 
     if (emailExistente) {
-      throw new ConflictException(
-        "Este email já está registrado. Use outro email ou faça login."
-      );
+      throw new ConflictException('Este email já está registrado. Use outro email ou faça login.');
     }
 
     // Criptografar senha
     const senhaCriptografada = await bcrypt.hash(password, 10);
 
-    // Usar transação para criar usuário e perfil profissional se necessário
-    const resultado = await this.prisma.$transaction(async (prisma) => {
-      // Criar usuário
-      const novoUsuario = await prisma.user.create({
-        data: {
-          name: name.trim(),
-          email: emailTrimmed,
-          password: senhaCriptografada,
-          tipo: tipoUpperCase as UserType,
-        },
-      });
-
-      // Se for profissional, criar perfil profissional automaticamente
-      if (tipoUpperCase === "PROFISSIONAL") {
-        await prisma.profissional.create({
-          data: {
-            usuario_id: novoUsuario.id,
-            especialidade: "",
-            registro_profissional: "",
-            titulo: "",
-            formacaoAcademica: "",
-            sobre: "",
-            codigoIdentificacao: `PROF${novoUsuario.id.toString().padStart(4, "0")}`,
-          },
-        });
-      }
-
-      return novoUsuario;
+    // Criar usuário
+    const novoUsuario = await this.prisma.user.create({
+      data: {
+        name: name.trim(),
+        email: emailTrimmed,
+        password: senhaCriptografada,
+        tipo: tipoUpperCase as UserType,
+      },
     });
 
     return {
-      message: "Usuário registrado com sucesso.",
+      message: 'Usuário registrado com sucesso.',
       user: {
-        id: resultado.id,
-        name: resultado.name,
-        email: resultado.email,
-        tipo: resultado.tipo,
+        id: novoUsuario.id,
+        name: novoUsuario.name,
+        email: novoUsuario.email,
+        tipo: novoUsuario.tipo,
       },
     };
   }
@@ -137,11 +109,11 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new BadRequestException("Usuário não encontrado.");
+      throw new BadRequestException('Usuário não encontrado.');
     }
 
     return {
-      message: "Usuário encontrado com sucesso!",
+      message: 'Usuário encontrado com sucesso!',
       data: user,
     };
   }
@@ -153,29 +125,27 @@ export class UsersService {
     });
 
     if (!userExists) {
-      throw new BadRequestException("Usuário não encontrado.");
+      throw new BadRequestException('Usuário não encontrado.');
     }
 
     // Se email foi fornecido, verificar se já existe em outro usuário
     if (updateUserDto.email) {
       const emailTrimmed = updateUserDto.email.trim();
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
+      
       if (!emailRegex.test(emailTrimmed)) {
-        throw new BadRequestException("Email inválido.");
+        throw new BadRequestException('Email inválido.');
       }
 
       const emailExistente = await this.prisma.user.findFirst({
-        where: {
+        where: { 
           email: emailTrimmed,
           NOT: { id },
         },
       });
 
       if (emailExistente) {
-        throw new ConflictException(
-          "Email já está sendo usado por outro usuário."
-        );
+        throw new ConflictException('Email já está sendo usado por outro usuário.');
       }
 
       updateUserDto.email = emailTrimmed;
@@ -204,7 +174,7 @@ export class UsersService {
     });
 
     return {
-      message: "Perfil atualizado com sucesso!",
+      message: 'Perfil atualizado com sucesso!',
       data: updatedUser,
     };
   }

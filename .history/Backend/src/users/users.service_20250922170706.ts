@@ -71,43 +71,23 @@ export class UsersService {
     // Criptografar senha
     const senhaCriptografada = await bcrypt.hash(password, 10);
 
-    // Usar transação para criar usuário e perfil profissional se necessário
-    const resultado = await this.prisma.$transaction(async (prisma) => {
-      // Criar usuário
-      const novoUsuario = await prisma.user.create({
-        data: {
-          name: name.trim(),
-          email: emailTrimmed,
-          password: senhaCriptografada,
-          tipo: tipoUpperCase as UserType,
-        },
-      });
-
-      // Se for profissional, criar perfil profissional automaticamente
-      if (tipoUpperCase === "PROFISSIONAL") {
-        await prisma.profissional.create({
-          data: {
-            usuario_id: novoUsuario.id,
-            especialidade: "",
-            registro_profissional: "",
-            titulo: "",
-            formacaoAcademica: "",
-            sobre: "",
-            codigoIdentificacao: `PROF${novoUsuario.id.toString().padStart(4, "0")}`,
-          },
-        });
-      }
-
-      return novoUsuario;
+    // Criar usuário
+    const novoUsuario = await this.prisma.user.create({
+      data: {
+        name: name.trim(),
+        email: emailTrimmed,
+        password: senhaCriptografada,
+        tipo: tipoUpperCase as UserType,
+      },
     });
 
     return {
       message: "Usuário registrado com sucesso.",
       user: {
-        id: resultado.id,
-        name: resultado.name,
-        email: resultado.email,
-        tipo: resultado.tipo,
+        id: novoUsuario.id,
+        name: novoUsuario.name,
+        email: novoUsuario.email,
+        tipo: novoUsuario.tipo,
       },
     };
   }

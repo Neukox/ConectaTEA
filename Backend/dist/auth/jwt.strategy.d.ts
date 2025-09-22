@@ -8,7 +8,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         name: string;
         email: string;
         id: number;
-        tipo: import(".prisma/client").$Enums.UserType;
+        tipo: import("@prisma/client").$Enums.UserType;
     }>;
 }
 export {};

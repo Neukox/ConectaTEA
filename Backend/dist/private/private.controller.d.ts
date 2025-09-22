@@ -26,10 +26,10 @@ export declare class PrivateController {
             profissional_id: number;
         }[];
         redesSociais: {
-            id: number;
             tipo: string;
-            url: string | null;
+            id: number;
             profissional_id: number;
+            url: string | null;
         }[];
         areasAtuacao: ({
             area: {
@@ -46,10 +46,10 @@ export declare class PrivateController {
         data: {
             name: string;
             email: string;
-            id: number;
             telefone: string;
             endereco: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
+            id: number;
         };
     }>;
 }

@@ -1,6 +1,6 @@
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
 export declare class UsersService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -10,24 +10,24 @@ export declare class UsersService {
             id: number;
             name: string;
             email: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
         };
     }>;
     findAll(): Promise<{
         name: string;
         email: string;
+        tipo: import("@prisma/client").$Enums.UserType;
         id: number;
-        tipo: import(".prisma/client").$Enums.UserType;
     }[]>;
     findOne(id: number): Promise<{
         message: string;
         data: {
             name: string;
             email: string;
-            id: number;
             telefone: string;
             endereco: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
+            id: number;
         };
     }>;
     update(id: number, updateUserDto: UpdateUserDto): Promise<{
@@ -35,20 +35,20 @@ export declare class UsersService {
         data: {
             name: string;
             email: string;
-            id: number;
             telefone: string;
             endereco: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
+            id: number;
         };
     }>;
     remove(id: number): Promise<{
         name: string;
         email: string | null;
         password: string;
-        id: number;
         telefone: string | null;
         endereco: string | null;
-        tipo: import(".prisma/client").$Enums.UserType;
+        tipo: import("@prisma/client").$Enums.UserType;
         criado_em: Date;
+        id: number;
     }>;
 }

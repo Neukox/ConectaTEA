@@ -48,7 +48,7 @@ export declare class ConexoesController {
             criado_em: Date;
             solicitante_id: number;
             solicitado_id: number;
-            status: import(".prisma/client").$Enums.StatusConexao;
+            status: import("@prisma/client").$Enums.StatusConexao;
         };
     }>;
     listarSolicitacoesRecebidas(req: any): Promise<{
@@ -77,7 +77,7 @@ export declare class ConexoesController {
             criado_em: Date;
             solicitante_id: number;
             solicitado_id: number;
-            status: import(".prisma/client").$Enums.StatusConexao;
+            status: import("@prisma/client").$Enums.StatusConexao;
         })[];
     }>;
     listarSolicitacoesEnviadas(req: any): Promise<{
@@ -106,7 +106,7 @@ export declare class ConexoesController {
             criado_em: Date;
             solicitante_id: number;
             solicitado_id: number;
-            status: import(".prisma/client").$Enums.StatusConexao;
+            status: import("@prisma/client").$Enums.StatusConexao;
         })[];
     }>;
     listarConexoes(req: any): Promise<{
@@ -153,7 +153,7 @@ export declare class ConexoesController {
             criado_em: Date;
             solicitante_id: number;
             solicitado_id: number;
-            status: import(".prisma/client").$Enums.StatusConexao;
+            status: import("@prisma/client").$Enums.StatusConexao;
         })[];
     }>;
     responderSolicitacao(id: string, updateConexaoDto: UpdateConexaoDto, req: any): Promise<{
@@ -200,7 +200,7 @@ export declare class ConexoesController {
             criado_em: Date;
             solicitante_id: number;
             solicitado_id: number;
-            status: import(".prisma/client").$Enums.StatusConexao;
+            status: import("@prisma/client").$Enums.StatusConexao;
         };
     }>;
     listarConexoesPorProfissional(profissionalId: string): Promise<{
@@ -247,7 +247,7 @@ export declare class ConexoesController {
             criado_em: Date;
             solicitante_id: number;
             solicitado_id: number;
-            status: import(".prisma/client").$Enums.StatusConexao;
+            status: import("@prisma/client").$Enums.StatusConexao;
         })[];
     }>;
     filtrarConexoes(solicitanteProfId?: string, solicitadoProfId?: string, req?: any): Promise<{
@@ -294,7 +294,7 @@ export declare class ConexoesController {
             criado_em: Date;
             solicitante_id: number;
             solicitado_id: number;
-            status: import(".prisma/client").$Enums.StatusConexao;
+            status: import("@prisma/client").$Enums.StatusConexao;
         })[];
     }>;
     removerConexao(id: string, req: any): Promise<{

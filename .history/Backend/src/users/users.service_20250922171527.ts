@@ -84,16 +84,17 @@ export class UsersService {
       });
 
       // Se for profissional, criar perfil profissional automaticamente
-      if (tipoUpperCase === "PROFISSIONAL") {
+      if (tipoUpperCase === 'PROFISSIONAL') {
         await prisma.profissional.create({
           data: {
             usuario_id: novoUsuario.id,
-            especialidade: "",
-            registro_profissional: "",
-            titulo: "",
-            formacaoAcademica: "",
-            sobre: "",
-            codigoIdentificacao: `PROF${novoUsuario.id.toString().padStart(4, "0")}`,
+            especialidade: '',
+            registro_profissional: '',
+            titulo: '',
+            formacaoAcademica: '',
+            sobre: '',
+            codigoIdentificacao: `PROF${novoUsuario.id.toString().padStart(4, '0')}`,
+            ativo: true,
           },
         });
       }
@@ -104,10 +105,10 @@ export class UsersService {
     return {
       message: "Usuário registrado com sucesso.",
       user: {
-        id: resultado.id,
-        name: resultado.name,
-        email: resultado.email,
-        tipo: resultado.tipo,
+        id: novoUsuario.id,
+        name: novoUsuario.name,
+        email: novoUsuario.email,
+        tipo: novoUsuario.tipo,
       },
     };
   }

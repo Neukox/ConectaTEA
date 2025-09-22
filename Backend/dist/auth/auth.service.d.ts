@@ -12,13 +12,13 @@ export declare class AuthService {
             id: number;
             name: string;
             email: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
         };
     }>;
     validateUser(userId: number): Promise<{
         name: string;
         email: string;
         id: number;
-        tipo: import(".prisma/client").$Enums.UserType;
+        tipo: import("@prisma/client").$Enums.UserType;
     }>;
 }

@@ -12,57 +12,58 @@ export default function Cadastro() {
     tipoUsuario: "",
   });
   const [loading, setLoading] = useState(false);
-  const { notificarSucesso, notificarErro, notificarAlerta } =
-    useNotificacoesContext();
+  const { notificarSucesso, notificarErro, notificarAlerta } = useNotificacoesContext();
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     // Validações básicas
     if (!form.nome.trim()) {
       notificarAlerta(
-        "Nome obrigatório",
-        "Por favor, digite seu nome completo.",
+        'Nome obrigatório',
+        'Por favor, digite seu nome completo.',
         { duration: 4000 }
       );
       return;
     }
 
     if (!form.email.trim()) {
-      notificarAlerta("Email obrigatório", "Por favor, digite seu email.", {
-        duration: 4000,
-      });
+      notificarAlerta(
+        'Email obrigatório',
+        'Por favor, digite seu email.',
+        { duration: 4000 }
+      );
       return;
     }
 
     // Validação de email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(form.email.trim())) {
-      notificarAlerta("Email inválido", "Por favor, digite um email válido.", {
-        duration: 4000,
-      });
-      return;
-    }
-
-    if (form.senha.length < 6) {
       notificarAlerta(
-        "Senha muito curta",
-        "A senha deve ter pelo menos 6 caracteres.",
+        'Email inválido',
+        'Por favor, digite um email válido.',
         { duration: 4000 }
       );
       return;
     }
 
+    if (form.senha.length < 6) {
+      notificarAlerta(
+        'Senha muito curta',
+        'A senha deve ter pelo menos 6 caracteres.',
+        { duration: 4000 }
+      );
+      return;
+    }
+    
     if (form.senha !== form.confirmarSenha) {
       notificarAlerta(
-        "Senhas não coincidem",
-        "As senhas digitadas não são iguais. Verifique e tente novamente.",
+        'Senhas não coincidem',
+        'As senhas digitadas não são iguais. Verifique e tente novamente.',
         { duration: 4000 }
       );
       return;
@@ -70,8 +71,8 @@ export default function Cadastro() {
 
     if (!form.tipoUsuario) {
       notificarAlerta(
-        "Tipo de usuário obrigatório",
-        "Selecione se você é um profissional ou responsável.",
+        'Tipo de usuário obrigatório',
+        'Selecione se você é um profissional ou responsável.',
         { duration: 4000 }
       );
       return;
@@ -79,39 +80,25 @@ export default function Cadastro() {
 
     setLoading(true);
     try {
-      const response = await register(
-        form.nome,
-        form.email,
-        form.senha,
-        form.tipoUsuario
-      );
+      const response = await register(form.nome, form.email, form.senha, form.tipoUsuario);
       notificarSucesso(
-        "Conta criada!",
-        "Sua conta foi criada com sucesso. Redirecionando para login...",
+        'Conta criada!',
+        'Sua conta foi criada com sucesso. Redirecionando para login...',
         { duration: 4000 }
       );
       console.log(response);
-
-      // Limpar formulário
-      setForm({
-        nome: "",
-        email: "",
-        senha: "",
-        confirmarSenha: "",
-        tipoUsuario: "",
-      });
-
-      setTimeout(() => navigate("/login"), 2000);
-    } catch (error) {
+      setTimeout(() => navigate("/login"), 2000); // Delay para mostrar a notificação
+    } catch (error: any) {
       console.error("Erro no registro:", error);
-
+      
       // Usar a mensagem específica do erro se disponível
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Não foi possível criar sua conta. Verifique os dados e tente novamente.";
-
-      notificarErro("Erro no cadastro", errorMessage, { duration: 6000 });
+      const errorMessage = error.message || 'Não foi possível criar sua conta. Verifique os dados e tente novamente.';
+      
+      notificarErro(
+        'Erro no cadastro',
+        errorMessage,
+        { duration: 6000 }
+      );
     } finally {
       setLoading(false);
     }
@@ -127,8 +114,7 @@ export default function Cadastro() {
         </div>
         <h1 className="text-2xl font-bold text-gray-800 mt-4">ConectaTEA</h1>
         <p className="text-center text-gray-600 max-w-sm">
-          Crie sua conta para começar a transformar a vida das crianças autistas
-          com amor e cuidado.
+          Crie sua conta para começar a transformar a vida das crianças autistas com amor e cuidado.
         </p>
       </div>
 
@@ -137,17 +123,13 @@ export default function Cadastro() {
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md"
       >
-        <h2 className="text-xl font-bold text-center text-gray-800 mb-2">
-          Criar Conta
-        </h2>
+        <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Criar Conta</h2>
         <p className="text-center text-gray-600 mb-6">
           Junte-se à comunidade ConectaTEA
         </p>
 
         {/* Nome */}
-        <label className="block mb-2 font-medium text-gray-700">
-          Nome Completo
-        </label>
+        <label className="block mb-2 font-medium text-gray-700">Nome Completo</label>
         <input
           type="text"
           name="nome"
@@ -183,9 +165,7 @@ export default function Cadastro() {
         />
 
         {/* Confirmar Senha */}
-        <label className="block mb-2 font-medium text-gray-700">
-          Confirmar Senha
-        </label>
+        <label className="block mb-2 font-medium text-gray-700">Confirmar Senha</label>
         <input
           type="password"
           name="confirmarSenha"
@@ -197,9 +177,7 @@ export default function Cadastro() {
         />
 
         {/* Tipo de usuário */}
-        <label className="block mb-2 font-medium text-gray-700">
-          Tipo de Usuário
-        </label>
+        <label className="block mb-2 font-medium text-gray-700">Tipo de Usuário</label>
         <select
           name="tipoUsuario"
           value={form.tipoUsuario}
@@ -209,9 +187,7 @@ export default function Cadastro() {
         >
           <option value="">Selecione o tipo de usuário</option>
           <option value="responsavel">Responsável (Pais/Cuidadores)</option>
-          <option value="profissional">
-            Profissional (Terapeutas/Psicólogos)
-          </option>
+          <option value="profissional">Profissional (Terapeutas/Psicólogos)</option>
         </select>
 
         {/* Botão Criar Conta */}
@@ -234,23 +210,19 @@ export default function Cadastro() {
         <button
           type="button"
           style={{
-            width: "100%",
-            backgroundColor: "white",
-            color: "#374151",
-            padding: "12px",
-            borderRadius: "8px",
-            fontWeight: "600",
-            border: "1px solid #d1d5db",
-            cursor: "pointer",
-            transition: "background-color 0.2s",
-            marginTop: "16px",
+            width: '100%',
+            backgroundColor: 'white',
+            color: '#374151',
+            padding: '12px',
+            borderRadius: '8px',
+            fontWeight: '600',
+            border: '1px solid #d1d5db',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+            marginTop: '16px'
           }}
-          onMouseEnter={(e) =>
-            ((e.target as HTMLElement).style.backgroundColor = "#f9fafb")
-          }
-          onMouseLeave={(e) =>
-            ((e.target as HTMLElement).style.backgroundColor = "white")
-          }
+          onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#f9fafb'}
+          onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'white'}
           onClick={() => navigate("/login")}
         >
           Já tenho uma conta

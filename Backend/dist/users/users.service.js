@@ -53,42 +53,70 @@ let UsersService = class UsersService {
     }
     async create(createUserDto) {
         const { name, email, password, tipo } = createUserDto;
-        console.log('=== DEBUG REGISTRO ===');
-        console.log('Dados recebidos:', { name, email, password: '***', tipo });
-        const emailTrimmed = email.trim();
+        console.log("=== DEBUG REGISTRO ===");
+        console.log("Dados recebidos:", { name, email, password: "***", tipo });
+        if (!name || !name.trim()) {
+            throw new common_1.BadRequestException("Nome é obrigatório.");
+        }
+        if (!email || !email.trim()) {
+            throw new common_1.BadRequestException("Email é obrigatório.");
+        }
+        if (!password || password.length < 6) {
+            throw new common_1.BadRequestException("Senha deve ter pelo menos 6 caracteres.");
+        }
+        if (!tipo || !tipo.trim()) {
+            throw new common_1.BadRequestException("Tipo de usuário é obrigatório.");
+        }
+        const emailTrimmed = email.trim().toLowerCase();
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(emailTrimmed)) {
-            throw new common_1.ConflictException('Email inválido.');
+            throw new common_1.BadRequestException("Email inválido.");
         }
         const tipoUpperCase = tipo.toUpperCase();
-        console.log('Tipo convertido:', tipoUpperCase);
-        console.log('UserType values:', Object.values(client_1.UserType));
+        console.log("Tipo convertido:", tipoUpperCase);
+        console.log("UserType values:", Object.values(client_1.UserType));
         if (!Object.values(client_1.UserType).includes(tipoUpperCase)) {
-            console.log('Tipo inválido detectado');
-            throw new common_1.ConflictException('Tipo de usuário inválido. Use: PROFISSIONAL ou RESPONSAVEL.');
+            console.log("Tipo inválido detectado");
+            throw new common_1.BadRequestException("Tipo de usuário inválido. Use: PROFISSIONAL ou RESPONSAVEL.");
         }
         const emailExistente = await this.prisma.user.findFirst({
             where: { email: emailTrimmed },
         });
         if (emailExistente) {
-            throw new common_1.ConflictException('Email já registrado.');
+            throw new common_1.ConflictException("Este email já está registrado. Use outro email ou faça login.");
         }
         const senhaCriptografada = await bcrypt.hash(password, 10);
-        const novoUsuario = await this.prisma.user.create({
-            data: {
-                name,
-                email: emailTrimmed,
-                password: senhaCriptografada,
-                tipo: tipoUpperCase,
-            },
+        const resultado = await this.prisma.$transaction(async (prisma) => {
+            const novoUsuario = await prisma.user.create({
+                data: {
+                    name: name.trim(),
+                    email: emailTrimmed,
+                    password: senhaCriptografada,
+                    tipo: tipoUpperCase,
+                },
+            });
+            if (tipoUpperCase === "PROFISSIONAL") {
+                await prisma.profissional.create({
+                    data: {
+                        usuario_id: novoUsuario.id,
+                        especialidade: "",
+                        registro_profissional: "",
+                        titulo: "",
+                        formacaoAcademica: "",
+                        sobre: "",
+                        codigoIdentificacao: `PROF${novoUsuario.id.toString().padStart(4, "0")}`,
+                    },
+                });
+            }
+            return novoUsuario;
         });
         return {
-            message: 'Usuário registrado com sucesso.',
+            message: "Usuário registrado com sucesso.",
             user: {
-                id: novoUsuario.id,
-                name: novoUsuario.name,
-                email: novoUsuario.email,
-                tipo: novoUsuario.tipo,
+                id: resultado.id,
+                name: resultado.name,
+                email: resultado.email,
+                tipo: resultado.tipo,
             },
         };
     }
@@ -115,10 +143,10 @@ let UsersService = class UsersService {
             },
         });
         if (!user) {
-            throw new common_1.BadRequestException('Usuário não encontrado.');
+            throw new common_1.BadRequestException("Usuário não encontrado.");
         }
         return {
-            message: 'Usuário encontrado com sucesso!',
+            message: "Usuário encontrado com sucesso!",
             data: user,
         };
     }
@@ -127,13 +155,13 @@ let UsersService = class UsersService {
             where: { id },
         });
         if (!userExists) {
-            throw new common_1.BadRequestException('Usuário não encontrado.');
+            throw new common_1.BadRequestException("Usuário não encontrado.");
         }
         if (updateUserDto.email) {
             const emailTrimmed = updateUserDto.email.trim();
             const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
             if (!emailRegex.test(emailTrimmed)) {
-                throw new common_1.BadRequestException('Email inválido.');
+                throw new common_1.BadRequestException("Email inválido.");
             }
             const emailExistente = await this.prisma.user.findFirst({
                 where: {
@@ -142,7 +170,7 @@ let UsersService = class UsersService {
                 },
             });
             if (emailExistente) {
-                throw new common_1.ConflictException('Email já está sendo usado por outro usuário.');
+                throw new common_1.ConflictException("Email já está sendo usado por outro usuário.");
             }
             updateUserDto.email = emailTrimmed;
         }
@@ -165,7 +193,7 @@ let UsersService = class UsersService {
             },
         });
         return {
-            message: 'Perfil atualizado com sucesso!',
+            message: "Perfil atualizado com sucesso!",
             data: updatedUser,
         };
     }

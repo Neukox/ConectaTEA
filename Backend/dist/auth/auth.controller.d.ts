@@ -10,7 +10,7 @@ export declare class AuthController {
             id: number;
             name: string;
             email: string;
-            tipo: import(".prisma/client").$Enums.UserType;
+            tipo: import("@prisma/client").$Enums.UserType;
         };
     }>;
 }
