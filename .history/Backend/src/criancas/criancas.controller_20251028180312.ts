@@ -21,8 +21,9 @@ import { CreateCriancaDto } from "./dto/create-crianca.dto";
 import { UpdateCriancaDto } from "./dto/update-crianca.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { UserType } from "@prisma/client";
-import { RolesGuard } from "../auth/roles.guard";
-import { Roles } from "../auth/roles.decorator";
+// Temporariamente comentados até resolver problemas de módulo
+ import { RolesGuard } from "../auth/roles.guard";
+// import { Roles } from "../auth/roles.decorator";
 
 @ApiTags("Crianças")
 @Controller("criancas")

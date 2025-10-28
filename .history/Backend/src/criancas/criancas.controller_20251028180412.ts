@@ -23,6 +23,7 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { UserType } from "@prisma/client";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
+import { AuthProvider } from './contexts/AuthProvider';
 
 @ApiTags("Crianças")
 @Controller("criancas")
@@ -85,4 +86,12 @@ export class CriancasController {
   async remove(@Param("id") id: string, @Req() req: any) {
     return await this.criancasService.remove(+id);
   }
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      {/* Suas rotas */}
+    </AuthProvider>
+  );
 }
