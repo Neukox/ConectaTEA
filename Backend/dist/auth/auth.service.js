@@ -52,7 +52,7 @@ let AuthService = class AuthService {
         this.prisma = prisma;
         this.jwtService = jwtService;
     }
-    async login(loginDto) {
+    async login(loginDto, response) {
         const { email, password } = loginDto;
         const usuario = await this.prisma.user.findFirst({
             where: { email },
@@ -70,15 +70,26 @@ let AuthService = class AuthService {
             tipo: usuario.tipo,
         };
         const token = this.jwtService.sign(payload);
+        response.cookie('jwt', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
         return {
             message: 'Login realizado com sucesso.',
-            token,
             user: {
                 id: usuario.id,
                 name: usuario.name,
                 email: usuario.email,
                 tipo: usuario.tipo,
             },
+        };
+    }
+    async logout(response) {
+        response.clearCookie('jwt');
+        return {
+            message: 'Logout realizado com sucesso.',
         };
     }
     async validateUser(userId) {

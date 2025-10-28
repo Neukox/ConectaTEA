@@ -19,6 +19,9 @@ const criancas_service_1 = require("./criancas.service");
 const create_crianca_dto_1 = require("./dto/create-crianca.dto");
 const update_crianca_dto_1 = require("./dto/update-crianca.dto");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const roles_guard_1 = require("../auth/roles.guard");
+const roles_decorator_1 = require("../auth/roles.decorator");
+const client_1 = require("@prisma/client");
 let CriancasController = class CriancasController {
     constructor(criancasService) {
         this.criancasService = criancasService;
@@ -53,7 +56,8 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Criança cadastrada com sucesso.' }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Dados inválidos.' }),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.UserType.RESPONSAVEL),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
@@ -64,7 +68,8 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Listar todas as crianças' }),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.UserType.RESPONSAVEL, client_1.UserType.PROFISSIONAL),
     (0, common_1.Get)(),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),

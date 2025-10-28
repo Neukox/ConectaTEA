@@ -17,12 +17,21 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const auth_service_1 = require("./auth.service");
 const login_dto_1 = require("./dto/login.dto");
+const jwt_auth_guard_1 = require("./jwt-auth.guard");
 let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async login(loginDto) {
-        return await this.authService.login(loginDto);
+    async login(loginDto, response) {
+        return await this.authService.login(loginDto, response);
+    }
+    async logout(response) {
+        return await this.authService.logout(response);
+    }
+    async getMe(request) {
+        return {
+            user: request.user
+        };
     }
 };
 exports.AuthController = AuthController;
@@ -32,10 +41,32 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Credenciais inválidas.' }),
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [login_dto_1.LoginDto]),
+    __metadata("design:paramtypes", [login_dto_1.LoginDto, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Realizar logout' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Logout realizado com sucesso.' }),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('logout'),
+    __param(0, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "logout", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Verificar autenticação do usuário' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Usuário autenticado.' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Usuário não autenticado.' }),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('me'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getMe", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Autenticação'),
     (0, common_1.Controller)('auth'),
