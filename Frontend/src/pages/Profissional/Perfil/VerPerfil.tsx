@@ -10,6 +10,7 @@ import {
   FaMapMarkerAlt,
 } from 'react-icons/fa'
 import Header from '../../../components/Header'
+import PageLayout from '../../../layouts/PageLayout'
 
 export default function PerfilProfissional() {
   const [perfil, setPerfil] = useState<Profissional | null>(null)
@@ -71,12 +72,11 @@ export default function PerfilProfissional() {
     )
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <PageLayout>
       {/* Header alinhado com outros layouts */}
       <Header
         title='Ver Perfil'
         description='Visualize os dados do profissional'
-        showSearch={false}
       />
 
       <div className='flex justify-center p-6'>
@@ -208,6 +208,6 @@ export default function PerfilProfissional() {
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

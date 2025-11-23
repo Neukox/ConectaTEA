@@ -1,5 +1,5 @@
-import React from 'react'
 import Header from '../../../components/Header'
+import PageLayout from '../../../layouts/PageLayout'
 
 const criancas = [
   {
@@ -207,7 +207,7 @@ const cardIcons = [
 
 export default function Dashboard() {
   return (
-    <div className='min-h-screen bg-gray-50 px-4 py-6 md:px-10'>
+    <PageLayout>
       <Header
         title='Dashboard'
         description='Acompanhe o progresso e gerencie as atividades'
@@ -413,6 +413,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

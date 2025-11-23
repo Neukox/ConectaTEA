@@ -8,16 +8,14 @@ import SupportSection from './components/SupportSection'
 import DangerZoneSection from './components/DangerZoneSection'
 
 import Header from '../../../components/Header'
+import PageLayout from '~/layouts/PageLayout'
 
 const Configuracoes: React.FC = () => {
   return (
-    <div className='min-h-screen bg-gray-50 p-8'>
+    <PageLayout>
       <Header
         title='Configurações'
         description='Gerencie suas preferências e configurações da conta'
-        showSearch={false}
-        showNotifications={false}
-        showProfile={false}
       >
         <button className='flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'>
           <Save className='h-5 w-5' />
@@ -40,7 +38,7 @@ const Configuracoes: React.FC = () => {
           <DangerZoneSection />
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }
 

@@ -1,27 +1,21 @@
+import { Bell, ChevronDown } from 'lucide-react'
 import React from 'react'
-import { Bell, Search, ChevronDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 interface HeaderProps {
   title?: string
   description?: string
   children?: React.ReactNode
-  showSearch?: boolean
   showNotifications?: boolean
   showProfile?: boolean
-  searchValue?: string
-  onSearchChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
 const Header: React.FC<HeaderProps> = ({
   title,
   description,
   children,
-  showSearch = true,
   showNotifications = true,
   showProfile = true,
-  searchValue,
-  onSearchChange,
 }) => {
   const [userName, setUserName] = React.useState('Profissional')
   const [userRole, setUserRole] = React.useState('PROFISSIONAL')
@@ -50,20 +44,6 @@ const Header: React.FC<HeaderProps> = ({
       <div className='mt-4 flex items-center gap-4 md:mt-0'>
         {/* Children (Custom Actions) */}
         {children}
-
-        {/* Global Search */}
-        {showSearch && (
-          <div className='relative hidden md:block'>
-            <input
-              type='text'
-              placeholder='Buscar...'
-              value={searchValue}
-              onChange={onSearchChange}
-              className='rounded-lg border border-gray-200 bg-white py-2 pr-4 pl-10 focus:ring-2 focus:ring-green-200 focus:outline-none'
-            />
-            <Search className='absolute top-2.5 left-3 h-5 w-5 text-gray-400' />
-          </div>
-        )}
 
         {/* Notifications */}
         {showNotifications && (

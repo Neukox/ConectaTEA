@@ -2,56 +2,6 @@
 
 // ...existing code...
 
-// Adicionar no header/topo do layout:
-// ...existing code...
-;<div className='group/profile relative flex items-center gap-2'>
-  <button
-    className='flex items-center gap-2 focus:outline-none'
-    tabIndex={0}
-  >
-    <img
-      src='https://randomuser.me/api/portraits/men/32.jpg'
-      alt='avatar'
-      className='h-10 w-10 rounded-full border-2 border-green-500'
-    />
-    <div className='hidden text-right sm:block'>
-      <p className='text-sm leading-4 font-semibold'>Gabriel Falcão da Cruz</p>
-      <span className='text-xs font-bold text-green-600'>PROFISSIONAL</span>
-    </div>
-    <svg
-      className='ml-1 h-5 w-5 text-gray-400'
-      fill='none'
-      stroke='currentColor'
-      strokeWidth='2'
-      viewBox='0 0 24 24'
-    >
-      <path
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        d='M19 9l-7 7-7-7'
-      />
-    </svg>
-  </button>
-  {/* Dropdown */}
-  <div className='pointer-events-none absolute top-14 right-0 z-20 min-w-[160px] rounded-xl border border-gray-200 bg-white py-2 opacity-0 shadow-lg transition-all duration-200 group-focus-within/profile:pointer-events-auto group-focus-within/profile:opacity-100 group-hover/profile:pointer-events-auto group-hover/profile:opacity-100'>
-    <a
-      href='#'
-      className='block px-4 py-2 text-gray-700 transition hover:bg-gray-100'
-    >
-      Configurações
-    </a>
-    <button
-      onClick={() => {
-        localStorage.clear()
-        if (typeof window !== 'undefined') window.location.href = '/login'
-      }}
-      className='block w-full px-4 py-2 text-left text-red-500 transition hover:bg-red-50'
-    >
-      Sair
-    </button>
-  </div>
-</div>
-// ...existing code...
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -66,6 +16,7 @@ import { useConfirmacao } from '../../../hooks/useConfirmacao'
 import BarraConfirmacao from '../../../components/ModalConfirmacao'
 import LayoutCriancaCadastrada from './LayoutCriancaCadastrada'
 import Header from '../../../components/Header'
+import PageLayout from '../../../layouts/PageLayout'
 
 // Tipo para dados do profissional (pode ser expandido conforme necessário)
 interface ProfissionalInfo {
@@ -301,40 +252,13 @@ export default function CadastrarCriancas() {
   }
 
   return (
-    <div className='h-full'>
-      {/* Header com barra de pesquisa */}
+    <PageLayout>
       {/* Header com barra de pesquisa */}
       <Header
         title='Crianças'
         description='Gerencie as crianças cadastradas no sistema'
-        showSearch={false}
       >
         <div className='flex items-center gap-4'>
-          {/* Barra de pesquisa */}
-          <div className='relative'>
-            <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
-              <svg
-                className='h-5 w-5 text-gray-400'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                />
-              </svg>
-            </div>
-            <input
-              type='text'
-              placeholder='Buscar crianças...'
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className='block w-80 rounded-lg border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-green-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:outline-none'
-            />
-          </div>
           {/* Botão Nova Criança */}
           <button
             onClick={abrirModalCadastro}
@@ -762,6 +686,6 @@ export default function CadastrarCriancas() {
           position='top-center'
         />
       </div>
-    </div>
+    </PageLayout>
   )
 }

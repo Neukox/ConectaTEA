@@ -14,6 +14,7 @@ import {
   YAxis,
 } from 'recharts'
 import Header from '../../../components/Header'
+import PageLayout from '../../../layouts/PageLayout'
 
 // Mock Data
 const evolucaoData = [
@@ -152,12 +153,11 @@ const statsCards = [
 
 export default function Progresso() {
   return (
-    <div className='min-h-screen space-y-6 bg-gray-50 p-6'>
+    <PageLayout>
       {/* Header */}
       <Header
         title='Progresso'
         description='Acompanhe a evolução das crianças e metas'
-        showSearch={false}
       >
         <div className='flex items-center gap-3'>
           <select className='rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 focus:ring-2 focus:ring-green-500 focus:outline-none'>
@@ -182,195 +182,200 @@ export default function Progresso() {
           </button>
         </div>
       </Header>
+      <div className='flex flex-col gap-6'>
+        {/* Stats Cards */}
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
+          {statsCards.map((card, index) => (
+            <div
+              key={index}
+              className='flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm'
+            >
+              <div className='rounded-lg bg-gray-50 p-3'>{card.icon}</div>
+              <div>
+                <h3 className='text-2xl font-bold text-gray-900'>
+                  {card.valor}
+                </h3>
+                <p className='text-sm text-gray-500'>{card.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
-      {/* Stats Cards */}
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
-        {statsCards.map((card, index) => (
-          <div
-            key={index}
-            className='flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm'
-          >
-            <div className='rounded-lg bg-gray-50 p-3'>{card.icon}</div>
-            <div>
-              <h3 className='text-2xl font-bold text-gray-900'>{card.valor}</h3>
-              <p className='text-sm text-gray-500'>{card.label}</p>
+        {/* Charts Row 1 */}
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+          {/* Evolução por Categoria */}
+          <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+            <h3 className='mb-6 text-lg font-bold text-gray-900'>
+              Evolução por Categoria
+            </h3>
+            <div className='h-80'>
+              <ResponsiveContainer
+                width='100%'
+                height='100%'
+              >
+                <LineChart data={evolucaoData}>
+                  <CartesianGrid
+                    strokeDasharray='3 3'
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey='name'
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip />
+                  <Line
+                    type='monotone'
+                    dataKey='social'
+                    stroke='#EC4899'
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                  <Line
+                    type='monotone'
+                    dataKey='comunicacao'
+                    stroke='#8B5CF6'
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                  <Line
+                    type='monotone'
+                    dataKey='motora'
+                    stroke='#22C55E'
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                  <Line
+                    type='monotone'
+                    dataKey='cognitiva'
+                    stroke='#06B6D4'
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Charts Row 1 */}
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        {/* Evolução por Categoria */}
-        <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
-          <h3 className='mb-6 text-lg font-bold text-gray-900'>
-            Evolução por Categoria
-          </h3>
-          <div className='h-80'>
-            <ResponsiveContainer
-              width='100%'
-              height='100%'
-            >
-              <LineChart data={evolucaoData}>
-                <CartesianGrid
-                  strokeDasharray='3 3'
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey='name'
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip />
-                <Line
-                  type='monotone'
-                  dataKey='social'
-                  stroke='#EC4899'
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='comunicacao'
-                  stroke='#8B5CF6'
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='motora'
-                  stroke='#22C55E'
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='cognitiva'
-                  stroke='#06B6D4'
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Distribuição por Categoria */}
-        <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
-          <h3 className='mb-6 text-lg font-bold text-gray-900'>
-            Distribuição por Categoria
-          </h3>
-          <div className='flex h-80 items-center justify-center'>
-            <ResponsiveContainer
-              width='100%'
-              height='100%'
-            >
-              <PieChart>
-                <Pie
-                  data={distribuicaoData}
-                  cx='50%'
-                  cy='50%'
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey='value'
-                >
-                  {distribuicaoData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.color}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend
-                  layout='vertical'
-                  verticalAlign='middle'
-                  align='right'
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Row 2 & Recent Updates */}
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        {/* Progresso por Criança */}
-        <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
-          <h3 className='mb-6 text-lg font-bold text-gray-900'>
-            Progresso por Criança
-          </h3>
-          <div className='h-80'>
-            <ResponsiveContainer
-              width='100%'
-              height='100%'
-            >
-              <BarChart data={progressoCriancaData}>
-                <CartesianGrid
-                  strokeDasharray='3 3'
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey='name'
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip cursor={{ fill: 'transparent' }} />
-                <Bar
-                  dataKey='progresso'
-                  fill='#22C55E'
-                  radius={[4, 4, 0, 0]}
-                  barSize={60}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Atualizações Recentes */}
-        <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
-          <h3 className='mb-6 text-lg font-bold text-gray-900'>
-            Atualizações Recentes
-          </h3>
-          <div className='space-y-4'>
-            {atualizacoesRecentes.map((item, index) => (
-              <div
-                key={index}
-                className='rounded-lg border border-gray-100 p-4 transition-shadow hover:shadow-md'
+          {/* Distribuição por Categoria */}
+          <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+            <h3 className='mb-6 text-lg font-bold text-gray-900'>
+              Distribuição por Categoria
+            </h3>
+            <div className='flex h-80 items-center justify-center'>
+              <ResponsiveContainer
+                width='100%'
+                height='100%'
               >
-                <div className='mb-2 flex items-start justify-between'>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-bold text-gray-900'>{item.nome}</span>
-                    <span className='rounded bg-gray-100 px-2 py-1 text-xs text-gray-600'>
-                      {item.meta}
+                <PieChart>
+                  <Pie
+                    data={distribuicaoData}
+                    cx='50%'
+                    cy='50%'
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey='value'
+                  >
+                    {distribuicaoData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend
+                    layout='vertical'
+                    verticalAlign='middle'
+                    align='right'
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Row 2 & Recent Updates */}
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+          {/* Progresso por Criança */}
+          <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+            <h3 className='mb-6 text-lg font-bold text-gray-900'>
+              Progresso por Criança
+            </h3>
+            <div className='h-80'>
+              <ResponsiveContainer
+                width='100%'
+                height='100%'
+              >
+                <BarChart data={progressoCriancaData}>
+                  <CartesianGrid
+                    strokeDasharray='3 3'
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey='name'
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip cursor={{ fill: 'transparent' }} />
+                  <Bar
+                    dataKey='progresso'
+                    fill='#22C55E'
+                    radius={[4, 4, 0, 0]}
+                    barSize={60}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Atualizações Recentes */}
+          <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+            <h3 className='mb-6 text-lg font-bold text-gray-900'>
+              Atualizações Recentes
+            </h3>
+            <div className='space-y-4'>
+              {atualizacoesRecentes.map((item, index) => (
+                <div
+                  key={index}
+                  className='rounded-lg border border-gray-100 p-4 transition-shadow hover:shadow-md'
+                >
+                  <div className='mb-2 flex items-start justify-between'>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-bold text-gray-900'>
+                        {item.nome}
+                      </span>
+                      <span className='rounded bg-gray-100 px-2 py-1 text-xs text-gray-600'>
+                        {item.meta}
+                      </span>
+                    </div>
+                    <span className='text-sm font-bold text-green-600'>
+                      {item.aumento}
                     </span>
                   </div>
-                  <span className='text-sm font-bold text-green-600'>
-                    {item.aumento}
-                  </span>
-                </div>
-                <p className='mb-3 text-sm text-gray-600'>{item.descricao}</p>
-                <div className='flex items-center justify-between text-xs text-gray-400'>
-                  <span>Profissional: {item.profissional}</span>
-                  <div className='flex gap-4'>
-                    <span>Data: {item.data}</span>
-                    <span>Progresso atual: {item.progressoAtual}%</span>
+                  <p className='mb-3 text-sm text-gray-600'>{item.descricao}</p>
+                  <div className='flex items-center justify-between text-xs text-gray-400'>
+                    <span>Profissional: {item.profissional}</span>
+                    <div className='flex gap-4'>
+                      <span>Data: {item.data}</span>
+                      <span>Progresso atual: {item.progressoAtual}%</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

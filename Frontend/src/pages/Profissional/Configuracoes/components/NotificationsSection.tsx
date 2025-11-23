@@ -1,23 +1,6 @@
 import React, { useState } from 'react'
 import { Bell } from 'lucide-react'
-
-const Toggle: React.FC<{ checked: boolean; onChange: () => void }> = ({
-  checked,
-  onChange,
-}) => (
-  <button
-    onClick={onChange}
-    className={`relative h-6 w-11 rounded-full transition-colors ${
-      checked ? 'bg-gray-900' : 'bg-gray-200'
-    }`}
-  >
-    <span
-      className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white transition-transform ${
-        checked ? 'translate-x-5' : 'translate-x-0'
-      }`}
-    />
-  </button>
-)
+import { Switch } from '~/components/ui'
 
 const NotificationsSection: React.FC = () => {
   const [email, setEmail] = useState(true)
@@ -45,9 +28,9 @@ const NotificationsSection: React.FC = () => {
                 Receba atualizações importantes por email
               </p>
             </div>
-            <Toggle
+            <Switch
               checked={email}
-              onChange={() => setEmail(!email)}
+              onCheckedChange={setEmail}
             />
           </div>
 
@@ -58,9 +41,9 @@ const NotificationsSection: React.FC = () => {
                 Receba notificações no navegador
               </p>
             </div>
-            <Toggle
+            <Switch
               checked={push}
-              onChange={() => setPush(!push)}
+              onCheckedChange={setPush}
             />
           </div>
 
@@ -71,9 +54,9 @@ const NotificationsSection: React.FC = () => {
                 Receba mensagens de texto importantes
               </p>
             </div>
-            <Toggle
+            <Switch
               checked={sms}
-              onChange={() => setSms(!sms)}
+              onCheckedChange={setSms}
             />
           </div>
         </div>
@@ -85,23 +68,23 @@ const NotificationsSection: React.FC = () => {
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
               <p className='text-gray-700'>Sessões Agendadas</p>
-              <Toggle
+              <Switch
                 checked={sessions}
-                onChange={() => setSessions(!sessions)}
+                onCheckedChange={setSessions}
               />
             </div>
             <div className='flex items-center justify-between'>
               <p className='text-gray-700'>Atualizações de Progresso</p>
-              <Toggle
+              <Switch
                 checked={progress}
-                onChange={() => setProgress(!progress)}
+                onCheckedChange={setProgress}
               />
             </div>
             <div className='flex items-center justify-between'>
               <p className='text-gray-700'>Novas Mensagens</p>
-              <Toggle
+              <Switch
                 checked={messages}
-                onChange={() => setMessages(!messages)}
+                onCheckedChange={setMessages}
               />
             </div>
           </div>

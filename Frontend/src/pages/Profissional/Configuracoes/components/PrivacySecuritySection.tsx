@@ -1,23 +1,6 @@
 import React, { useState } from 'react'
 import { Shield, Key } from 'lucide-react'
-
-const Toggle: React.FC<{ checked: boolean; onChange: () => void }> = ({
-  checked,
-  onChange,
-}) => (
-  <button
-    onClick={onChange}
-    className={`relative h-6 w-11 rounded-full transition-colors ${
-      checked ? 'bg-gray-900' : 'bg-gray-200'
-    }`}
-  >
-    <span
-      className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white transition-transform ${
-        checked ? 'translate-x-5' : 'translate-x-0'
-      }`}
-    />
-  </button>
-)
+import { Switch } from '../../../../components/ui/switch'
 
 const PrivacySecuritySection: React.FC = () => {
   const [profileVisible, setProfileVisible] = useState(true)
@@ -42,9 +25,9 @@ const PrivacySecuritySection: React.FC = () => {
                 Permitir que outros usuários vejam seu perfil
               </p>
             </div>
-            <Toggle
+            <Switch
               checked={profileVisible}
-              onChange={() => setProfileVisible(!profileVisible)}
+              onCheckedChange={setProfileVisible}
             />
           </div>
 
@@ -57,9 +40,9 @@ const PrivacySecuritySection: React.FC = () => {
                 Permitir compartilhamento de dados de progresso
               </p>
             </div>
-            <Toggle
+            <Switch
               checked={shareProgress}
-              onChange={() => setShareProgress(!shareProgress)}
+              onCheckedChange={setShareProgress}
             />
           </div>
 
@@ -70,9 +53,9 @@ const PrivacySecuritySection: React.FC = () => {
                 Receber mensagens de profissionais
               </p>
             </div>
-            <Toggle
+            <Switch
               checked={allowMessages}
-              onChange={() => setAllowMessages(!allowMessages)}
+              onCheckedChange={setAllowMessages}
             />
           </div>
         </div>

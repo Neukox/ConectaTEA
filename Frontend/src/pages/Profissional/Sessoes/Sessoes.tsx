@@ -14,8 +14,9 @@ import SummaryCard from './components/SummaryCard'
 import SessionItem from './components/SessionItem'
 import NextSessions from './components/NextSessions'
 import QuickActions from './components/QuickActions'
+import PageLayout from '~/layouts/PageLayout'
+import Header from '~/components/Header'
 
-import Header from '../../../components/Header'
 
 const Sessoes: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('14/01/2024')
@@ -106,7 +107,7 @@ const Sessoes: React.FC = () => {
   ]
 
   return (
-    <div className='min-h-screen bg-gray-50 p-8'>
+    <PageLayout>
       <Header
         title='Sessões'
         description='Gerencie agendamentos e sessões terapêuticas'
@@ -189,7 +190,7 @@ const Sessoes: React.FC = () => {
           <QuickActions />
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }
 

@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNotificacoesContext } from '../../../api/barraNotificacao'
-import { useNavigate } from 'react-router-dom'
 import {
-  MapPin,
-  Linkedin,
-  Facebook,
-  Instagram,
-  Filter,
-  Eye,
   Check,
+  Eye,
+  Facebook,
+  Filter,
+  Instagram,
+  Linkedin,
+  MapPin,
   UserPlus,
 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useNotificacoesContext } from '../../../api/barraNotificacao'
 import type { Profissional as ApiProfissional } from '../../../api/protected/axiosProfissionais'
 
 import {
@@ -19,15 +19,17 @@ import {
 } from '../../../api/protected/axiosProfissionais'
 
 import {
-  enviarSolicitacao,
   aceitarSolicitacao,
-  removerSolicitacao,
-  listarSolicitacoesRecebidas,
-  listarSolicitacoesEnviadas,
+  enviarSolicitacao,
   listarConexoesPorProfissional,
+  listarSolicitacoesEnviadas,
+  listarSolicitacoesRecebidas,
+  removerSolicitacao,
   type ConexaoProfissional,
 } from '../../../api/protected/axiosAmizade'
 import Header from '../../../components/Header'
+import { Button } from '../../../components/ui/button'
+import PageLayout from '../../../layouts/PageLayout'
 
 // --- Tipagem estendida do profissional para a UI
 interface Profissional extends ApiProfissional {
@@ -377,30 +379,29 @@ export default function Profissionais() {
   }, [searchInput, fetchProfissionais])
 
   // --- Dados para renderização ---
+
   const conexoesCount = profissionais.filter((p) => p.conectado).length
   const displayed =
     tab === 'todos' ? profissionais : profissionais.filter((p) => p.conectado)
 
   return (
-    <div className='h-full bg-[#f8f9fb]'>
+    <PageLayout>
       {/* Header com busca e botão de ação */}
       <Header
         title='Profissionais'
         description='Encontre e conecte-se com outros especialistas'
-        searchValue={searchInput}
-        onSearchChange={(e) => setSearchInput(e.target.value)}
       >
-        <button
+        <Button
           // onClick={() => setShowModal(true)}
-          className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition hover:bg-green-700'
+          className='gap-2 text-base'
         >
           <span className='text-lg'>+</span>
           Convidar Profissional
-        </button>
+        </Button>
       </Header>
 
       {/* Main content */}
-      <main className='mx-auto max-w-7xl p-6 px-4'>
+      <div className='mx-auto max-w-7xl'>
         {/* Tabs */}
         <div className='mb-6 flex gap-2'>
           <button
@@ -527,7 +528,7 @@ export default function Profissionais() {
             </article>
           ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </PageLayout>
   )
 }

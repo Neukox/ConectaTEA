@@ -10,6 +10,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import Header from '../../../components/Header'
+import PageLayout from '~/layouts/PageLayout'
 
 // Paleta (verde como identidade)
 const colors = {
@@ -283,11 +284,10 @@ const metas: Meta[] = [
 
 export default function MetasPage() {
   return (
-    <div className='h-full bg-[#f8f9fb]'>
+    <PageLayout>
       <Header
         title='Metas'
         description='Gerencie as metas terapêuticas das crianças'
-        showSearch={false}
       >
         <button className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'>
           <span className='text-lg'>+</span>
@@ -355,6 +355,6 @@ export default function MetasPage() {
           />
         ))}
       </div>
-    </div>
+    </PageLayout>
   )
 }
