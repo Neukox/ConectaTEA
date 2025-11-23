@@ -15,6 +15,8 @@ import SessionItem from './components/SessionItem'
 import NextSessions from './components/NextSessions'
 import QuickActions from './components/QuickActions'
 
+import Header from '../../../components/Header'
+
 const Sessoes: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('14/01/2024')
 
@@ -105,18 +107,15 @@ const Sessoes: React.FC = () => {
 
   return (
     <div className='min-h-screen bg-gray-50 p-8'>
-      <div className='mb-8 flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold text-gray-800'>Sessões</h1>
-          <p className='text-gray-600'>
-            Gerencie agendamentos e sessões terapêuticas
-          </p>
-        </div>
+      <Header
+        title='Sessões'
+        description='Gerencie agendamentos e sessões terapêuticas'
+      >
         <button className='flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'>
           <Plus className='h-5 w-5' />
           Nova Sessão
         </button>
-      </div>
+      </Header>
 
       {/* Search and Filters */}
       <div className='mb-8 flex flex-col gap-4 md:flex-row'>

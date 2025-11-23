@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import Header from '../../../components/Header'
 
 // Mock Data
 const evolucaoData = [
@@ -153,13 +154,11 @@ export default function Progresso() {
   return (
     <div className='min-h-screen space-y-6 bg-gray-50 p-6'>
       {/* Header */}
-      <div className='flex flex-col justify-between gap-4 md:flex-row md:items-center'>
-        <div>
-          <h1 className='text-2xl font-bold text-gray-900'>Progresso</h1>
-          <p className='text-gray-500'>
-            Acompanhe a evolução das crianças e metas
-          </p>
-        </div>
+      <Header
+        title='Progresso'
+        description='Acompanhe a evolução das crianças e metas'
+        showSearch={false}
+      >
         <div className='flex items-center gap-3'>
           <select className='rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 focus:ring-2 focus:ring-green-500 focus:outline-none'>
             <option>Últimos 6 meses</option>
@@ -182,7 +181,7 @@ export default function Progresso() {
             Exportar Relatório
           </button>
         </div>
-      </div>
+      </Header>
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>

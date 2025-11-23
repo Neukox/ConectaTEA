@@ -17,6 +17,7 @@ import PerfilProfissional from '../pages/Profissional/Perfil/VerPerfil'
 import Profissionais from '../pages/Profissional/Profissionais/Profissionais'
 import Progresso from '../pages/Profissional/Progresso/Progresso'
 import Sessoes from '../pages/Profissional/Sessoes/Sessoes'
+import Configuracoes from '../pages/Profissional/Configuracoes/Configuracoes'
 
 export default function AppRoutes() {
   return (
@@ -137,6 +138,15 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
             <Sessoes />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path='/profissional/configuracoes'
+        element={
+          <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
+            <Configuracoes />
           </ProtectedRoute>
         }
       />

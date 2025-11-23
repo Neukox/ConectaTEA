@@ -79,7 +79,7 @@ const Sidebar: React.FC = () => {
         <Link
           to='/profissional/progresso'
           className={`flex items-center gap-3 rounded-lg px-4 py-2 font-medium ${
-            location.hash === '#progresso'
+            location.pathname === '/profissional/progresso'
               ? 'bg-green-500 text-white'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
@@ -100,7 +100,7 @@ const Sidebar: React.FC = () => {
           <span>Sessões</span>
         </Link>
 
-        <Link
+        {/* <Link
           to='#chat'
           className={`flex items-center gap-3 rounded-lg px-4 py-2 font-medium ${
             location.hash === '#chat'
@@ -110,8 +110,8 @@ const Sidebar: React.FC = () => {
         >
           <MessageCircle className='h-5 w-5' />
           <span>Chat</span>
-        </Link>
-
+        </Link> */}
+        {/* 
         <Link
           to='#ia'
           className={`flex items-center gap-3 rounded-lg px-4 py-2 font-medium ${
@@ -122,7 +122,7 @@ const Sidebar: React.FC = () => {
         >
           <Cpu className='h-5 w-5' />
           <span>IA</span>
-        </Link>
+        </Link> */}
 
         <Link
           to='/profissional/perfil'

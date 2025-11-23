@@ -4,77 +4,109 @@
 
 // Adicionar no header/topo do layout:
 // ...existing code...
-<div className="relative flex items-center gap-2 group/profile">
+;<div className='group/profile relative flex items-center gap-2'>
   <button
-    className="flex items-center gap-2 focus:outline-none"
+    className='flex items-center gap-2 focus:outline-none'
     tabIndex={0}
   >
-    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" className="w-10 h-10 rounded-full border-2 border-green-500" />
-    <div className="text-right hidden sm:block">
-      <p className="font-semibold text-sm leading-4">Gabriel Falcão da Cruz</p>
-      <span className="text-green-600 text-xs font-bold">PROFISSIONAL</span>
+    <img
+      src='https://randomuser.me/api/portraits/men/32.jpg'
+      alt='avatar'
+      className='h-10 w-10 rounded-full border-2 border-green-500'
+    />
+    <div className='hidden text-right sm:block'>
+      <p className='text-sm leading-4 font-semibold'>Gabriel Falcão da Cruz</p>
+      <span className='text-xs font-bold text-green-600'>PROFISSIONAL</span>
     </div>
-    <svg className="w-5 h-5 text-gray-400 ml-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+    <svg
+      className='ml-1 h-5 w-5 text-gray-400'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2'
+      viewBox='0 0 24 24'
+    >
+      <path
+        strokeLinecap='round'
+        strokeLinejoin='round'
+        d='M19 9l-7 7-7-7'
+      />
+    </svg>
   </button>
   {/* Dropdown */}
-  <div className="absolute right-0 top-14 z-20 min-w-[160px] bg-white border border-gray-200 rounded-xl shadow-lg py-2 opacity-0 pointer-events-none group-hover/profile:opacity-100 group-hover/profile:pointer-events-auto group-focus-within/profile:opacity-100 group-focus-within/profile:pointer-events-auto transition-all duration-200">
-    <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">Configurações</a>
-    <button onClick={() => { localStorage.clear(); if (typeof window !== 'undefined') window.location.href = '/login'; }} className="block w-full text-left px-4 py-2 text-red-500 hover:bg-red-50 transition">Sair</button>
+  <div className='pointer-events-none absolute top-14 right-0 z-20 min-w-[160px] rounded-xl border border-gray-200 bg-white py-2 opacity-0 shadow-lg transition-all duration-200 group-focus-within/profile:pointer-events-auto group-focus-within/profile:opacity-100 group-hover/profile:pointer-events-auto group-hover/profile:opacity-100'>
+    <a
+      href='#'
+      className='block px-4 py-2 text-gray-700 transition hover:bg-gray-100'
+    >
+      Configurações
+    </a>
+    <button
+      onClick={() => {
+        localStorage.clear()
+        if (typeof window !== 'undefined') window.location.href = '/login'
+      }}
+      className='block w-full px-4 py-2 text-left text-red-500 transition hover:bg-red-50'
+    >
+      Sair
+    </button>
   </div>
 </div>
 // ...existing code...
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  cadastrarCrianca, 
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import {
+  cadastrarCrianca,
   listarCriancas,
   excluirCrianca,
   type CadastroCriancaFormData,
-  type CriancaListagem 
-} from '../../../api/protected/axiosCadastroCrianca';
-import { useNotificacoesContext } from '../../../api/barraNotificacao';
-import { useConfirmacao } from '../../../hooks/useConfirmacao';
-import BarraConfirmacao from '../../../components/ModalConfirmacao';
-import LayoutCriancaCadastrada from './LayoutCriancaCadastrada';
+  type CriancaListagem,
+} from '../../../api/protected/axiosCadastroCrianca'
+import { useNotificacoesContext } from '../../../api/barraNotificacao'
+import { useConfirmacao } from '../../../hooks/useConfirmacao'
+import BarraConfirmacao from '../../../components/ModalConfirmacao'
+import LayoutCriancaCadastrada from './LayoutCriancaCadastrada'
+import Header from '../../../components/Header'
 
 // Tipo para dados do profissional (pode ser expandido conforme necessário)
 interface ProfissionalInfo {
-  nome: string;
-  email: string;
+  nome: string
+  email: string
 }
 
 export default function CadastrarCriancas() {
-  const navigate = useNavigate();
-  const { notificarSucesso, notificarErro } = useNotificacoesContext();
-  const { confirmacao, mostrarConfirmacao } = useConfirmacao();
-  const [criancas, setCriancas] = useState<CriancaListagem[]>([]);
-  const [criancasFiltradas, setCriancasFiltradas] = useState<CriancaListagem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  
+  const navigate = useNavigate()
+  const { notificarSucesso, notificarErro } = useNotificacoesContext()
+  const { confirmacao, mostrarConfirmacao } = useConfirmacao()
+  const [criancas, setCriancas] = useState<CriancaListagem[]>([])
+  const [criancasFiltradas, setCriancasFiltradas] = useState<CriancaListagem[]>(
+    [],
+  )
+  const [isLoading, setIsLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+
   // Obter dados do profissional logado do localStorage
   const getProfissionalInfo = (): ProfissionalInfo => {
-    const userData = localStorage.getItem("user");
+    const userData = localStorage.getItem('user')
     if (userData) {
       try {
-        const user = JSON.parse(userData);
+        const user = JSON.parse(userData)
         return {
           nome: user.name || 'Profissional',
-          email: user.email || ''
-        };
+          email: user.email || '',
+        }
       } catch (error) {
-        console.error('Erro ao parsear dados do usuário:', error);
+        console.error('Erro ao parsear dados do usuário:', error)
       }
     }
     return {
       nome: 'Dr. Maria Silva', // Fallback
-      email: 'maria@conectatea.com'
-    };
-  };
+      email: 'maria@conectatea.com',
+    }
+  }
 
-  const [profissional] = useState<ProfissionalInfo>(getProfissionalInfo());
-  
+  const [profissional] = useState<ProfissionalInfo>(getProfissionalInfo())
+
   // Função para criar um estado inicial limpo do formulário
   const getInitialFormData = (): CadastroCriancaFormData => ({
     nomeCompleto: '',
@@ -88,80 +120,84 @@ export default function CadastrarCriancas() {
     email: '',
     endereco: '',
     parentesco: 'PAI',
-    observacoes: ''
-  });
+    observacoes: '',
+  })
 
-  const [formData, setFormData] = useState<CadastroCriancaFormData>(getInitialFormData());
+  const [formData, setFormData] =
+    useState<CadastroCriancaFormData>(getInitialFormData())
 
   // Função para abrir o modal e garantir formulário limpo
   const abrirModalCadastro = () => {
-    setFormData(getInitialFormData());
-    setShowModal(true);
-  };
+    setFormData(getInitialFormData())
+    setShowModal(true)
+  }
 
   // Função para fechar o modal e limpar formulário
   const fecharModal = () => {
-    setFormData(getInitialFormData());
-    setShowModal(false);
-  };
+    setFormData(getInitialFormData())
+    setShowModal(false)
+  }
 
   // Buscar crianças do profissional
   const fetchCriancas = async () => {
     try {
-      setIsLoading(true);
-      const response = await listarCriancas();
-      
-      console.log('Resposta da API:', response); // Debug
-      
+      setIsLoading(true)
+      const response = await listarCriancas()
+
+      console.log('Resposta da API:', response) // Debug
+
       // A API retorna: { message, criancas: [...], total }
       // A função listarCriancas já retorna response.data, então acessamos diretamente
-      const criancasData = response.criancas || [];
-      
-      console.log('Crianças carregadas:', criancasData); // Debug
-      setCriancas(criancasData);
-      setCriancasFiltradas(criancasData);
+      const criancasData = response.criancas || []
+
+      console.log('Crianças carregadas:', criancasData) // Debug
+      setCriancas(criancasData)
+      setCriancasFiltradas(criancasData)
     } catch (error) {
-      console.error('Erro ao buscar crianças:', error);
-      setCriancas([]);
-      setCriancasFiltradas([]);
+      console.error('Erro ao buscar crianças:', error)
+      setCriancas([])
+      setCriancasFiltradas([])
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Filtrar crianças baseado no termo de busca
   useEffect(() => {
     if (!searchTerm.trim()) {
-      setCriancasFiltradas(criancas);
-      return;
+      setCriancasFiltradas(criancas)
+      return
     }
 
-    const filtered = criancas.filter(crianca => 
-      crianca.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      crianca.diagnostico.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      crianca.responsavel.nome.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setCriancasFiltradas(filtered);
-  }, [searchTerm, criancas]);
+    const filtered = criancas.filter(
+      (crianca) =>
+        crianca.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        crianca.diagnostico.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        crianca.responsavel.nome
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()),
+    )
+    setCriancasFiltradas(filtered)
+  }, [searchTerm, criancas])
 
   useEffect(() => {
-    fetchCriancas();
-  }, []);
+    fetchCriancas()
+  }, [])
 
   // Adicionar listener para recarregar quando voltar para a página
   useEffect(() => {
     const handleFocus = () => {
-      fetchCriancas();
-    };
+      fetchCriancas()
+    }
 
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
 
   // Excluir criança
   const handleExcluirCrianca = async (criancaId: number) => {
-    const crianca = criancas.find(c => c.id === criancaId);
-    if (!crianca) return;
+    const crianca = criancas.find((c) => c.id === criancaId)
+    if (!crianca) return
 
     mostrarConfirmacao(
       {
@@ -169,41 +205,39 @@ export default function CadastrarCriancas() {
         mensagem: `Tem certeza que deseja excluir a criança "${crianca.nome}"?\n\nEsta ação não poderá ser desfeita.`,
         textoBotaoConfirmar: 'Excluir',
         textoBotaoCancelar: 'Cancelar',
-        tipoConfirmacao: 'danger'
+        tipoConfirmacao: 'danger',
       },
       async () => {
         try {
-          await excluirCrianca(criancaId);
-          
+          await excluirCrianca(criancaId)
+
           // Atualizar lista local removendo a criança excluída
-          const novasCriancas = criancas.filter(c => c.id !== criancaId);
-          setCriancas(novasCriancas);
-          setCriancasFiltradas(novasCriancas);
-          
-          notificarSucesso(
-            'Sucesso!', 
-            'Criança excluída com sucesso!',
-            { duration: 4000 }
-          );
+          const novasCriancas = criancas.filter((c) => c.id !== criancaId)
+          setCriancas(novasCriancas)
+          setCriancasFiltradas(novasCriancas)
+
+          notificarSucesso('Sucesso!', 'Criança excluída com sucesso!', {
+            duration: 4000,
+          })
         } catch (error) {
-          console.error('Erro ao excluir criança:', error);
+          console.error('Erro ao excluir criança:', error)
           notificarErro(
             'Erro ao excluir',
             'Não foi possível excluir a criança. Tente novamente.',
-            { duration: 5000 }
-          );
+            { duration: 5000 },
+          )
         }
-      }
-    );
-  };
+      },
+    )
+  }
 
   // Cadastrar nova criança
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
       // Debug: verificar dados antes do envio
-      console.log('Dados do formulário antes do envio:', formData);
-      
+      console.log('Dados do formulário antes do envio:', formData)
+
       // Criar uma cópia profunda dos dados para evitar referências
       const dadosParaEnvio = {
         nomeCompleto: String(formData.nomeCompleto).trim(),
@@ -217,120 +251,118 @@ export default function CadastrarCriancas() {
         email: String(formData.email || '').trim(),
         endereco: String(formData.endereco || '').trim(),
         parentesco: formData.parentesco,
-        observacoes: String(formData.observacoes || '').trim()
-      };
-      
-      console.log('Dados processados para envio:', dadosParaEnvio);
-      
+        observacoes: String(formData.observacoes || '').trim(),
+      }
+
+      console.log('Dados processados para envio:', dadosParaEnvio)
+
       // Usar a função de cadastro com tipagem correta
-      await cadastrarCrianca(dadosParaEnvio);
-      
+      await cadastrarCrianca(dadosParaEnvio)
+
       // Limpar formulário e fechar modal
-      setFormData(getInitialFormData());
-      fecharModal();
-      
+      setFormData(getInitialFormData())
+      fecharModal()
+
       // Recarregar lista
-      fetchCriancas();
-      
+      fetchCriancas()
+
       // Mostrar mensagem de sucesso
       notificarSucesso(
         'Cadastro realizado!',
         `Criança ${formData.nomeCompleto} foi cadastrada com sucesso!`,
-        { duration: 5000 }
-      );
+        { duration: 5000 },
+      )
     } catch (error: unknown) {
-      console.error('Erro ao cadastrar criança:', error);
-      let errorMessage = 'Erro ao cadastrar criança.';
+      console.error('Erro ao cadastrar criança:', error)
+      let errorMessage = 'Erro ao cadastrar criança.'
       // Type guard para AxiosError
-      function isAxiosError(err: unknown): err is { response: { data: { message?: string } } } {
-        if (typeof err !== 'object' || err === null) return false;
-        const maybeResponse = (err as Record<string, unknown>).response;
-        if (typeof maybeResponse !== 'object' || maybeResponse === null) return false;
-        const maybeData = (maybeResponse as Record<string, unknown>).data;
-        if (typeof maybeData !== 'object' || maybeData === null) return false;
-        return true;
+      function isAxiosError(
+        err: unknown,
+      ): err is { response: { data: { message?: string } } } {
+        if (typeof err !== 'object' || err === null) return false
+        const maybeResponse = (err as Record<string, unknown>).response
+        if (typeof maybeResponse !== 'object' || maybeResponse === null)
+          return false
+        const maybeData = (maybeResponse as Record<string, unknown>).data
+        if (typeof maybeData !== 'object' || maybeData === null) return false
+        return true
       }
-      if (isAxiosError(error) && 'message' in error.response.data && typeof error.response.data.message === 'string') {
-        errorMessage = error.response.data.message;
+      if (
+        isAxiosError(error) &&
+        'message' in error.response.data &&
+        typeof error.response.data.message === 'string'
+      ) {
+        errorMessage = error.response.data.message
       } else if (error instanceof Error && error.message) {
-        errorMessage = error.message;
+        errorMessage = error.message
       }
-      notificarErro(
-        'Erro no cadastro',
-        errorMessage,
-        { duration: 6000 }
-      );
+      notificarErro('Erro no cadastro', errorMessage, { duration: 6000 })
     }
-  };
+  }
 
   return (
-    <div className="h-full">
+    <div className='h-full'>
       {/* Header com barra de pesquisa */}
-  <div className="bg-white border-b px-6 py-4 sticky top-0 z-30">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Crianças</h1>
-            <p className="text-gray-500">Gerencie as crianças cadastradas no sistema</p>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Barra de pesquisa */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input 
-                type="text" 
-                placeholder="Buscar crianças..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-80 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-            {/* Botão Nova Criança */}
-            <button
-              onClick={abrirModalCadastro}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-            >
-              <span className="text-lg">+</span>
-              Nova Criança
-            </button>
-            {/* Notificações */}
-            <button className="p-2 text-gray-400 hover:text-gray-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v18H3V3h6z" />
+      {/* Header com barra de pesquisa */}
+      <Header
+        title='Crianças'
+        description='Gerencie as crianças cadastradas no sistema'
+        showSearch={false}
+      >
+        <div className='flex items-center gap-4'>
+          {/* Barra de pesquisa */}
+          <div className='relative'>
+            <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
+              <svg
+                className='h-5 w-5 text-gray-400'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+                />
               </svg>
-            </button>
-            {/* Usuário */}
-            <div className="relative flex items-center gap-2 group/profile">
-              <button className="flex items-center gap-2 focus:outline-none" tabIndex={0}>
-                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="avatar" className="w-10 h-10 rounded-full border-2 border-green-500" />
-                <div className="text-right hidden sm:block">
-                  <p className="font-semibold text-sm leading-4">{profissional.nome}</p>
-                  <span className="text-green-600 text-xs font-bold">PROFISSIONAL</span>
-                </div>
-                <svg className="w-5 h-5 text-gray-400 ml-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-              </button>
-              {/* Dropdown */}
-              <div className="absolute right-0 top-14 z-20 min-w-[160px] bg-white border border-gray-200 rounded-xl shadow-lg py-2 opacity-0 pointer-events-none group-hover/profile:opacity-100 group-hover/profile:pointer-events-auto group-focus-within/profile:opacity-100 group-focus-within/profile:pointer-events-auto transition-all duration-200">
-                <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">Configurações</a>
-                <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">Perfil</a>
-                <button onClick={() => { localStorage.clear(); if (typeof window !== 'undefined') window.location.href = '/login'; }} className="block w-full text-left px-4 py-2 text-red-500 hover:bg-red-50 transition">Sair</button>
-              </div>
             </div>
+            <input
+              type='text'
+              placeholder='Buscar crianças...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className='block w-80 rounded-lg border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-green-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:outline-none'
+            />
           </div>
+          {/* Botão Nova Criança */}
+          <button
+            onClick={abrirModalCadastro}
+            className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
+          >
+            <span className='text-lg'>+</span>
+            Nova Criança
+          </button>
         </div>
-      </div>
+      </Header>
 
       {/* Conteúdo principal */}
-      <div className="p-6">
+      <div className='p-6'>
         {/* Filtros adicionais */}
-        <div className="mb-6 flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+        <div className='mb-6 flex items-center gap-2'>
+          <button className='flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-600 transition-colors hover:bg-gray-50'>
+            <svg
+              className='h-4 w-4'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z'
+              />
             </svg>
             Filtros
           </button>
@@ -338,287 +370,384 @@ export default function CadastrarCriancas() {
 
         {/* Lista de Crianças */}
         {isLoading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-            <p className="text-gray-500 mt-2">Carregando crianças...</p>
+          <div className='py-8 text-center'>
+            <div className='mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-green-600'></div>
+            <p className='mt-2 text-gray-500'>Carregando crianças...</p>
           </div>
         ) : criancasFiltradas.length === 0 ? (
-          <div className="text-center py-8">
-          {searchTerm ? (
-            <p className="text-gray-500">Nenhuma criança encontrada para "{searchTerm}".</p>
-          ) : (
-            <>
-              <p className="text-gray-500">Nenhuma criança cadastrada ainda.</p>
-              <button
-                onClick={abrirModalCadastro}
-                className="mt-4 text-blue-600 hover:text-blue-800"
-              >
-                Cadastrar primeira criança
-              </button>
-            </>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {criancasFiltradas.map((crianca) => (
-            <LayoutCriancaCadastrada
-              key={crianca.id}
-              crianca={crianca}
-              profissional={profissional}
-              onVerDetalhes={(criancaId) => {
-                navigate(`/profissional/criancas/detalhes/${criancaId}`);
-              }}
-              onEditar={(criancaId) => {
-                navigate(`/profissional/criancas/editar/${criancaId}`);
-              }}
-              onExcluir={handleExcluirCrianca}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Modal de Cadastro - NOVO LAYOUT BASEADO NAS IMAGENS */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header do Modal */}
-            <div className="flex items-center p-6 border-b bg-white">
-              <button
-                onClick={fecharModal}
-                className="mr-4 text-gray-500 hover:text-gray-700 text-xl"
-              >
-                ←
-              </button>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Nova Criança</h2>
-                <p className="text-gray-600 text-sm mt-1">Cadastre uma nova criança no sistema</p>
-              </div>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="p-6">
-              {/* Informações Básicas */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Informações Básicas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome Completo <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.nomeCompleto}
-                      onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Digite o nome completo da criança"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Idade <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      max="18"
-                      value={formData.idade}
-                      onChange={(e) => setFormData({ ...formData, idade: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Idade em anos"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Data de Nascimento <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.dataNascimento}
-                      onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Gênero <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.genero}
-                      onChange={(e) => setFormData({ ...formData, genero: e.target.value as 'Masculino' | 'Feminino' | 'Outro' | 'Prefiro não informar' })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                    >
-                      <option value="">Selecione o gênero</option>
-                      <option value="Masculino">Masculino</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
-                      <option value="Prefiro não informar">Prefiro não informar</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Diagnóstico <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    required
-                    value={formData.diagnostico}
-                    onChange={(e) => setFormData({ ...formData, diagnostico: e.target.value, diagnosticoOutro: '' })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                  >
-                    <option value="">Selecione o diagnóstico</option>
-                    <option value="TEA - Transtorno do Espectro Autista">TEA - Transtorno do Espectro Autista</option>
-                    <option value="TDAH - Transtorno do Déficit de Atenção com Hiperatividade">TDAH - Transtorno do Déficit de Atenção com Hiperatividade</option>
-                    <option value="Síndrome de Down">Síndrome de Down</option>
-                    <option value="Deficiência Intelectual">Deficiência Intelectual</option>
-                    <option value="Paralisia Cerebral">Paralisia Cerebral</option>
-                    <option value="Síndrome de Asperger">Síndrome de Asperger</option>
-                    <option value="Outro">Outro</option>
-                  </select>
-                </div>
-
-                {/* Campo condicional para diagnóstico customizado */}
-                {formData.diagnostico === 'Outro' && (
-                  <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Especifique o diagnóstico <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.diagnosticoOutro}
-                      onChange={(e) => setFormData({ ...formData, diagnosticoOutro: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Digite o diagnóstico específico"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Informações do Responsável */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Informações do Responsável</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome do Responsável <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.nomeResponsavel}
-                      onChange={(e) => setFormData({ ...formData, nomeResponsavel: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Nome completo do responsável"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Telefone <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={formData.telefone}
-                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="(11) 99999-9999"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Parentesco <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.parentesco}
-                      onChange={(e) => setFormData({ ...formData, parentesco: e.target.value as 'PAI' | 'MAE' | 'AVO' | 'AVOA' | 'TIO' | 'TIA' | 'TUTOR' | 'OUTRO' })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                    >
-                      <option value="PAI">Pai</option>
-                      <option value="MAE">Mãe</option>
-                      <option value="AVO">Avô</option>
-                      <option value="AVOA">Avó</option>
-                      <option value="TIO">Tio</option>
-                      <option value="TIA">Tia</option>
-                      <option value="TUTOR">Tutor/Responsável Legal</option>
-                      <option value="OUTRO">Outro</option>
-                    </select>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      E-mail
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Endereço
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.endereco}
-                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Endereço completo"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Informações Adicionais */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Informações Adicionais</h3>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Observações
-                  </label>
-                  <textarea
-                    value={formData.observacoes}
-                    onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows={4}
-                    placeholder="Informações adicionais sobre a criança, necessidades especiais, medicamentos, etc."
-                  />
-                </div>
-              </div>
-
-              {/* Botões */}
-              <div className="flex gap-4 pt-6 border-t border-gray-200">
+          <div className='py-8 text-center'>
+            {searchTerm ? (
+              <p className='text-gray-500'>
+                Nenhuma criança encontrada para "{searchTerm}".
+              </p>
+            ) : (
+              <>
+                <p className='text-gray-500'>
+                  Nenhuma criança cadastrada ainda.
+                </p>
                 <button
-                  type="button"
-                  onClick={fecharModal}
-                  className="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  onClick={abrirModalCadastro}
+                  className='mt-4 text-blue-600 hover:text-blue-800'
                 >
-                  Cancelar
+                  Cadastrar primeira criança
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                >
-                  Cadastrar Criança
-                </button>
-              </div>
-            </form>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className='space-y-4'>
+            {criancasFiltradas.map((crianca) => (
+              <LayoutCriancaCadastrada
+                key={crianca.id}
+                crianca={crianca}
+                profissional={profissional}
+                onVerDetalhes={(criancaId) => {
+                  navigate(`/profissional/criancas/detalhes/${criancaId}`)
+                }}
+                onEditar={(criancaId) => {
+                  navigate(`/profissional/criancas/editar/${criancaId}`)
+                }}
+                onExcluir={handleExcluirCrianca}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Modal de Cadastro - NOVO LAYOUT BASEADO NAS IMAGENS */}
+        {showModal && (
+          <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
+            <div className='max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white'>
+              {/* Header do Modal */}
+              <div className='flex items-center border-b bg-white p-6'>
+                <button
+                  onClick={fecharModal}
+                  className='mr-4 text-xl text-gray-500 hover:text-gray-700'
+                >
+                  ←
+                </button>
+                <div>
+                  <h2 className='text-2xl font-bold text-gray-900'>
+                    Nova Criança
+                  </h2>
+                  <p className='mt-1 text-sm text-gray-600'>
+                    Cadastre uma nova criança no sistema
+                  </p>
+                </div>
+              </div>
+
+              <form
+                onSubmit={handleSubmit}
+                className='p-6'
+              >
+                {/* Informações Básicas */}
+                <div className='mb-8'>
+                  <h3 className='mb-6 text-lg font-semibold text-gray-900'>
+                    Informações Básicas
+                  </h3>
+                  <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                    <div>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Nome Completo <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='text'
+                        required
+                        value={formData.nomeCompleto}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            nomeCompleto: e.target.value,
+                          })
+                        }
+                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                        placeholder='Digite o nome completo da criança'
+                      />
+                    </div>
+
+                    <div>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Idade <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='number'
+                        required
+                        min='0'
+                        max='18'
+                        value={formData.idade}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            idade: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                        placeholder='Idade em anos'
+                      />
+                    </div>
+
+                    <div>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Data de Nascimento{' '}
+                        <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='date'
+                        required
+                        value={formData.dataNascimento}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            dataNascimento: e.target.value,
+                          })
+                        }
+                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                      />
+                    </div>
+
+                    <div>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Gênero <span className='text-red-500'>*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.genero}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            genero: e.target.value as
+                              | 'Masculino'
+                              | 'Feminino'
+                              | 'Outro'
+                              | 'Prefiro não informar',
+                          })
+                        }
+                        className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                      >
+                        <option value=''>Selecione o gênero</option>
+                        <option value='Masculino'>Masculino</option>
+                        <option value='Feminino'>Feminino</option>
+                        <option value='Outro'>Outro</option>
+                        <option value='Prefiro não informar'>
+                          Prefiro não informar
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className='mt-6'>
+                    <label className='mb-2 block text-sm font-medium text-gray-700'>
+                      Diagnóstico <span className='text-red-500'>*</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.diagnostico}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          diagnostico: e.target.value,
+                          diagnosticoOutro: '',
+                        })
+                      }
+                      className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    >
+                      <option value=''>Selecione o diagnóstico</option>
+                      <option value='TEA - Transtorno do Espectro Autista'>
+                        TEA - Transtorno do Espectro Autista
+                      </option>
+                      <option value='TDAH - Transtorno do Déficit de Atenção com Hiperatividade'>
+                        TDAH - Transtorno do Déficit de Atenção com
+                        Hiperatividade
+                      </option>
+                      <option value='Síndrome de Down'>Síndrome de Down</option>
+                      <option value='Deficiência Intelectual'>
+                        Deficiência Intelectual
+                      </option>
+                      <option value='Paralisia Cerebral'>
+                        Paralisia Cerebral
+                      </option>
+                      <option value='Síndrome de Asperger'>
+                        Síndrome de Asperger
+                      </option>
+                      <option value='Outro'>Outro</option>
+                    </select>
+                  </div>
+
+                  {/* Campo condicional para diagnóstico customizado */}
+                  {formData.diagnostico === 'Outro' && (
+                    <div className='mt-6'>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Especifique o diagnóstico{' '}
+                        <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='text'
+                        required
+                        value={formData.diagnosticoOutro}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            diagnosticoOutro: e.target.value,
+                          })
+                        }
+                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                        placeholder='Digite o diagnóstico específico'
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Informações do Responsável */}
+                <div className='mb-8'>
+                  <h3 className='mb-6 text-lg font-semibold text-gray-900'>
+                    Informações do Responsável
+                  </h3>
+                  <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                    <div className='md:col-span-2'>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Nome do Responsável{' '}
+                        <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='text'
+                        required
+                        value={formData.nomeResponsavel}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            nomeResponsavel: e.target.value,
+                          })
+                        }
+                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                        placeholder='Nome completo do responsável'
+                      />
+                    </div>
+
+                    <div>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Telefone <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='tel'
+                        required
+                        value={formData.telefone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, telefone: e.target.value })
+                        }
+                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                        placeholder='(11) 99999-9999'
+                      />
+                    </div>
+
+                    <div>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Parentesco <span className='text-red-500'>*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.parentesco}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            parentesco: e.target.value as
+                              | 'PAI'
+                              | 'MAE'
+                              | 'AVO'
+                              | 'AVOA'
+                              | 'TIO'
+                              | 'TIA'
+                              | 'TUTOR'
+                              | 'OUTRO',
+                          })
+                        }
+                        className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                      >
+                        <option value='PAI'>Pai</option>
+                        <option value='MAE'>Mãe</option>
+                        <option value='AVO'>Avô</option>
+                        <option value='AVOA'>Avó</option>
+                        <option value='TIO'>Tio</option>
+                        <option value='TIA'>Tia</option>
+                        <option value='TUTOR'>Tutor/Responsável Legal</option>
+                        <option value='OUTRO'>Outro</option>
+                      </select>
+                    </div>
+
+                    <div className='md:col-span-2'>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        E-mail
+                      </label>
+                      <input
+                        type='email'
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                        placeholder='email@exemplo.com'
+                      />
+                    </div>
+
+                    <div className='md:col-span-2'>
+                      <label className='mb-2 block text-sm font-medium text-gray-700'>
+                        Endereço
+                      </label>
+                      <input
+                        type='text'
+                        value={formData.endereco}
+                        onChange={(e) =>
+                          setFormData({ ...formData, endereco: e.target.value })
+                        }
+                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                        placeholder='Endereço completo'
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informações Adicionais */}
+                <div className='mb-8'>
+                  <h3 className='mb-6 text-lg font-semibold text-gray-900'>
+                    Informações Adicionais
+                  </h3>
+                  <div>
+                    <label className='mb-2 block text-sm font-medium text-gray-700'>
+                      Observações
+                    </label>
+                    <textarea
+                      value={formData.observacoes}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          observacoes: e.target.value,
+                        })
+                      }
+                      className='w-full resize-none rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                      rows={4}
+                      placeholder='Informações adicionais sobre a criança, necessidades especiais, medicamentos, etc.'
+                    />
+                  </div>
+                </div>
+
+                {/* Botões */}
+                <div className='flex gap-4 border-t border-gray-200 pt-6'>
+                  <button
+                    type='button'
+                    onClick={fecharModal}
+                    className='flex-1 rounded-lg border border-gray-300 px-6 py-3 font-medium transition-colors hover:bg-gray-50'
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type='submit'
+                    className='flex-1 rounded-lg bg-green-600 px-6 py-3 font-medium text-white transition-colors hover:bg-green-700'
+                  >
+                    Cadastrar Criança
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Barra de Confirmação */}
         <BarraConfirmacao
@@ -630,9 +759,9 @@ export default function CadastrarCriancas() {
           tipoConfirmacao={confirmacao.tipoConfirmacao}
           onConfirmar={confirmacao.onConfirmar}
           onCancelar={confirmacao.onCancelar}
-          position="top-center"
+          position='top-center'
         />
       </div>
     </div>
-  );
+  )
 }
