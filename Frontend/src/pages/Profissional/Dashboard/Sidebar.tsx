@@ -37,7 +37,7 @@ const Sidebar: React.FC = () => {
           }`}
         >
           <Grid className='h-5 w-5' />
-          <span>Dashboard</span>
+          <span>Visão Geral</span>
         </Link>
 
         <Link

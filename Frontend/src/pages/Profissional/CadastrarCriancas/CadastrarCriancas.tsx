@@ -2,21 +2,22 @@
 
 // ...existing code...
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import CadastrarCriancaDialog from '~/components/CadastrarCriancaDialog'
+import { useNotificacoesContext } from '../../../api/barraNotificacao'
 import {
   cadastrarCrianca,
-  listarCriancas,
   excluirCrianca,
+  listarCriancas,
   type CadastroCriancaFormData,
   type CriancaListagem,
 } from '../../../api/protected/axiosCadastroCrianca'
-import { useNotificacoesContext } from '../../../api/barraNotificacao'
-import { useConfirmacao } from '../../../hooks/useConfirmacao'
-import BarraConfirmacao from '../../../components/ModalConfirmacao'
-import LayoutCriancaCadastrada from './LayoutCriancaCadastrada'
 import Header from '../../../components/Header'
+import BarraConfirmacao from '../../../components/ModalConfirmacao'
+import { useConfirmacao } from '../../../hooks/useConfirmacao'
 import PageLayout from '../../../layouts/PageLayout'
+import LayoutCriancaCadastrada from './LayoutCriancaCadastrada'
 
 // Tipo para dados do profissional (pode ser expandido conforme necessário)
 interface ProfissionalInfo {
@@ -252,440 +253,111 @@ export default function CadastrarCriancas() {
   }
 
   return (
-    <PageLayout>
-      {/* Header com barra de pesquisa */}
-      <Header
-        title='Crianças'
-        description='Gerencie as crianças cadastradas no sistema'
-      >
-        <div className='flex items-center gap-4'>
-          {/* Botão Nova Criança */}
-          <button
-            onClick={abrirModalCadastro}
-            className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
-          >
-            <span className='text-lg'>+</span>
-            Nova Criança
-          </button>
-        </div>
-      </Header>
-
-      {/* Conteúdo principal */}
-      <div className='p-6'>
-        {/* Filtros adicionais */}
-        <div className='mb-6 flex items-center gap-2'>
-          <button className='flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-600 transition-colors hover:bg-gray-50'>
-            <svg
-              className='h-4 w-4'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
+    <>
+      <PageLayout>
+        {/* Header com barra de pesquisa */}
+        <Header
+          title='Crianças'
+          description='Gerencie as crianças cadastradas no sistema'
+        >
+          <div className='flex items-center gap-4'>
+            {/* Botão Nova Criança */}
+            <button
+              onClick={abrirModalCadastro}
+              className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
             >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z'
-              />
-            </svg>
-            Filtros
-          </button>
-        </div>
-
-        {/* Lista de Crianças */}
-        {isLoading ? (
-          <div className='py-8 text-center'>
-            <div className='mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-green-600'></div>
-            <p className='mt-2 text-gray-500'>Carregando crianças...</p>
+              <span className='text-lg'>+</span>
+              Nova Criança
+            </button>
           </div>
-        ) : criancasFiltradas.length === 0 ? (
-          <div className='py-8 text-center'>
-            {searchTerm ? (
-              <p className='text-gray-500'>
-                Nenhuma criança encontrada para "{searchTerm}".
-              </p>
-            ) : (
-              <>
-                <p className='text-gray-500'>
-                  Nenhuma criança cadastrada ainda.
-                </p>
-                <button
-                  onClick={abrirModalCadastro}
-                  className='mt-4 text-blue-600 hover:text-blue-800'
-                >
-                  Cadastrar primeira criança
-                </button>
-              </>
-            )}
-          </div>
-        ) : (
-          <div className='space-y-4'>
-            {criancasFiltradas.map((crianca) => (
-              <LayoutCriancaCadastrada
-                key={crianca.id}
-                crianca={crianca}
-                profissional={profissional}
-                onVerDetalhes={(criancaId) => {
-                  navigate(`/profissional/criancas/detalhes/${criancaId}`)
-                }}
-                onEditar={(criancaId) => {
-                  navigate(`/profissional/criancas/editar/${criancaId}`)
-                }}
-                onExcluir={handleExcluirCrianca}
-              />
-            ))}
-          </div>
-        )}
+        </Header>
 
-        {/* Modal de Cadastro - NOVO LAYOUT BASEADO NAS IMAGENS */}
-        {showModal && (
-          <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-            <div className='max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white'>
-              {/* Header do Modal */}
-              <div className='flex items-center border-b bg-white p-6'>
-                <button
-                  onClick={fecharModal}
-                  className='mr-4 text-xl text-gray-500 hover:text-gray-700'
-                >
-                  ←
-                </button>
-                <div>
-                  <h2 className='text-2xl font-bold text-gray-900'>
-                    Nova Criança
-                  </h2>
-                  <p className='mt-1 text-sm text-gray-600'>
-                    Cadastre uma nova criança no sistema
-                  </p>
-                </div>
-              </div>
-
-              <form
-                onSubmit={handleSubmit}
-                className='p-6'
+        {/* Conteúdo principal */}
+        <div className='p-6'>
+          {/* Filtros adicionais */}
+          <div className='mb-6 flex items-center gap-2'>
+            <button className='flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-600 transition-colors hover:bg-gray-50'>
+              <svg
+                className='h-4 w-4'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
               >
-                {/* Informações Básicas */}
-                <div className='mb-8'>
-                  <h3 className='mb-6 text-lg font-semibold text-gray-900'>
-                    Informações Básicas
-                  </h3>
-                  <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                    <div>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Nome Completo <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='text'
-                        required
-                        value={formData.nomeCompleto}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            nomeCompleto: e.target.value,
-                          })
-                        }
-                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                        placeholder='Digite o nome completo da criança'
-                      />
-                    </div>
-
-                    <div>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Idade <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='number'
-                        required
-                        min='0'
-                        max='18'
-                        value={formData.idade}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            idade: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                        placeholder='Idade em anos'
-                      />
-                    </div>
-
-                    <div>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Data de Nascimento{' '}
-                        <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='date'
-                        required
-                        value={formData.dataNascimento}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            dataNascimento: e.target.value,
-                          })
-                        }
-                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                      />
-                    </div>
-
-                    <div>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Gênero <span className='text-red-500'>*</span>
-                      </label>
-                      <select
-                        required
-                        value={formData.genero}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            genero: e.target.value as
-                              | 'Masculino'
-                              | 'Feminino'
-                              | 'Outro'
-                              | 'Prefiro não informar',
-                          })
-                        }
-                        className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                      >
-                        <option value=''>Selecione o gênero</option>
-                        <option value='Masculino'>Masculino</option>
-                        <option value='Feminino'>Feminino</option>
-                        <option value='Outro'>Outro</option>
-                        <option value='Prefiro não informar'>
-                          Prefiro não informar
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className='mt-6'>
-                    <label className='mb-2 block text-sm font-medium text-gray-700'>
-                      Diagnóstico <span className='text-red-500'>*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.diagnostico}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          diagnostico: e.target.value,
-                          diagnosticoOutro: '',
-                        })
-                      }
-                      className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                    >
-                      <option value=''>Selecione o diagnóstico</option>
-                      <option value='TEA - Transtorno do Espectro Autista'>
-                        TEA - Transtorno do Espectro Autista
-                      </option>
-                      <option value='TDAH - Transtorno do Déficit de Atenção com Hiperatividade'>
-                        TDAH - Transtorno do Déficit de Atenção com
-                        Hiperatividade
-                      </option>
-                      <option value='Síndrome de Down'>Síndrome de Down</option>
-                      <option value='Deficiência Intelectual'>
-                        Deficiência Intelectual
-                      </option>
-                      <option value='Paralisia Cerebral'>
-                        Paralisia Cerebral
-                      </option>
-                      <option value='Síndrome de Asperger'>
-                        Síndrome de Asperger
-                      </option>
-                      <option value='Outro'>Outro</option>
-                    </select>
-                  </div>
-
-                  {/* Campo condicional para diagnóstico customizado */}
-                  {formData.diagnostico === 'Outro' && (
-                    <div className='mt-6'>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Especifique o diagnóstico{' '}
-                        <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='text'
-                        required
-                        value={formData.diagnosticoOutro}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            diagnosticoOutro: e.target.value,
-                          })
-                        }
-                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                        placeholder='Digite o diagnóstico específico'
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Informações do Responsável */}
-                <div className='mb-8'>
-                  <h3 className='mb-6 text-lg font-semibold text-gray-900'>
-                    Informações do Responsável
-                  </h3>
-                  <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                    <div className='md:col-span-2'>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Nome do Responsável{' '}
-                        <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='text'
-                        required
-                        value={formData.nomeResponsavel}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            nomeResponsavel: e.target.value,
-                          })
-                        }
-                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                        placeholder='Nome completo do responsável'
-                      />
-                    </div>
-
-                    <div>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Telefone <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='tel'
-                        required
-                        value={formData.telefone}
-                        onChange={(e) =>
-                          setFormData({ ...formData, telefone: e.target.value })
-                        }
-                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                        placeholder='(11) 99999-9999'
-                      />
-                    </div>
-
-                    <div>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Parentesco <span className='text-red-500'>*</span>
-                      </label>
-                      <select
-                        required
-                        value={formData.parentesco}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            parentesco: e.target.value as
-                              | 'PAI'
-                              | 'MAE'
-                              | 'AVO'
-                              | 'AVOA'
-                              | 'TIO'
-                              | 'TIA'
-                              | 'TUTOR'
-                              | 'OUTRO',
-                          })
-                        }
-                        className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                      >
-                        <option value='PAI'>Pai</option>
-                        <option value='MAE'>Mãe</option>
-                        <option value='AVO'>Avô</option>
-                        <option value='AVOA'>Avó</option>
-                        <option value='TIO'>Tio</option>
-                        <option value='TIA'>Tia</option>
-                        <option value='TUTOR'>Tutor/Responsável Legal</option>
-                        <option value='OUTRO'>Outro</option>
-                      </select>
-                    </div>
-
-                    <div className='md:col-span-2'>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        E-mail
-                      </label>
-                      <input
-                        type='email'
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                        placeholder='email@exemplo.com'
-                      />
-                    </div>
-
-                    <div className='md:col-span-2'>
-                      <label className='mb-2 block text-sm font-medium text-gray-700'>
-                        Endereço
-                      </label>
-                      <input
-                        type='text'
-                        value={formData.endereco}
-                        onChange={(e) =>
-                          setFormData({ ...formData, endereco: e.target.value })
-                        }
-                        className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                        placeholder='Endereço completo'
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Informações Adicionais */}
-                <div className='mb-8'>
-                  <h3 className='mb-6 text-lg font-semibold text-gray-900'>
-                    Informações Adicionais
-                  </h3>
-                  <div>
-                    <label className='mb-2 block text-sm font-medium text-gray-700'>
-                      Observações
-                    </label>
-                    <textarea
-                      value={formData.observacoes}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          observacoes: e.target.value,
-                        })
-                      }
-                      className='w-full resize-none rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                      rows={4}
-                      placeholder='Informações adicionais sobre a criança, necessidades especiais, medicamentos, etc.'
-                    />
-                  </div>
-                </div>
-
-                {/* Botões */}
-                <div className='flex gap-4 border-t border-gray-200 pt-6'>
-                  <button
-                    type='button'
-                    onClick={fecharModal}
-                    className='flex-1 rounded-lg border border-gray-300 px-6 py-3 font-medium transition-colors hover:bg-gray-50'
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type='submit'
-                    className='flex-1 rounded-lg bg-green-600 px-6 py-3 font-medium text-white transition-colors hover:bg-green-700'
-                  >
-                    Cadastrar Criança
-                  </button>
-                </div>
-              </form>
-            </div>
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z'
+                />
+              </svg>
+              Filtros
+            </button>
           </div>
-        )}
 
-        {/* Barra de Confirmação */}
-        <BarraConfirmacao
-          isOpen={confirmacao.isOpen}
-          titulo={confirmacao.titulo}
-          mensagem={confirmacao.mensagem}
-          textoBotaoConfirmar={confirmacao.textoBotaoConfirmar}
-          textoBotaoCancelar={confirmacao.textoBotaoCancelar}
-          tipoConfirmacao={confirmacao.tipoConfirmacao}
-          onConfirmar={confirmacao.onConfirmar}
-          onCancelar={confirmacao.onCancelar}
-          position='top-center'
-        />
-      </div>
-    </PageLayout>
+          {/* Lista de Crianças */}
+          {isLoading ? (
+            <div className='py-8 text-center'>
+              <div className='mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-green-600'></div>
+              <p className='mt-2 text-gray-500'>Carregando crianças...</p>
+            </div>
+          ) : criancasFiltradas.length === 0 ? (
+            <div className='py-8 text-center'>
+              {searchTerm ? (
+                <p className='text-gray-500'>
+                  Nenhuma criança encontrada para "{searchTerm}".
+                </p>
+              ) : (
+                <>
+                  <p className='text-gray-500'>
+                    Nenhuma criança cadastrada ainda.
+                  </p>
+                  <button
+                    onClick={abrirModalCadastro}
+                    className='mt-4 text-blue-600 hover:text-blue-800'
+                  >
+                    Cadastrar primeira criança
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className='space-y-4'>
+              {criancasFiltradas.map((crianca) => (
+                <LayoutCriancaCadastrada
+                  key={crianca.id}
+                  crianca={crianca}
+                  profissional={profissional}
+                  onVerDetalhes={(criancaId) => {
+                    navigate(`/profissional/criancas/detalhes/${criancaId}`)
+                  }}
+                  onEditar={(criancaId) => {
+                    navigate(`/profissional/criancas/editar/${criancaId}`)
+                  }}
+                  onExcluir={handleExcluirCrianca}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Barra de Confirmação */}
+          <BarraConfirmacao
+            isOpen={confirmacao.isOpen}
+            titulo={confirmacao.titulo}
+            mensagem={confirmacao.mensagem}
+            textoBotaoConfirmar={confirmacao.textoBotaoConfirmar}
+            textoBotaoCancelar={confirmacao.textoBotaoCancelar}
+            tipoConfirmacao={confirmacao.tipoConfirmacao}
+            onConfirmar={confirmacao.onConfirmar}
+            onCancelar={confirmacao.onCancelar}
+            position='top-center'
+          />
+        </div>
+      </PageLayout>
+      <CadastrarCriancaDialog
+        open={showModal}
+        onOpenChange={setShowModal}
+        onSuccess={() => setShowModal(false)}
+      />
+    </>
   )
 }

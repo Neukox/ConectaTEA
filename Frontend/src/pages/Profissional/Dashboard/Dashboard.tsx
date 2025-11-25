@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import Header from '../../../components/Header'
 import PageLayout from '../../../layouts/PageLayout'
+import CadastrarCriancaDialog from '../../../components/CadastrarCriancaDialog'
 
 const criancas = [
   {
@@ -206,213 +208,226 @@ const cardIcons = [
 ]
 
 export default function Dashboard() {
+  const [showModal, setShowModal] = useState(false)
+
   return (
-    <PageLayout>
-      <Header
-        title='Dashboard'
-        description='Acompanhe o progresso e gerencie as atividades'
-      />
+    <>
+      <PageLayout>
+        <Header
+          title='Dashboard'
+          description='Acompanhe o progresso e gerencie as atividades'
+        />
 
-      {/* Cards superiores */}
-      <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-        {[
-          {
-            valor: 24,
-            label: 'Total de Crianças',
-            sub: '+2 este mês',
-            tooltip: 'Quantidade total de crianças cadastradas na plataforma.',
-          },
-          {
-            valor: 8,
-            label: 'Profissionais Ativos',
-            sub: '+1 este mês',
-            tooltip: 'Número de profissionais ativos atualmente.',
-          },
-          {
-            valor: 47,
-            label: 'Metas Ativas',
-            sub: '+5 esta semana',
-            tooltip: 'Total de metas em andamento para as crianças.',
-          },
-          {
-            valor: '78%',
-            label: 'Taxa de Progresso',
-            sub: '+12% este mês',
-            tooltip: 'Porcentagem média de progresso das metas.',
-          },
-        ].map((card, i) => (
-          <div
-            key={i}
-            className='group relative flex cursor-pointer items-center gap-4 rounded-2xl border border-transparent bg-white p-6 shadow transition-all duration-200 hover:-translate-y-2 hover:border-green-400 hover:bg-white hover:shadow-xl focus:-translate-y-2'
-            tabIndex={0}
-          >
-            {/* Tooltip acima do card */}
-            <div className='absolute bottom-full left-1/2 z-10 mb-3 hidden -translate-x-1/2 flex-col items-center group-hover:flex group-focus:flex'>
-              <div className='animate-fade-in-up rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white shadow-lg'>
-                {card.tooltip}
-              </div>
-              <div className='mt-1 h-3 w-3 rotate-45 bg-gray-900'></div>
-            </div>
-            <div className='flex h-14 w-14 items-center justify-center rounded-xl border border-green-100 bg-green-50 transition-all duration-200 group-hover:border-green-400 group-hover:bg-green-100'>
-              {cardIcons[i]}
-            </div>
-            <div>
-              <p className='text-2xl font-bold'>{card.valor}</p>
-              <p className='font-medium text-gray-600'>{card.label}</p>
-              <span className='text-sm font-semibold text-green-600'>
-                {card.sub}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Conteúdo principal */}
-      <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
-        {/* Crianças Recentes */}
-        <div className='rounded-2xl bg-white p-6 shadow-md'>
-          <div className='mb-6 flex items-center justify-between'>
-            <h2 className='text-lg font-bold'>Crianças Recentes</h2>
-            <button className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700'>
-              <svg
-                className='h-5 w-5'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M12 4v16m8-8H4'
-                />
-              </svg>
-              Adicionar
-            </button>
-          </div>
-          <div className='space-y-3'>
-            {criancas.map((crianca, index) => (
-              <div
-                key={index}
-                className='flex cursor-pointer items-center justify-between rounded-xl border border-transparent bg-gray-50 px-4 py-3 transition-all duration-200 hover:-translate-y-1 hover:border-green-400 hover:bg-white hover:shadow-md focus:-translate-y-1'
-                tabIndex={0}
-              >
-                <div className='flex items-center gap-3'>
-                  <img
-                    src={crianca.avatar}
-                    alt={crianca.nome}
-                    className='h-12 w-12 rounded-full border-2 border-white object-cover shadow'
-                  />
-                  <div>
-                    <p className='text-base font-semibold'>{crianca.nome}</p>
-                    <p className='text-xs text-gray-500'>
-                      {crianca.idade} · {crianca.nivel}
-                    </p>
-                    <p className='text-xs text-gray-400'>
-                      Profissional: {crianca.profissional}
-                    </p>
-                  </div>
+        {/* Cards superiores */}
+        <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+          {[
+            {
+              valor: 24,
+              label: 'Total de Crianças',
+              sub: '+2 este mês',
+              tooltip:
+                'Quantidade total de crianças cadastradas na plataforma.',
+            },
+            {
+              valor: 8,
+              label: 'Profissionais Ativos',
+              sub: '+1 este mês',
+              tooltip: 'Número de profissionais ativos atualmente.',
+            },
+            {
+              valor: 47,
+              label: 'Metas Ativas',
+              sub: '+5 esta semana',
+              tooltip: 'Total de metas em andamento para as crianças.',
+            },
+            {
+              valor: '78%',
+              label: 'Taxa de Progresso',
+              sub: '+12% este mês',
+              tooltip: 'Porcentagem média de progresso das metas.',
+            },
+          ].map((card, i) => (
+            <div
+              key={i}
+              className='group relative flex cursor-pointer items-center gap-4 rounded-2xl border border-transparent bg-white p-6 shadow transition-all duration-200 hover:-translate-y-2 hover:border-green-400 hover:bg-white hover:shadow-xl focus:-translate-y-2'
+              tabIndex={0}
+            >
+              {/* Tooltip acima do card */}
+              <div className='absolute bottom-full left-1/2 z-10 mb-3 hidden -translate-x-1/2 flex-col items-center group-hover:flex group-focus:flex'>
+                <div className='animate-fade-in-up rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white shadow-lg'>
+                  {card.tooltip}
                 </div>
-                <div className='flex items-center gap-2'>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                      crianca.status === 'Ativo'
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {crianca.status}
-                  </span>
-                  <button className='rounded p-1 hover:bg-gray-200'>
-                    <svg
-                      className='h-5 w-5 text-gray-400'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      viewBox='0 0 24 24'
-                    >
-                      <circle
-                        cx='12'
-                        cy='12'
-                        r='1'
-                      />
-                      <circle
-                        cx='19'
-                        cy='12'
-                        r='1'
-                      />
-                      <circle
-                        cx='5'
-                        cy='12'
-                        r='1'
-                      />
-                    </svg>
-                  </button>
-                </div>
+                <div className='mt-1 h-3 w-3 rotate-45 bg-gray-900'></div>
               </div>
-            ))}
-          </div>
+              <div className='flex h-14 w-14 items-center justify-center rounded-xl border border-green-100 bg-green-50 transition-all duration-200 group-hover:border-green-400 group-hover:bg-green-100'>
+                {cardIcons[i]}
+              </div>
+              <div>
+                <p className='text-2xl font-bold'>{card.valor}</p>
+                <p className='font-medium text-gray-600'>{card.label}</p>
+                <span className='text-sm font-semibold text-green-600'>
+                  {card.sub}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Metas em Andamento */}
-        <div className='rounded-2xl bg-white p-6 shadow-md'>
-          <div className='mb-6 flex items-center justify-between'>
-            <h2 className='text-lg font-bold'>Metas em Andamento</h2>
-            <button className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700'>
-              <svg
-                className='h-5 w-5'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                viewBox='0 0 24 24'
+        {/* Conteúdo principal */}
+        <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
+          {/* Crianças Recentes */}
+          <div className='rounded-2xl bg-white p-6 shadow-md'>
+            <div className='mb-6 flex items-center justify-between'>
+              <h2 className='text-lg font-bold'>Crianças Recentes</h2>
+              <button
+                onClick={() => setShowModal(true)}
+                className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700'
               >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M12 4v16m8-8H4'
-                />
-              </svg>
-              Nova Meta
-            </button>
-          </div>
-          <div className='space-y-4'>
-            {metas.map((meta, index) => (
-              <div
-                key={index}
-                className='cursor-pointer rounded-xl border border-transparent bg-gray-50 px-4 py-3 transition-all duration-200 hover:-translate-y-1 hover:border-green-400 hover:bg-white hover:shadow-md focus:-translate-y-1'
-                tabIndex={0}
-              >
-                <div className='mb-1 flex items-center justify-between'>
-                  <div>
-                    <p className='text-base font-semibold'>{meta.nome}</p>
-                    <p className='text-xs text-gray-500'>{meta.meta}</p>
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M12 4v16m8-8H4'
+                  />
+                </svg>
+                Adicionar
+              </button>
+            </div>
+            <div className='space-y-3'>
+              {criancas.map((crianca, index) => (
+                <div
+                  key={index}
+                  className='flex cursor-pointer items-center justify-between rounded-xl border border-transparent bg-gray-50 px-4 py-3 transition-all duration-200 hover:-translate-y-1 hover:border-green-400 hover:bg-white hover:shadow-md focus:-translate-y-1'
+                  tabIndex={0}
+                >
+                  <div className='flex items-center gap-3'>
+                    <img
+                      src={crianca.avatar}
+                      alt={crianca.nome}
+                      className='h-12 w-12 rounded-full border-2 border-white object-cover shadow'
+                    />
+                    <div>
+                      <p className='text-base font-semibold'>{crianca.nome}</p>
+                      <p className='text-xs text-gray-500'>
+                        {crianca.idade} · {crianca.nivel}
+                      </p>
+                      <p className='text-xs text-gray-400'>
+                        Profissional: {crianca.profissional}
+                      </p>
+                    </div>
                   </div>
-                  <div className='text-right'>
+                  <div className='flex items-center gap-2'>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-bold ${
-                        meta.status === 'Quase concluída'
+                        crianca.status === 'Ativo'
                           ? 'bg-green-100 text-green-600'
-                          : 'bg-blue-100 text-blue-600'
+                          : 'bg-gray-200 text-gray-600'
                       }`}
                     >
-                      {meta.status}
+                      {crianca.status}
                     </span>
-                    <p className='text-base font-bold text-green-600'>
-                      {meta.progresso}%
-                    </p>
+                    <button className='rounded p-1 hover:bg-gray-200'>
+                      <svg
+                        className='h-5 w-5 text-gray-400'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        viewBox='0 0 24 24'
+                      >
+                        <circle
+                          cx='12'
+                          cy='12'
+                          r='1'
+                        />
+                        <circle
+                          cx='19'
+                          cy='12'
+                          r='1'
+                        />
+                        <circle
+                          cx='5'
+                          cy='12'
+                          r='1'
+                        />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                <div className='h-3 w-full rounded-full bg-gray-200'>
-                  <div
-                    className='h-3 rounded-full bg-green-500 transition-all duration-500'
-                    style={{ width: `${meta.progresso}%` }}
-                  ></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Metas em Andamento */}
+          <div className='rounded-2xl bg-white p-6 shadow-md'>
+            <div className='mb-6 flex items-center justify-between'>
+              <h2 className='text-lg font-bold'>Metas em Andamento</h2>
+              <button className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700'>
+                <svg
+                  className='h-5 w-5'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M12 4v16m8-8H4'
+                  />
+                </svg>
+                Nova Meta
+              </button>
+            </div>
+            <div className='space-y-4'>
+              {metas.map((meta, index) => (
+                <div
+                  key={index}
+                  className='cursor-pointer rounded-xl border border-transparent bg-gray-50 px-4 py-3 transition-all duration-200 hover:-translate-y-1 hover:border-green-400 hover:bg-white hover:shadow-md focus:-translate-y-1'
+                  tabIndex={0}
+                >
+                  <div className='mb-1 flex items-center justify-between'>
+                    <div>
+                      <p className='text-base font-semibold'>{meta.nome}</p>
+                      <p className='text-xs text-gray-500'>{meta.meta}</p>
+                    </div>
+                    <div className='text-right'>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          meta.status === 'Quase concluída'
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-blue-100 text-blue-600'
+                        }`}
+                      >
+                        {meta.status}
+                      </span>
+                      <p className='text-base font-bold text-green-600'>
+                        {meta.progresso}%
+                      </p>
+                    </div>
+                  </div>
+                  <div className='h-3 w-full rounded-full bg-gray-200'>
+                    <div
+                      className='h-3 rounded-full bg-green-500 transition-all duration-500'
+                      style={{ width: `${meta.progresso}%` }}
+                    ></div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </PageLayout>
+      </PageLayout>
+      <CadastrarCriancaDialog
+        open={showModal}
+        onOpenChange={setShowModal}
+        onSuccess={() => setShowModal(false)}
+      />
+    </>
   )
 }
