@@ -1,10 +1,18 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Header from '../../../components/Header'
 import PageLayout from '../../../layouts/PageLayout'
-import CadastrarCriancaDialog from '../../../components/CadastrarCriancaDialog'
+import CadastrarCriancaDialog from '~/components/CadastrarCriancaDialog'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '~/components/ui/tooltip'
 
 const criancas = [
   {
+    id: 1,
     nome: 'Ana Silva',
     idade: '6 anos',
     nivel: 'TEA Leve',
@@ -13,6 +21,7 @@ const criancas = [
     avatar: 'https://randomuser.me/api/portraits/women/65.jpg',
   },
   {
+    id: 2,
     nome: 'João Pedro',
     idade: '8 anos',
     nivel: 'TEA Moderado',
@@ -21,6 +30,7 @@ const criancas = [
     avatar: 'https://randomuser.me/api/portraits/men/43.jpg',
   },
   {
+    id: 3,
     nome: 'Sofia Costa',
     idade: '5 anos',
     nivel: 'TEA Leve',
@@ -29,6 +39,7 @@ const criancas = [
     avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
   },
   {
+    id: 4,
     nome: 'Lucas Ferreira',
     idade: '7 anos',
     nivel: 'TEA Severo',
@@ -40,24 +51,28 @@ const criancas = [
 
 const metas = [
   {
+    id: 1,
     nome: 'Ana Silva',
     meta: 'Melhorar comunicação verbal',
     progresso: 85,
     status: 'Em andamento',
   },
   {
+    id: 2,
     nome: 'João Pedro',
     meta: 'Desenvolver habilidades sociais',
     progresso: 60,
     status: 'Em andamento',
   },
   {
+    id: 3,
     nome: 'Sofia Costa',
     meta: 'Reduzir comportamentos repetitivos',
     progresso: 92,
     status: 'Quase concluída',
   },
   {
+    id: 4,
     nome: 'Lucas Ferreira',
     meta: 'Aumentar tempo de atenção',
     progresso: 45,
@@ -209,6 +224,7 @@ const cardIcons = [
 
 export default function Dashboard() {
   const [showModal, setShowModal] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <>
@@ -219,59 +235,57 @@ export default function Dashboard() {
         />
 
         {/* Cards superiores */}
-        <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-          {[
-            {
-              valor: 24,
-              label: 'Total de Crianças',
-              sub: '+2 este mês',
-              tooltip:
-                'Quantidade total de crianças cadastradas na plataforma.',
-            },
-            {
-              valor: 8,
-              label: 'Profissionais Ativos',
-              sub: '+1 este mês',
-              tooltip: 'Número de profissionais ativos atualmente.',
-            },
-            {
-              valor: 47,
-              label: 'Metas Ativas',
-              sub: '+5 esta semana',
-              tooltip: 'Total de metas em andamento para as crianças.',
-            },
-            {
-              valor: '78%',
-              label: 'Taxa de Progresso',
-              sub: '+12% este mês',
-              tooltip: 'Porcentagem média de progresso das metas.',
-            },
-          ].map((card, i) => (
-            <div
-              key={i}
-              className='group relative flex cursor-pointer items-center gap-4 rounded-2xl border border-transparent bg-white p-6 shadow transition-all duration-200 hover:-translate-y-2 hover:border-green-400 hover:bg-white hover:shadow-xl focus:-translate-y-2'
-              tabIndex={0}
-            >
-              {/* Tooltip acima do card */}
-              <div className='absolute bottom-full left-1/2 z-10 mb-3 hidden -translate-x-1/2 flex-col items-center group-hover:flex group-focus:flex'>
-                <div className='animate-fade-in-up rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white shadow-lg'>
-                  {card.tooltip}
-                </div>
-                <div className='mt-1 h-3 w-3 rotate-45 bg-gray-900'></div>
-              </div>
-              <div className='flex h-14 w-14 items-center justify-center rounded-xl border border-green-100 bg-green-50 transition-all duration-200 group-hover:border-green-400 group-hover:bg-green-100'>
-                {cardIcons[i]}
-              </div>
-              <div>
-                <p className='text-2xl font-bold'>{card.valor}</p>
-                <p className='font-medium text-gray-600'>{card.label}</p>
-                <span className='text-sm font-semibold text-green-600'>
-                  {card.sub}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <TooltipProvider>
+          <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+            {[
+              {
+                valor: 24,
+                label: 'Total de Crianças',
+                sub: '+2 este mês',
+                tooltip:
+                  'Quantidade total de crianças cadastradas na plataforma.',
+              },
+              {
+                valor: 8,
+                label: 'Profissionais Ativos',
+                sub: '+1 este mês',
+                tooltip: 'Número de profissionais ativos atualmente.',
+              },
+              {
+                valor: 47,
+                label: 'Metas Ativas',
+                sub: '+5 esta semana',
+                tooltip: 'Total de metas em andamento para as crianças.',
+              },
+              {
+                valor: '78%',
+                label: 'Taxa de Progresso',
+                sub: '+12% este mês',
+                tooltip: 'Porcentagem média de progresso das metas.',
+              },
+            ].map((card, i) => (
+              <Tooltip key={i}>
+                <TooltipTrigger asChild>
+                  <div className='flex cursor-pointer items-center gap-4 rounded-2xl border border-transparent bg-white p-6 shadow transition-all duration-200 hover:-translate-y-2 hover:border-green-400 hover:bg-white hover:shadow-xl focus:-translate-y-2'>
+                    <div className='flex h-14 w-14 items-center justify-center rounded-xl border border-green-100 bg-green-50 transition-all duration-200 hover:border-green-400 hover:bg-green-100'>
+                      {cardIcons[i]}
+                    </div>
+                    <div>
+                      <p className='text-2xl font-bold'>{card.valor}</p>
+                      <p className='font-medium text-gray-600'>{card.label}</p>
+                      <span className='text-sm font-semibold text-green-600'>
+                        {card.sub}
+                      </span>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{card.tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        </TooltipProvider>
 
         {/* Conteúdo principal */}
         <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
@@ -305,6 +319,9 @@ export default function Dashboard() {
                   key={index}
                   className='flex cursor-pointer items-center justify-between rounded-xl border border-transparent bg-gray-50 px-4 py-3 transition-all duration-200 hover:-translate-y-1 hover:border-green-400 hover:bg-white hover:shadow-md focus:-translate-y-1'
                   tabIndex={0}
+                  onClick={() =>
+                    navigate(`/profissional/criancas/detalhes/${crianca.id}`)
+                  }
                 >
                   <div className='flex items-center gap-3'>
                     <img
@@ -390,6 +407,9 @@ export default function Dashboard() {
                   key={index}
                   className='cursor-pointer rounded-xl border border-transparent bg-gray-50 px-4 py-3 transition-all duration-200 hover:-translate-y-1 hover:border-green-400 hover:bg-white hover:shadow-md focus:-translate-y-1'
                   tabIndex={0}
+                  onClick={() =>
+                    navigate(`/profissional/metas/detalhes/${meta.id}`)
+                  }
                 >
                   <div className='mb-1 flex items-center justify-between'>
                     <div>

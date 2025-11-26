@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   TrendingUp,
   Filter,
@@ -131,12 +132,16 @@ function Badge({
 function OutlineButton({
   icon: Icon,
   children,
+  ...props
 }: {
   icon?: React.ElementType
   children: React.ReactNode
-}) {
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button className='inline-flex items-center gap-2 rounded-md border border-green-300 px-3 py-2 text-sm font-medium text-green-800 transition-colors hover:bg-green-50 active:bg-green-100'>
+    <button
+      className='inline-flex items-center gap-2 rounded-md border border-green-300 px-3 py-2 text-sm font-medium text-green-800 transition-colors hover:bg-green-50 active:bg-green-100'
+      {...props}
+    >
       {Icon ? <Icon className='h-4 w-4' /> : null}
       <span>{children}</span>
     </button>
@@ -176,6 +181,7 @@ type Meta = {
 
 // Componente para cada meta
 function MetaCard({ meta }: { meta: Meta }) {
+  const navigate = useNavigate()
   let prioridadeTone: 'default' | 'success' | 'warning' | 'danger' = 'default'
   if (meta.prioridade === 'alta') prioridadeTone = 'danger'
   else if (meta.prioridade === 'media') prioridadeTone = 'warning'
@@ -205,7 +211,12 @@ function MetaCard({ meta }: { meta: Meta }) {
           </div>
         </div>
         <div className='flex flex-wrap items-center gap-2 md:justify-end'>
-          <OutlineButton icon={Eye}>Ver Detalhes</OutlineButton>
+          <OutlineButton
+            icon={Eye}
+            onClick={() => navigate(`/profissional/metas/detalhes/${meta.id}`)}
+          >
+            Ver Detalhes
+          </OutlineButton>
           <OutlineButton icon={TrendingUp}>Atualizar Progresso</OutlineButton>
           <OutlineButton icon={Pencil}>Editar</OutlineButton>
         </div>
