@@ -13,8 +13,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import Header from '../../../components/Header'
-import PageLayout from '../../../layouts/PageLayout'
+import Header from '../../../components/layout/Header'
+import { PageLayout } from '~/components/layout'
 
 // Mock Data
 const evolucaoData = [

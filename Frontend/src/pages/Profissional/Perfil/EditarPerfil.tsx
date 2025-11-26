@@ -13,8 +13,8 @@ import {
   atualizarPerfilProfissional,
 } from '../../../api/protected/axiosPerfil'
 import type { Profissional } from '../../../api/protected/axiosProfissionais'
-import PageLayout from '../../../layouts/PageLayout'
-import Header from '../../../components/Header'
+import { PageLayout } from '~/components/layout'
+import Header from '../../../components/layout/Header'
 
 export default function PerfilEdit() {
   const [perfil, setPerfil] = useState<Partial<Profissional>>({})

@@ -4,7 +4,6 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import CadastrarCriancaDialog from '~/components/CadastrarCriancaDialog'
 import { useNotificacoesContext } from '../../../api/barraNotificacao'
 import {
   cadastrarCrianca,
@@ -13,11 +12,12 @@ import {
   type CadastroCriancaFormData,
   type CriancaListagem,
 } from '../../../api/protected/axiosCadastroCrianca'
-import Header from '../../../components/Header'
-import BarraConfirmacao from '../../../components/ModalConfirmacao'
+import Header from '../../../components/layout/Header'
+import BarraConfirmacao from '../../../components/features/ModalConfirmacao'
 import { useConfirmacao } from '../../../hooks/useConfirmacao'
-import PageLayout from '../../../layouts/PageLayout'
+import { PageLayout } from '~/components/layout'
 import LayoutCriancaCadastrada from './LayoutCriancaCadastrada'
+import { CadastrarCriancaDialog } from '~/features/CadastrarCrianca'
 
 // Tipo para dados do profissional (pode ser expandido conforme necessário)
 interface ProfissionalInfo {

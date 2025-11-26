@@ -27,9 +27,9 @@ import {
   removerSolicitacao,
   type ConexaoProfissional,
 } from '../../../api/protected/axiosAmizade'
-import Header from '../../../components/Header'
+import Header from '../../../components/layout/Header'
 import { Button } from '../../../components/ui/button'
-import PageLayout from '../../../layouts/PageLayout'
+import { PageLayout } from '~/components/layout'
 
 // --- Tipagem estendida do profissional para a UI
 interface Profissional extends ApiProfissional {

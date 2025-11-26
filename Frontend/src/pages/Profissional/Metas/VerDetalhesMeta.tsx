@@ -10,8 +10,8 @@ import {
 } from 'lucide-react'
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import PageLayout from '~/layouts/PageLayout'
-import Header from '../../../components/Header'
+import { PageLayout } from '~/components/layout/PageLayout'
+import Header from '../../../components/layout/Header'
 
 // Paleta (verde como identidade) - Copied from Metas.tsx
 const colors = {

@@ -14,9 +14,8 @@ import SummaryCard from './components/SummaryCard'
 import SessionItem from './components/SessionItem'
 import NextSessions from './components/NextSessions'
 import QuickActions from './components/QuickActions'
-import PageLayout from '~/layouts/PageLayout'
-import Header from '~/components/Header'
-
+import { PageLayout } from '~/components/layout/PageLayout'
+import Header from '~/components/layout/Header'
 
 const Sessoes: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('14/01/2024')

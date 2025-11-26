@@ -9,8 +9,8 @@ import {
   FaUniversity,
   FaMapMarkerAlt,
 } from 'react-icons/fa'
-import Header from '../../../components/Header'
-import PageLayout from '../../../layouts/PageLayout'
+import Header from '../../../components/layout/Header'
+import { PageLayout } from '~/components/layout'
 
 export default function PerfilProfissional() {
   const [perfil, setPerfil] = useState<Profissional | null>(null)

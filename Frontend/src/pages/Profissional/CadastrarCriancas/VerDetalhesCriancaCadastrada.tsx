@@ -5,7 +5,7 @@ import {
   type CriancaListagem,
 } from '../../../api/protected/axiosCadastroCrianca'
 import { useNotificacoesContext } from '../../../api/barraNotificacao'
-import PageLayout from '../../../layouts/PageLayout'
+import { PageLayout } from '~/components/layout'
 
 export default function VerDetalhesCriancaCadastrada() {
   const { id } = useParams<{ id: string }>()

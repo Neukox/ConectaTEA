@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import type { CriancaListagem } from '../../../api/protected/axiosCadastroCrianca';
-import { useConfirmacao } from '../../../hooks/useConfirmacao';
-import BarraConfirmacao from '../../../components/ModalConfirmacao';
-import ModalVerDetalhesCriancaCadastrada from './ModalVerDetalhesCriancaCadastrada';
+import React, { useState } from 'react'
+import type { CriancaListagem } from '../../../api/protected/axiosCadastroCrianca'
+import { useConfirmacao } from '../../../hooks/useConfirmacao'
+import BarraConfirmacao from '../../../components/features/ModalConfirmacao'
+import ModalVerDetalhesCriancaCadastrada from './ModalVerDetalhesCriancaCadastrada'
 
 // Interface para o profissional
 interface ProfissionalInfo {
-  nome: string;
-  email: string;
+  nome: string
+  email: string
 }
 
 // Props do componente
 interface LayoutCriancaCadastradaProps {
-  crianca: CriancaListagem;
-  profissional: ProfissionalInfo;
-  onVerDetalhes?: (criancaId: number) => void;
-  onEditar?: (criancaId: number) => void;
-  onExcluir?: (criancaId: number) => void;
+  crianca: CriancaListagem
+  profissional: ProfissionalInfo
+  onVerDetalhes?: (criancaId: number) => void
+  onEditar?: (criancaId: number) => void
+  onExcluir?: (criancaId: number) => void
 }
 
 const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
@@ -24,23 +24,23 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
   profissional,
   onVerDetalhes,
   onEditar,
-  onExcluir
+  onExcluir,
 }) => {
-  const [showModal, setShowModal] = useState(false);
-  const { confirmacao, mostrarConfirmacao } = useConfirmacao();
+  const [showModal, setShowModal] = useState(false)
+  const { confirmacao, mostrarConfirmacao } = useConfirmacao()
 
   // Função para obter a última sessão (mock - pode ser substituída por dados reais)
   const getUltimaSessao = () => {
-    return "09/01/2024"; // Mock - substituir por dados reais da API
-  };
+    return '09/01/2024' // Mock - substituir por dados reais da API
+  }
 
   const handleVerDetalhes = () => {
     if (onVerDetalhes) {
-      onVerDetalhes(crianca.id);
+      onVerDetalhes(crianca.id)
     } else {
-      setShowModal(true);
+      setShowModal(true)
     }
-  };
+  }
 
   const handleExcluir = () => {
     mostrarConfirmacao(
@@ -49,73 +49,79 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
         mensagem: `Tem certeza que deseja excluir o cadastro de "${crianca.nome}"?\n\nEsta ação não pode ser desfeita.`,
         textoBotaoConfirmar: 'Excluir',
         textoBotaoCancelar: 'Cancelar',
-        tipoConfirmacao: 'danger'
+        tipoConfirmacao: 'danger',
       },
       () => {
-        onExcluir?.(crianca.id);
-      }
-    );
-  };
+        onExcluir?.(crianca.id)
+      },
+    )
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex justify-between items-start">
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+      <div className='flex items-start justify-between'>
+        <div className='grid flex-1 grid-cols-1 gap-4 md:grid-cols-4'>
           {/* Nome da criança */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">{crianca.nome}</h3>
-              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+            <div className='mb-2 flex items-center gap-2'>
+              <h3 className='text-lg font-semibold text-gray-900'>
+                {crianca.nome}
+              </h3>
+              <span className='rounded-full bg-green-100 px-2 py-1 text-xs text-green-800'>
                 Ativo
               </span>
             </div>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Idade:</span> {crianca.idade} anos
+            <p className='text-sm text-gray-600'>
+              <span className='font-medium'>Idade:</span> {crianca.idade} anos
             </p>
           </div>
 
           {/* Diagnóstico */}
           <div>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Diagnóstico:</span> {crianca.diagnostico}
+            <p className='text-sm text-gray-600'>
+              <span className='font-medium'>Diagnóstico:</span>{' '}
+              {crianca.diagnostico}
             </p>
           </div>
 
           {/* Responsável */}
           <div>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Responsável:</span> {crianca.responsavel.nome}
+            <p className='text-sm text-gray-600'>
+              <span className='font-medium'>Responsável:</span>{' '}
+              {crianca.responsavel.nome}
             </p>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Profissional:</span> {profissional.nome}
+            <p className='text-sm text-gray-600'>
+              <span className='font-medium'>Profissional:</span>{' '}
+              {profissional.nome}
             </p>
           </div>
 
           {/* Última sessão */}
           <div>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Última sessão:</span> {getUltimaSessao()}
+            <p className='text-sm text-gray-600'>
+              <span className='font-medium'>Última sessão:</span>{' '}
+              {getUltimaSessao()}
             </p>
           </div>
         </div>
 
         {/* Botões de ação */}
-        <div className="flex gap-2 ml-4">
-          <button 
+        <div className='ml-4 flex gap-2'>
+          <button
             onClick={handleVerDetalhes}
-            className="px-4 py-2 text-green-600 border border-green-600 rounded-lg hover:bg-green-50 transition-colors text-sm"
+            className='rounded-lg border border-green-600 px-4 py-2 text-sm text-green-600 transition-colors hover:bg-green-50'
           >
             Ver Detalhes
           </button>
-          <button 
+          <button
             onClick={() => onEditar?.(crianca.id)}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+            className='rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50'
           >
             Editar
           </button>
-          <button 
+          <button
             onClick={handleExcluir}
-            className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm"
+            className='rounded-lg border border-red-600 px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50'
           >
             Excluir
           </button>
@@ -128,8 +134,8 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onEdit={(id) => {
-          setShowModal(false);
-          onEditar?.(id);
+          setShowModal(false)
+          onEditar?.(id)
         }}
       />
 
@@ -143,10 +149,10 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
         tipoConfirmacao={confirmacao.tipoConfirmacao}
         onConfirmar={confirmacao.onConfirmar}
         onCancelar={confirmacao.onCancelar}
-        position="top-center"
+        position='top-center'
       />
     </div>
-  );
-};
+  )
+}
 
-export default LayoutCriancaCadastrada;
+export default LayoutCriancaCadastrada

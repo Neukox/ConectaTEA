@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Header from '../../../components/Header'
-import PageLayout from '../../../layouts/PageLayout'
-import CadastrarCriancaDialog from '~/components/CadastrarCriancaDialog'
+import Header from '../../../components/layout/Header'
+import { PageLayout } from '~/components/layout/PageLayout'
+import { CadastrarCriancaDialog } from '~/features/CadastrarCrianca'
+import { CadastrarMetaDialog } from '~/features/Metas'
 import {
   Tooltip,
   TooltipContent,
@@ -224,6 +225,7 @@ const cardIcons = [
 
 export default function Dashboard() {
   const [showModal, setShowModal] = useState(false)
+  const [showMetaModal, setShowMetaModal] = useState(false)
   const navigate = useNavigate()
 
   return (
@@ -384,7 +386,10 @@ export default function Dashboard() {
           <div className='rounded-2xl bg-white p-6 shadow-md'>
             <div className='mb-6 flex items-center justify-between'>
               <h2 className='text-lg font-bold'>Metas em Andamento</h2>
-              <button className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700'>
+              <button
+                onClick={() => setShowMetaModal(true)}
+                className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700'
+              >
                 <svg
                   className='h-5 w-5'
                   fill='none'
@@ -447,6 +452,10 @@ export default function Dashboard() {
         open={showModal}
         onOpenChange={setShowModal}
         onSuccess={() => setShowModal(false)}
+      />
+      <CadastrarMetaDialog
+        open={showMetaModal}
+        onOpenChange={setShowMetaModal}
       />
     </>
   )

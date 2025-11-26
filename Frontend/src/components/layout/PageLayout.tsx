@@ -1,11 +1,11 @@
 import React from 'react'
-import Sidebar from '../pages/Profissional/Dashboard/Sidebar'
+import Sidebar from '../../pages/Profissional/Dashboard/Sidebar'
 
 interface PageLayoutProps {
   children: React.ReactNode
 }
 
-const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
+export const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
   return (
     <div className='flex min-h-screen bg-gray-50'>
       <Sidebar />
@@ -15,5 +15,3 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
     </div>
   )
 }
-
-export default PageLayout

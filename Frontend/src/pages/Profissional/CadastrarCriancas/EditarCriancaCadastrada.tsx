@@ -8,7 +8,7 @@ import {
   type AtualizarCriancaData,
 } from '../../../api/protected/axiosCadastroCrianca'
 import { useNotificacoesContext } from '../../../api/barraNotificacao'
-import PageLayout from '../../../layouts/PageLayout'
+import { PageLayout } from '~/components/layout'
 
 export default function EditarCriancaCadastrada() {
   const { id } = useParams<{ id: string }>()

@@ -10,8 +10,8 @@ import { Button } from '~/components/ui/button'
 import {
   cadastrarCrianca,
   type CadastroCriancaFormData,
-} from '../api/protected/axiosCadastroCrianca'
-import { useNotificacoesContext } from '../api/barraNotificacao'
+} from '../../api/protected/axiosCadastroCrianca'
+import { useNotificacoesContext } from '../../api/barraNotificacao'
 
 interface CadastrarCriancaDialogProps {
   open: boolean
@@ -19,7 +19,7 @@ interface CadastrarCriancaDialogProps {
   onSuccess?: () => void
 }
 
-export default function CadastrarCriancaDialog({
+export function CadastrarCriancaDialog({
   open,
   onOpenChange,
   onSuccess,

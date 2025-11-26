@@ -7,8 +7,8 @@ import PrivacySecuritySection from './components/PrivacySecuritySection'
 import SupportSection from './components/SupportSection'
 import DangerZoneSection from './components/DangerZoneSection'
 
-import Header from '../../../components/Header'
-import PageLayout from '~/layouts/PageLayout'
+import Header from '../../../components/layout/Header'
+import { PageLayout } from '~/components/layout/PageLayout'
 
 const Configuracoes: React.FC = () => {
   return (

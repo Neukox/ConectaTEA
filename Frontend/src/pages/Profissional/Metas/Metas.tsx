@@ -10,8 +10,9 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react'
-import Header from '../../../components/Header'
-import PageLayout from '~/layouts/PageLayout'
+import Header from '../../../components/layout/Header'
+import { PageLayout } from '~/components/layout/PageLayout'
+import { CadastrarMetaDialog } from '~/features/Metas'
 
 // Paleta (verde como identidade)
 const colors = {
@@ -294,13 +295,18 @@ const metas: Meta[] = [
 ]
 
 export default function MetasPage() {
+  const [showModal, setShowModal] = React.useState(false)
+
   return (
     <PageLayout>
       <Header
         title='Metas'
         description='Gerencie as metas terapêuticas das crianças'
       >
-        <button className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'>
+        <button
+          onClick={() => setShowModal(true)}
+          className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
+        >
           <span className='text-lg'>+</span>
           Nova Meta
         </button>
@@ -366,6 +372,11 @@ export default function MetasPage() {
           />
         ))}
       </div>
+
+      <CadastrarMetaDialog
+        open={showModal}
+        onOpenChange={setShowModal}
+      />
     </PageLayout>
   )
 }
