@@ -1,5 +1,4 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   TrendingUp,
@@ -13,6 +12,12 @@ import {
 import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
 import { CadastrarMetaDialog } from '~/features/Metas'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '~/components/ui/tooltip'
 
 // Paleta (verde como identidade)
 const colors = {
@@ -50,61 +55,23 @@ function SummaryCard({
   value: number
   tooltip: string
 }) {
-  const [showTooltip, setShowTooltip] = React.useState(false)
-  const cardRef = React.useRef<HTMLDivElement>(null)
-  const [tooltipPos, setTooltipPos] = React.useState<{
-    left: number
-    top: number
-  }>({ left: 0, top: 0 })
-
-  React.useEffect(() => {
-    if (showTooltip && cardRef.current) {
-      const rect = cardRef.current.getBoundingClientRect()
-      setTooltipPos({
-        left: rect.left + rect.width / 2,
-        top: rect.top - 12, // 12px acima do card
-      })
-    }
-  }, [showTooltip])
-
   return (
-    <>
-      <div
-        ref={cardRef}
-        className='group relative flex min-h-[110px] cursor-pointer items-center gap-4 rounded-2xl border border-transparent bg-white p-6 shadow transition-all duration-200 hover:-translate-y-2 hover:border-green-400 hover:bg-white hover:shadow-xl focus:-translate-y-2'
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        onFocus={() => setShowTooltip(true)}
-        onBlur={() => setShowTooltip(false)}
-        tabIndex={0}
-      >
-        <div className='flex h-14 w-14 items-center justify-center rounded-xl border border-green-100 bg-green-50 transition-all duration-200 group-hover:border-green-400 group-hover:bg-green-100'>
-          <Icon className='h-7 w-7 text-green-600' />
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className='flex min-h-[110px] cursor-pointer items-center gap-4 rounded-2xl border border-transparent bg-white p-6 shadow transition-all duration-200 hover:-translate-y-2 hover:border-green-400 hover:bg-white hover:shadow-xl focus:-translate-y-2'>
+          <div className='flex h-14 w-14 items-center justify-center rounded-xl border border-green-100 bg-green-50 transition-all duration-200 hover:border-green-400 hover:bg-green-100'>
+            <Icon className='h-7 w-7 text-green-600' />
+          </div>
+          <div>
+            <p className='text-2xl font-bold'>{value}</p>
+            <p className='font-medium text-gray-600'>{label}</p>
+          </div>
         </div>
-        <div>
-          <p className='text-2xl font-bold'>{value}</p>
-          <p className='font-medium text-gray-600'>{label}</p>
-        </div>
-      </div>
-      {showTooltip &&
-        ReactDOM.createPortal(
-          <div
-            style={{
-              position: 'fixed',
-              left: tooltipPos.left,
-              top: tooltipPos.top,
-              transform: 'translate(-50%, -100%)',
-            }}
-            className='pointer-events-none z-50 flex flex-col items-center'
-          >
-            <div className='animate-fade-in-up rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white shadow-lg'>
-              {tooltip}
-            </div>
-            <div className='mt-1 h-3 w-3 rotate-45 bg-gray-900'></div>
-          </div>,
-          document.body,
-        )}
-    </>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -315,32 +282,34 @@ export default function MetasPage() {
       {/* Toolbar topo */}
       <div className='mt-6'>
         <div className='px-4 md:px-8'>
-          <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-            <SummaryCard
-              icon={Target}
-              label='Total de Metas'
-              value={47}
-              tooltip='Quantidade total de metas cadastradas.'
-            />
-            <SummaryCard
-              icon={TrendingUp}
-              label='Em Andamento'
-              value={32}
-              tooltip='Metas que estão em andamento no momento.'
-            />
-            <SummaryCard
-              icon={AlertTriangle}
-              label='Vencendo'
-              value={8}
-              tooltip='Metas próximas do prazo de vencimento.'
-            />
-            <SummaryCard
-              icon={CheckCircle2}
-              label='Concluídas'
-              value={15}
-              tooltip='Metas já concluídas.'
-            />
-          </div>
+          <TooltipProvider>
+            <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+              <SummaryCard
+                icon={Target}
+                label='Total de Metas'
+                value={47}
+                tooltip='Quantidade total de metas cadastradas.'
+              />
+              <SummaryCard
+                icon={TrendingUp}
+                label='Em Andamento'
+                value={32}
+                tooltip='Metas que estão em andamento no momento.'
+              />
+              <SummaryCard
+                icon={AlertTriangle}
+                label='Vencendo'
+                value={8}
+                tooltip='Metas próximas do prazo de vencimento.'
+              />
+              <SummaryCard
+                icon={CheckCircle2}
+                label='Concluídas'
+                value={15}
+                tooltip='Metas já concluídas.'
+              />
+            </div>
+          </TooltipProvider>
         </div>
       </div>
 
