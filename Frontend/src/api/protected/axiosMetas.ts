@@ -23,3 +23,26 @@ export const cadastrarMeta = async (data: CadastroMetaData): Promise<void> => {
   // In a real scenario, this would be:
   // return api.post('/metas', data)
 }
+
+// Mock function to simulate API call for update
+export const atualizarMeta = async (
+  id: number,
+  data: CadastroMetaData,
+): Promise<void> => {
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  // Simulate success
+  console.log('Meta atualizada com sucesso:', id, data)
+  return Promise.resolve()
+}
+
+// Mock function to update progress
+export const atualizarProgresso = async (
+  id: number,
+  novoProgresso: number,
+): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+  console.log('Progresso atualizado:', id, novoProgresso)
+  return Promise.resolve()
+}

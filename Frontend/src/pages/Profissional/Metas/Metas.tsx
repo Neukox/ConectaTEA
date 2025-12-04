@@ -11,7 +11,8 @@ import {
 } from 'lucide-react'
 import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
-import { CadastrarMetaDialog } from '~/features/Metas'
+import { CadastrarMetaDialog, AtualizarProgressoDialog } from '~/features/Metas'
+import { type CadastroMetaData } from '~/api/protected/axiosMetas'
 import {
   Tooltip,
   TooltipContent,
@@ -145,10 +146,19 @@ type Meta = {
   profissional: string
   periodo: string // "31/12/2023 - 30/03/2024"
   progresso: number
+  descricao?: string
 }
 
 // Componente para cada meta
-function MetaCard({ meta }: { meta: Meta }) {
+function MetaCard({
+  meta,
+  onEdit,
+  onUpdateProgress,
+}: {
+  meta: Meta
+  onEdit: (meta: Meta) => void
+  onUpdateProgress: (meta: Meta) => void
+}) {
   const navigate = useNavigate()
   let prioridadeTone: 'default' | 'success' | 'warning' | 'danger' = 'default'
   if (meta.prioridade === 'alta') prioridadeTone = 'danger'
@@ -185,8 +195,18 @@ function MetaCard({ meta }: { meta: Meta }) {
           >
             Ver Detalhes
           </OutlineButton>
-          <OutlineButton icon={TrendingUp}>Atualizar Progresso</OutlineButton>
-          <OutlineButton icon={Pencil}>Editar</OutlineButton>
+          <OutlineButton
+            icon={TrendingUp}
+            onClick={() => onUpdateProgress(meta)}
+          >
+            Atualizar Progresso
+          </OutlineButton>
+          <OutlineButton
+            icon={Pencil}
+            onClick={() => onEdit(meta)}
+          >
+            Editar
+          </OutlineButton>
         </div>
       </div>
       <div className='mt-6'>
@@ -263,6 +283,54 @@ const metas: Meta[] = [
 
 export default function MetasPage() {
   const [showModal, setShowModal] = React.useState(false)
+  const [metaParaEditar, setMetaParaEditar] = React.useState<
+    (CadastroMetaData & { id: number }) | null
+  >(null)
+  const [showProgressoModal, setShowProgressoModal] = React.useState(false)
+  const [metaParaProgresso, setMetaParaProgresso] = React.useState<{
+    id: number
+    titulo: string
+    progresso: number
+  } | null>(null)
+
+  const handleEdit = (meta: Meta) => {
+    // Converter Meta para CadastroMetaData (adaptar campos se necessário)
+    const metaData: CadastroMetaData & { id: number } = {
+      id: meta.id,
+      titulo: meta.titulo,
+      categoria: meta.categoria,
+      prioridade: meta.prioridade,
+      criancaId: 1, // Mock ID, já que não temos o ID real da criança na interface Meta
+      dataInicio: meta.periodo.split(' - ')[0].split('/').reverse().join('-'), // Converter DD/MM/YYYY para YYYY-MM-DD
+      dataFim: meta.periodo.split(' - ')[1].split('/').reverse().join('-'),
+      descricao: meta.descricao || '',
+    }
+    setMetaParaEditar(metaData)
+    setShowModal(true)
+  }
+
+  const handleCloseModal = (open: boolean) => {
+    setShowModal(open)
+    if (!open) {
+      setMetaParaEditar(null)
+    }
+  }
+
+  const handleUpdateProgress = (meta: Meta) => {
+    setMetaParaProgresso({
+      id: meta.id,
+      titulo: meta.titulo,
+      progresso: meta.progresso,
+    })
+    setShowProgressoModal(true)
+  }
+
+  const handleCloseProgressoModal = (open: boolean) => {
+    setShowProgressoModal(open)
+    if (!open) {
+      setMetaParaProgresso(null)
+    }
+  }
 
   return (
     <PageLayout>
@@ -281,7 +349,7 @@ export default function MetasPage() {
 
       {/* Toolbar topo */}
       <div className='mt-6'>
-        <div className='px-4 md:px-8'>
+        <div>
           <TooltipProvider>
             <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
               <SummaryCard
@@ -314,7 +382,7 @@ export default function MetasPage() {
       </div>
 
       {/* Busca + Filtro */}
-      <div className='mx-auto max-w-7xl px-4'>
+      <div className='mx-auto max-w-7xl'>
         <div className='mt-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:px-8'>
           <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <div className='relative w-full md:max-w-xl'>
@@ -333,18 +401,27 @@ export default function MetasPage() {
       </div>
 
       {/* Lista de Metas */}
-      <div className='mt-6 space-y-5 px-4 md:px-8'>
+      <div className='mt-6 space-y-5'>
         {metas.map((m) => (
           <MetaCard
             key={m.id}
             meta={m}
+            onEdit={handleEdit}
+            onUpdateProgress={handleUpdateProgress}
           />
         ))}
       </div>
 
       <CadastrarMetaDialog
         open={showModal}
-        onOpenChange={setShowModal}
+        onOpenChange={handleCloseModal}
+        metaToEdit={metaParaEditar}
+      />
+
+      <AtualizarProgressoDialog
+        open={showProgressoModal}
+        onOpenChange={handleCloseProgressoModal}
+        meta={metaParaProgresso}
       />
     </PageLayout>
   )

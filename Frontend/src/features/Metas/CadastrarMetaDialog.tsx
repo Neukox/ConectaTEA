@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
 import { Button } from '~/components/ui/button'
 import {
   cadastrarMeta,
+  atualizarMeta,
   type CadastroMetaData,
 } from '../../api/protected/axiosMetas'
 import { useNotificacoesContext } from '../../api/barraNotificacao'
@@ -17,6 +18,7 @@ interface CadastrarMetaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
+  metaToEdit?: (CadastroMetaData & { id: number }) | null
 }
 
 // Mock data for children - in a real app this would come from an API
@@ -31,6 +33,7 @@ export function CadastrarMetaDialog({
   open,
   onOpenChange,
   onSuccess,
+  metaToEdit,
 }: CadastrarMetaDialogProps) {
   const { notificarSucesso, notificarErro } = useNotificacoesContext()
 
@@ -48,6 +51,23 @@ export function CadastrarMetaDialog({
     useState<CadastroMetaData>(getInitialFormData())
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    if (open && metaToEdit) {
+      setFormData({
+        titulo: metaToEdit.titulo,
+        categoria: metaToEdit.categoria,
+        prioridade: metaToEdit.prioridade,
+        criancaId: metaToEdit.criancaId,
+        profissionalId: metaToEdit.profissionalId,
+        dataInicio: metaToEdit.dataInicio,
+        dataFim: metaToEdit.dataFim,
+        descricao: metaToEdit.descricao,
+      })
+    } else if (open && !metaToEdit) {
+      setFormData(getInitialFormData())
+    }
+  }, [open, metaToEdit])
+
   const fecharModal = () => {
     setFormData(getInitialFormData())
     onOpenChange(false)
@@ -57,23 +77,35 @@ export function CadastrarMetaDialog({
     e.preventDefault()
     setLoading(true)
     try {
-      await cadastrarMeta(formData)
+      if (metaToEdit) {
+        await atualizarMeta(metaToEdit.id, formData)
+        notificarSucesso(
+          'Meta atualizada!',
+          `A meta "${formData.titulo}" foi atualizada com sucesso.`,
+          { duration: 5000 },
+        )
+      } else {
+        await cadastrarMeta(formData)
+        notificarSucesso(
+          'Meta cadastrada!',
+          `A meta "${formData.titulo}" foi criada com sucesso.`,
+          { duration: 5000 },
+        )
+      }
 
       setFormData(getInitialFormData())
       fecharModal()
 
-      notificarSucesso(
-        'Meta cadastrada!',
-        `A meta "${formData.titulo}" foi criada com sucesso.`,
-        { duration: 5000 },
-      )
-
       onSuccess?.()
     } catch (error) {
-      console.error('Erro ao cadastrar meta:', error)
-      notificarErro('Erro no cadastro', 'Não foi possível cadastrar a meta.', {
-        duration: 5000,
-      })
+      console.error('Erro ao salvar meta:', error)
+      notificarErro(
+        'Erro ao salvar',
+        'Não foi possível salvar as alterações da meta.',
+        {
+          duration: 5000,
+        },
+      )
     } finally {
       setLoading(false)
     }
@@ -87,10 +119,12 @@ export function CadastrarMetaDialog({
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto p-0'>
         <DialogHeader className='border-b bg-white p-6'>
           <DialogTitle className='text-2xl font-bold text-gray-900'>
-            Nova Meta Terapêutica
+            {metaToEdit ? 'Editar Meta Terapêutica' : 'Nova Meta Terapêutica'}
           </DialogTitle>
           <DialogDescription className='mt-1 text-sm text-gray-600'>
-            Defina uma nova meta para acompanhamento
+            {metaToEdit
+              ? 'Atualize as informações da meta'
+              : 'Defina uma nova meta para acompanhamento'}
           </DialogDescription>
         </DialogHeader>
 
@@ -258,7 +292,11 @@ export function CadastrarMetaDialog({
               className='flex-1 bg-green-600 hover:bg-green-700'
               disabled={loading}
             >
-              {loading ? 'Cadastrando...' : 'Criar Meta'}
+              {loading
+                ? 'Salvando...'
+                : metaToEdit
+                  ? 'Salvar Alterações'
+                  : 'Criar Meta'}
             </Button>
           </div>
         </form>
