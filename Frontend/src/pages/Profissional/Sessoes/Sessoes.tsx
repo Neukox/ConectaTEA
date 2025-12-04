@@ -14,11 +14,13 @@ import SummaryCard from './components/SummaryCard'
 import SessionItem from './components/SessionItem'
 import NextSessions from './components/NextSessions'
 import QuickActions from './components/QuickActions'
+import ModalAgendarSessao from './components/ModalAgendarSessao'
 import { PageLayout } from '~/components/layout/PageLayout'
 import Header from '~/components/layout/Header'
 
 const Sessoes: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<string>('14/01/2024')
+  const [selectedDate] = useState<string>('14/01/2024')
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Mock data
   const summaryData = [
@@ -105,13 +107,22 @@ const Sessoes: React.FC = () => {
     },
   ]
 
+  const handleSchedule = (data: any) => {
+    console.log('Sessão agendada:', data)
+    // Here we would call the API to schedule the session
+    setIsModalOpen(false)
+  }
+
   return (
     <PageLayout>
       <Header
         title='Sessões'
         description='Gerencie agendamentos e sessões terapêuticas'
       >
-        <button className='flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className='flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'
+        >
           <Plus className='h-5 w-5' />
           Nova Sessão
         </button>
@@ -186,9 +197,15 @@ const Sessoes: React.FC = () => {
         {/* Sidebar Content */}
         <div className='space-y-8'>
           <NextSessions sessions={nextSessions} />
-          <QuickActions />
+          <QuickActions onScheduleClick={() => setIsModalOpen(true)} />
         </div>
       </div>
+
+      <ModalAgendarSessao
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSchedule={handleSchedule}
+      />
     </PageLayout>
   )
 }
