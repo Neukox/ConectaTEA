@@ -10,6 +10,7 @@ interface SessionItemProps {
   observation?: string
   professionalName: string
   date?: string // For next sessions list if needed, though main list is usually by day
+  onEdit?: () => void
 }
 
 const SessionItem: React.FC<SessionItemProps> = ({
@@ -21,6 +22,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
   description,
   observation,
   professionalName,
+  onEdit,
 }) => {
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -92,7 +94,10 @@ const SessionItem: React.FC<SessionItemProps> = ({
         </div>
 
         <div className='flex gap-2'>
-          <button className='rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'>
+          <button
+            onClick={onEdit}
+            className='rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+          >
             Editar
           </button>
           {status === 'Agendada' && (

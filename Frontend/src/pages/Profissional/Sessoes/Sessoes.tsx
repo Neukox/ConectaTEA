@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -15,12 +17,16 @@ import SessionItem from './components/SessionItem'
 import NextSessions from './components/NextSessions'
 import QuickActions from './components/QuickActions'
 import ModalAgendarSessao from './components/ModalAgendarSessao'
+import ModalCalendarioCompleto from './components/ModalCalendarioCompleto'
+import ModalEditarSessao from './components/ModalEditarSessao'
 import { PageLayout } from '~/components/layout/PageLayout'
 import Header from '~/components/layout/Header'
 
 const Sessoes: React.FC = () => {
-  const [selectedDate] = useState<string>('14/01/2024')
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2024, 0, 14))
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
+  const [editingSession, setEditingSession] = useState<any>(null)
 
   // Mock data
   const summaryData = [
@@ -113,6 +119,12 @@ const Sessoes: React.FC = () => {
     setIsModalOpen(false)
   }
 
+  const handleEditSession = (data: any) => {
+    console.log('Sessão editada:', data)
+    // API call to update session
+    setEditingSession(null)
+  }
+
   return (
     <PageLayout>
       <Header
@@ -168,7 +180,8 @@ const Sessoes: React.FC = () => {
             <div className='flex items-center gap-2'>
               <CalendarIcon className='h-5 w-5 text-gray-600' />
               <span className='font-bold text-gray-800'>
-                Sessões de {selectedDate}
+                Sessões de{' '}
+                {format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })}
               </span>
             </div>
             <div className='flex gap-2'>
@@ -189,6 +202,7 @@ const Sessoes: React.FC = () => {
               <SessionItem
                 key={session.id}
                 {...session}
+                onEdit={() => setEditingSession(session)}
               />
             ))}
           </div>
@@ -197,7 +211,10 @@ const Sessoes: React.FC = () => {
         {/* Sidebar Content */}
         <div className='space-y-8'>
           <NextSessions sessions={nextSessions} />
-          <QuickActions onScheduleClick={() => setIsModalOpen(true)} />
+          <QuickActions
+            onScheduleClick={() => setIsModalOpen(true)}
+            onCalendarClick={() => setIsCalendarModalOpen(true)}
+          />
         </div>
       </div>
 
@@ -206,6 +223,29 @@ const Sessoes: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSchedule={handleSchedule}
       />
+
+      <ModalCalendarioCompleto
+        isOpen={isCalendarModalOpen}
+        onClose={() => setIsCalendarModalOpen(false)}
+        sessions={sessions} // Pass the list of sessions
+        onSelectSession={(session) => {
+          // Optional: Handle selection, e.g., jump to that date in the main view
+          if (session) {
+            setEditingSession(session)
+            // Optional: Close calendar if desired, or keep open
+            // setIsCalendarModalOpen(false)
+          }
+        }}
+      />
+
+      {editingSession && (
+        <ModalEditarSessao
+          isOpen={!!editingSession}
+          onClose={() => setEditingSession(null)}
+          session={editingSession}
+          onSave={handleEditSession}
+        />
+      )}
     </PageLayout>
   )
 }
