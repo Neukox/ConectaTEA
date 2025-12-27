@@ -12,14 +12,34 @@ enum UserType {
   RESPONSAVEL
 }
 
-
 enum PrioridadeMeta {
   BAIXA
   MEDIA
   ALTA
 }
 
+enum StatusVinculo {
+  AGUARDANDO
+  VINCULADO
+  DESVINCULADO
+  EXPIRADO
+}
 
+enum StatusTokenVinculo {
+  AGUARDANDO
+  USADO
+  EXPIRADO
+  CANCELADO
+}
+
+enum StatusVinculacao {
+  TOKEN_GERADO
+  TOKEN_USADO
+  TOKEN_EXPIRADO
+  TOKEN_CANCELADO
+  VINCULO_CRIADO
+  VINCULO_ENCERRADO
+}
 
 enum StatusMeta {
   EM_ANDAMENTO
@@ -81,9 +101,12 @@ model User {
   criado_em DateTime @default(now())
 
   // Relacionamentos
-  criancas     Crianca[]     @relation("ResponsavelCrianças")
-  profissional Profissional?
-  auditLogs    AuditLog[]
+  criancas          Crianca[]           @relation("ResponsavelCrianças")
+  profissional      Profissional?
+  auditLogs         AuditLog[]
+  tokensUsados      TokenVinculo[]      @relation("TokensUsadosPorResponsavel")
+  consentimentos    Consentimento[]     @relation("ResponsavelConsentimentos")
+  historicoVinculos HistoricoVinculos[] @relation("ResponsavelHistorico")
 }
 
 model Crianca {
@@ -100,9 +123,12 @@ model Crianca {
   responsavel    User @relation("ResponsavelCrianças", fields: [responsavel_id], references: [id])
 
   // Relacionamentos
-  sessoes      Sessoes[]
-  metas        Meta[]
-  prof_crianca ProfissionalCriança[]
+  sessoes           Sessoes[]
+  metas             Meta[]
+  prof_crianca      ProfissionalCriança[]
+  tokensVinculo     TokenVinculo[]         @relation("TokensCrianca")
+  consentimentos    Consentimento[]        @relation("ConsentimentosCrianca")
+  historicoVinculos HistoricoVinculos[]    @relation("HistoricoCrianca")
 }
 
 model Profissional {
@@ -128,6 +154,9 @@ model Profissional {
   locaisAtendimento LocalAtendimento[]
   redesSociais      RedeSocial[]
   areasAtuacao      AreaAtuacaoProfissional[]
+  tokensGerados     TokenVinculo[]            @relation("TokensGeradosPorProfissional")
+  consentimentos    Consentimento[]           @relation("ConsentimentosProfissional")
+  historicoVinculos HistoricoVinculos[]       @relation("HistoricoProfissional")
 }
 
 model LocalAtendimento {
@@ -164,8 +193,12 @@ model AreaAtuacaoProfissional {
 }
 
 model ProfissionalCriança {
-  profissional_id Int
-  crianca_id      Int
+  profissional_id   Int
+  crianca_id        Int
+  status_vinculo    StatusVinculo @default(AGUARDANDO)
+  data_vinculo      DateTime      @default(now())
+  data_desvinculo   DateTime?
+  motivo_desvinculo String?
 
   profissional Profissional @relation(fields: [profissional_id], references: [id])
   crianca      Crianca      @relation(fields: [crianca_id], references: [id])
@@ -209,10 +242,9 @@ model Meta {
   data_inicio DateTime
   data_fim    DateTime
 
-  crianca   Crianca     @relation(fields: [crianca_id], references: [id])
-  updates   Progresso[]
+  crianca Crianca     @relation(fields: [crianca_id], references: [id])
+  updates Progresso[]
 }
-
 
 model Progresso {
   id        Int      @id @default(autoincrement())
@@ -235,4 +267,67 @@ model AuditLog {
 
   @@index([action])
   @@index([createdAt])
+}
+
+model HistoricoVinculos {
+  id              Int           @id @default(autoincrement())
+  responsavel_id  Int?
+  profissional_id Int
+  crianca_id      Int
+  tipo_evento     StatusVinculacao
+  descricao       String?
+  data_evento     DateTime      @default(now())
+
+  profissional Profissional @relation("HistoricoProfissional", fields: [profissional_id], references: [id])
+  crianca      Crianca      @relation("HistoricoCrianca", fields: [crianca_id], references: [id])
+  responsavel  User?         @relation("ResponsavelHistorico", fields: [responsavel_id], references: [id])
+
+  @@index([crianca_id])
+  @@index([profissional_id])
+  @@index([data_evento])
+}
+
+model Consentimento {
+  id              Int       @id @default(autoincrement())
+  responsavel_id  Int
+  profissional_id Int
+  crianca_id      Int
+  versao_termo    String // Ex: "v1.0"
+  conteudo_termo  String    @db.Text
+  aceito          Boolean   @default(false)
+  data_aceite     DateTime  @default(now())
+  data_revogado   DateTime?
+  ip_address      String?
+  user_agent      String?
+
+  responsavel  User         @relation("ResponsavelConsentimentos", fields: [responsavel_id], references: [id])
+  profissional Profissional @relation("ConsentimentosProfissional", fields: [profissional_id], references: [id])
+  crianca      Crianca      @relation("ConsentimentosCrianca", fields: [crianca_id], references: [id])
+
+  @@unique([crianca_id, responsavel_id, profissional_id])
+  @@index([crianca_id])
+  @@index([responsavel_id])
+}
+
+model TokenVinculo {
+  id              Int                @id @default(autoincrement())
+  codigo          String             @unique
+  qr_code_url     String?
+  profissional_id Int
+  crianca_id      Int
+  status          StatusTokenVinculo @default(AGUARDANDO)
+  data_criacao    DateTime           @default(now())
+  data_expiracao  DateTime
+  data_uso        DateTime?
+  usado_por       Int?
+
+  // Relações
+  profissional   Profissional  @relation(name: "TokensGeradosPorProfissional", fields: [profissional_id], references: [id])
+  crianca        Crianca       @relation(name: "TokensCrianca", fields: [crianca_id], references: [id])
+  usuario        User?         @relation(name: "TokensUsadosPorResponsavel", fields: [usado_por], references: [id])
+
+  @@index([profissional_id])
+  @@index([crianca_id])
+  @@index([codigo])
+  @@index([status])
 }
