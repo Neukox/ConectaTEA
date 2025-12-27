@@ -1,159 +1,146 @@
-
 # ConectaTEA 🧩
 
-> **Plataforma web para acompanhamento especializado de crianças com TEA**
+Plataforma para acompanhamento de crianças com TEA, conectando responsáveis e profissionais especializados.
 
-Uma solução digital que conecta responsáveis e profissionais especializados, facilitando o cuidado e desenvolvimento de crianças no espectro autista.
+## 🏗️ Arquitetura
 
-## 🚀 Visão Geral
+### Diagrama da Arquitetura
 
-O ConectaTEA é uma plataforma completa que centraliza o acompanhamento de crianças com Transtorno do Espectro Autista, promovendo comunicação eficiente entre famílias e profissionais da saúde através de uma interface moderna e segura.
-
-### 🏗️ Arquitetura
-
-```text
-┌─────────────────┐    HTTP/REST    ┌─────────────────┐    Prisma    ┌─────────────────┐
-│                 │ ──────────────► │                 │ ───────────► │                 │
-│   FRONTEND      │                 │    BACKEND      │              │    DATABASE     │
-│                 │ ◄────────────── │                 │ ◄─────────── │                 │
-│  React + TS     │      JSON       │   NestJS + TS   │              │   PostgreSQL    │
-│                 │                 │                 │              │                 │
-│  • Dashboard    │                 │  • Auth (JWT)   │              │  • Users        │
-│  • Login        │                 │  • Users        │              │  • Profissional │
-│  • Crianças     │                 │  • Crianças     │              │  • Crianças     │
-│  • Conexões     │                 │  • Conexões     │              │  • Conexões     │
-└─────────────────┘                 └─────────────────┘              └─────────────────┘
-        ▲                                   ▲                                ▲
-        │                                   │                                │
-   Port 5173                           Port 3000                        Port 5432
+```
+┌─────────────────┐    HTTP/REST    ┌─────────────────┐    ORM     ┌─────────────────┐
+│                 │ ──────────────► │                 │ ─────────► │                 │
+│  Frontend       │                 │  Backend        │            │  PostgreSQL     │
+│  React + Vite   │ ◄────────────── │  NestJS         │ ◄───────── │  Database       │
+│  TypeScript     │     JSON        │  TypeScript     │   Prisma   │                 │
+└─────────────────┘                 └─────────────────┘            └─────────────────┘
 ```
 
-**Stack Tecnológica:**
+### Stack Tecnológico
 
-- **Frontend:** React, TypeScript, Vite, Tailwind CSS
-- **Backend:** NestJS, TypeScript, JWT, bcrypt
-- **Database:** PostgreSQL com Prisma ORM
-- **Autenticação:** JWT com Guards personalizados
+- **Frontend**: React + TypeScript + Vite + Axios
+- **Backend**: NestJS + TypeScript + Prisma ORM
+- **Database**: PostgreSQL
+- **Autenticação**: JWT + Guards
+- **Validação**: DTOs + Class-validator
 
-## ✨ Funcionalidades Principais
+## ⚡ Funcionalidades Principais
 
-### 🔐 **Autenticação Segura**
+### 🔐 Sistema de Autenticação
 
-- Sistema JWT para controle de acesso
-- Perfis diferenciados (Responsáveis e Profissionais)
-- Proteção de dados sensíveis
+- Login/registro seguro com JWT
+- Guards de autenticação em rotas protegidas
+- Middleware de validação de tokens
 
-### 👥 **Gestão de Profissionais**
+### 👥 Gestão de Profissionais
 
-- Cadastro completo de perfis especializados
-- Sistema de conexões profissionais
-- Especialidades e locais de atendimento
+- Cadastro completo de perfil profissional
+- Especialidades, locais de atendimento, redes sociais
+- Sistema de conexões entre profissionais
+- Envio, aceite, recusa e remoção de solicitações
 
-### 👶 **Acompanhamento de Crianças**
+### 👶 Gestão de Crianças
 
-- CRUD completo para registros de crianças
-- Histórico de desenvolvimento
-- Vinculação segura com responsáveis
+- CRUD completo para crianças cadastradas
+- Vinculação com responsáveis
+- Acompanhamento de desenvolvimento
 
-### 🤝 **Rede Colaborativa**
+### 🔗 Sistema de Conexões
 
-- Solicitações de conexão entre profissionais
-- Comunicação facilitada entre equipes
-- Compartilhamento de melhores práticas
+- Solicitações de amizade entre profissionais
+- Status: PENDENTE, ACEITO, RECUSADO
+- Listagem de conexões por profissional
+- Remoção de conexões existentes
 
-## 🛠️ Instalação e Execução
+## 🛠️ Instalação e Configuração do Projeto
 
 ### Pré-requisitos
 
-- Node.js 18+
-- PostgreSQL 12+
-- Git
+- Node.js (v16+)
+- npm (v8+)
+- PostgreSQL (v12+) (local ou Docker)
+- Docker (opcional, para execução do banco, e outros serviços)
 
-### Setup Rápido
+### Backend (NestJS)
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/GabrielF0900/ConectaTEA.git
-cd ConectaTEA
-
-# 2. Configure o Backend
 cd Backend
 npm install
-cp .env.example .env  # Configure suas variáveis de ambiente
-npx prisma migrate dev
 npm run start:dev
+# Servidor rodando em http://localhost:3000
+```
 
-# 3. Configure o Frontend (novo terminal)
-cd ../Frontend
+### Frontend (React)
+
+```bash
+cd Frontend
 npm install
 npm run dev
+# Aplicação rodando em http://localhost:5173
 ```
 
-### Acesso
+### Banco de Dados
 
-- **Frontend:** <http://localhost:5173>
-- **Backend API:** <http://localhost:3000>
-
-## 📚 API Endpoints
-
-### Autenticação
-
-```http
-POST /auth/register  # Registro de usuários
-POST /auth/login     # Autenticação
+```bash
+cd Backend
+npx prisma migrate dev
+npx prisma studio  # Interface visual do banco
 ```
 
-### Principais Recursos (Protegidos)
+### Ambiente Docker (opcional)
 
-```http
-GET  /users/profile          # Perfil do usuário
-GET  /profissionais          # Lista de profissionais
-POST /criancas               # Cadastro de crianças
-POST /conexoes/enviar        # Solicitação de conexão
-GET  /conexoes/recebidas     # Solicitações recebidas
+[docker-compose.yml](./docker-compose.yml) para orquestração de serviços (PostgreSQL, etc).
+
+No diretório raiz do projeto, execute:
+
+```bash
+docker-compose up -d
 ```
 
-## 🎯 Objetivos do Projeto
+Para parar os serviços:
 
-- **Centralização:** Unificar informações de acompanhamento
-- **Conectividade:** Facilitar comunicação entre stakeholders
-- **Segurança:** Proteger dados sensíveis de crianças
-- **Escalabilidade:** Arquitetura preparada para crescimento
-- **Acessibilidade:** Interface intuitiva e responsiva
+```bash
+docker-compose down
+```
 
-## 📊 Status do Desenvolvimento
+Para ver logs:
 
-- ✅ **Core System:** Autenticação, CRUD de usuários e crianças
-- ✅ **Professional Network:** Sistema de conexões entre profissionais
-- ✅ **Security:** JWT, validações e proteção de rotas
-- ✅ **Frontend:** Interface responsiva e moderna
-- 🔄 **In Progress:** Sistema de metas e relatórios
-- 📋 **Planned:** Notificações em tempo real, dashboard analytics
+```bash
+docker-compose logs -f {service_name}
+```
 
-## 🤝 Contribuição
+## Documentação da API
 
-Contribuições são bem-vindas! Por favor:
+para ver todos os endpoints e detalhes, rode o backend e acesse:
 
-1. Faça um fork do projeto
-2. Crie uma feature branch (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
+```bash
+http://localhost:3000/api/docs
+```
 
-## 📄 Licença
+## 📂 Estrutura Modular
 
-Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
+```
+Backend/src/
+├── auth/           # Autenticação JWT
+├── users/          # Usuários do sistema
+├── profissionais/  # Perfis profissionais
+├── criancas/       # Gestão de crianças
+├── conexoes/       # Sistema de conexões
+└── prisma/         # Configurações (Prisma)
 
-## 👨‍💻 Desenvolvedor
-
-- **Gabriel Falcão**
-- LinkedIn: [Gabriel Falcão](https://www.linkedin.com/in/gabrielfalcaodev/)
-- GitHub: [@GabrielF0900](https://github.com/GabrielF0900)
+Frontend/src/
+├── api/            # Cliente HTTP + endpoints
+├── assets/         # Imagens, estilos, etc.
+├── pages/          # Componentes de página
+├── components/     # Componentes reutilizáveis
+├── hooks/          # Hooks customizados
+├── config/         # Configurações globais
+├── lib/            # Utilitários e helpers
+├── context/        # Contextos React
+├── features/       # Funcionalidades específicas
+├── services/       # Serviços de negócios
+└── routes/         # Definição de rotas
+```
 
 ---
 
 **ConectaTEA** - Conectando cuidado especializado para crianças com TEA 💙
-
-Desenvolvido com ❤️ para fazer a diferença na vida de famílias e profissionais
-
-⭐ **Se este projeto foi útil, considere dar uma estrela!**
