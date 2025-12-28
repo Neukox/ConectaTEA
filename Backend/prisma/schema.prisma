@@ -18,11 +18,18 @@ enum PrioridadeMeta {
   ALTA
 }
 
-enum StatusVinculo {
+enum StatusResponsavelVinculo {
+  AGUARDANDO_VINCULO
+  VINCULADO
+  DESVINCULADO
+  CODIGO_EXPIRADO
+}
+
+enum StatusProfissionalVinculo {
   AGUARDANDO
   VINCULADO
   DESVINCULADO
-  EXPIRADO
+  SUSPENSO
 }
 
 enum StatusTokenVinculo {
@@ -110,14 +117,15 @@ model User {
 }
 
 model Crianca {
-  id                  Int        @id @default(autoincrement())
-  nome                String
-  data_nascimento     DateTime
-  genero              String
-  diagnostico         String
-  diagnosticoDetalhes String?
-  observacoes         String?
-  parentesco          Parentesco
+  id                         Int                      @id @default(autoincrement())
+  nome                       String
+  data_nascimento            DateTime
+  genero                     String
+  diagnostico                String
+  diagnosticoDetalhes        String?
+  observacoes                String?
+  parentesco                 Parentesco
+  status_vinculo_responsavel StatusResponsavelVinculo @default(AGUARDANDO_VINCULO)
 
   responsavel_id Int
   responsavel    User @relation("ResponsavelCrianças", fields: [responsavel_id], references: [id])
@@ -195,8 +203,8 @@ model AreaAtuacaoProfissional {
 model ProfissionalCriança {
   profissional_id   Int
   crianca_id        Int
-  status_vinculo    StatusVinculo @default(AGUARDANDO)
-  data_vinculo      DateTime      @default(now())
+  status_vinculo    StatusProfissionalVinculo @default(AGUARDANDO)
+  data_vinculo      DateTime                  @default(now())
   data_desvinculo   DateTime?
   motivo_desvinculo String?
 
@@ -270,17 +278,17 @@ model AuditLog {
 }
 
 model HistoricoVinculos {
-  id              Int           @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   responsavel_id  Int?
   profissional_id Int
   crianca_id      Int
   tipo_evento     StatusVinculacao
   descricao       String?
-  data_evento     DateTime      @default(now())
+  data_evento     DateTime         @default(now())
 
   profissional Profissional @relation("HistoricoProfissional", fields: [profissional_id], references: [id])
   crianca      Crianca      @relation("HistoricoCrianca", fields: [crianca_id], references: [id])
-  responsavel  User?         @relation("ResponsavelHistorico", fields: [responsavel_id], references: [id])
+  responsavel  User?        @relation("ResponsavelHistorico", fields: [responsavel_id], references: [id])
 
   @@index([crianca_id])
   @@index([profissional_id])
@@ -320,9 +328,9 @@ model TokenVinculo {
   usado_por       Int?
 
   // Relações
-  profissional   Profissional  @relation(name: "TokensGeradosPorProfissional", fields: [profissional_id], references: [id])
-  crianca        Crianca       @relation(name: "TokensCrianca", fields: [crianca_id], references: [id])
-  usuario        User?         @relation(name: "TokensUsadosPorResponsavel", fields: [usado_por], references: [id])
+  profissional Profissional @relation(name: "TokensGeradosPorProfissional", fields: [profissional_id], references: [id])
+  crianca      Crianca      @relation(name: "TokensCrianca", fields: [crianca_id], references: [id])
+  usuario      User?        @relation(name: "TokensUsadosPorResponsavel", fields: [usado_por], references: [id])
 
   @@index([profissional_id])
   @@index([crianca_id])
