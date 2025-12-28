@@ -13,8 +13,8 @@ import { MetasModule } from "./metas/metas.module";
 import { PrivateModule } from "./private/private.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { VinculacaoModule } from "./vinculacao/vinculacao.module";
-import { TokenVinculoService } from "./token-vinculo/token-vinculo.service";
 import { TokenVinculoModule } from "./token-vinculo/token-vinculo.module";
+import { ConsentimentoModule } from './consentimento/consentimento.module';
 
 @Module({
   imports: [
@@ -39,6 +39,7 @@ import { TokenVinculoModule } from "./token-vinculo/token-vinculo.module";
     MetasModule,
     VinculacaoModule,
     TokenVinculoModule,
+    ConsentimentoModule,
   ],
   controllers: [],
   providers: [],

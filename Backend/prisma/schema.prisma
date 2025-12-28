@@ -292,8 +292,6 @@ model Consentimento {
   responsavel_id  Int
   profissional_id Int
   crianca_id      Int
-  versao_termo    String // Ex: "v1.0"
-  conteudo_termo  String    @db.Text
   aceito          Boolean   @default(false)
   data_aceite     DateTime  @default(now())
   data_revogado   DateTime?
