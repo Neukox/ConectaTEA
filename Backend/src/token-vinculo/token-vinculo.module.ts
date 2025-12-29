@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
 import { TokenVinculoService } from "./token-vinculo.service";
-import { PrismaService } from "../prisma/prisma.service";
+import { PrismaModule } from "../prisma/prisma.module";
 
 @Module({
-  imports: [PrismaService],
+  imports: [PrismaModule],
   providers: [TokenVinculoService],
   exports: [TokenVinculoService],
 })

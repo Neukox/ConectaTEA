@@ -73,18 +73,31 @@ export class TokenVinculoService {
   }
 
   async marcarTokenComoUsado(token: string, responsavelId: number) {
-    const tokenRecord = await this.prismaService.tokenVinculo.findUnique({
-      where: { codigo: token },
-    });
-
     const tokenValido = await this.validarCodigo(token);
 
-    await this.prismaService.tokenVinculo.update({
+    const tokenAtualizado = await this.prismaService.tokenVinculo.update({
       where: { id: tokenValido.id },
       data: {
         status: "USADO",
         data_uso: new Date(),
         usado_por: responsavelId,
+      },
+    });
+
+    return tokenAtualizado;
+  }
+
+  async buscarTokenUsado(
+    criancaId: number,
+    profissionalId: number,
+    responsavel_id: number
+  ) {
+    return await this.prismaService.tokenVinculo.findFirst({
+      where: {
+        crianca_id: criancaId,
+        profissional_id: profissionalId,
+        usado_por: responsavel_id,
+        status: "USADO",
       },
     });
   }
