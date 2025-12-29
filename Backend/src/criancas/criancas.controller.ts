@@ -23,6 +23,7 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { UserType } from "@prisma/client";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
+import { ProfissionalExistsGuard } from "../profissionais/guards/profissional-exists.guard";
 
 @ApiTags("Crianças")
 @Controller("criancas")
@@ -33,10 +34,11 @@ export class CriancasController {
   @ApiResponse({ status: 201, description: "Criança cadastrada com sucesso." })
   @ApiResponse({ status: 400, description: "Dados inválidos." })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, ProfissionalExistsGuard)
   @Post()
   async create(@Body() createCriancaDto: CreateCriancaDto, @Req() req: any) {
-    return await this.criancasService.create(createCriancaDto, req.user?.id);
+    const profissional = req.profissional;
+    return await this.criancasService.create(createCriancaDto, profissional.id);
   }
 
   @ApiOperation({ summary: "Listar todas as crianças" })

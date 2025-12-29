@@ -1,89 +1,60 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateCriancaDto } from './dto/create-crianca.dto';
-import { UpdateCriancaDto } from './dto/update-crianca.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateCriancaDto } from "./dto/create-crianca.dto";
+import { UpdateCriancaDto } from "./dto/update-crianca.dto";
+import DateUtils from "../common/utils/date.utils";
+import { TokenVinculoService } from "../token-vinculo/token-vinculo.service";
+import { VinculacaoService } from "../vinculacao/vinculacao.service";
+import bcrypt from "bcrypt";
 
 @Injectable()
 export class CriancasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tokenVinculoService: TokenVinculoService,
+  ) {}
 
-  async create(createCriancaDto: CreateCriancaDto, userId?: number) {
-    const { fullName, birthDate, gender, diagnosis, parentesco, notes, responsible } = createCriancaDto;
+  async create(createCriancaDto: CreateCriancaDto, profissionalId?: number) {
+    const {
+      fullName,
+      birthDate,
+      gender,
+      diagnosis,
+      parentesco,
+      notes,
+      responsible,
+    } = createCriancaDto;
     const { name, phone, email, address } = responsible;
 
     console.log("=== CADASTRO DE CRIANÇA ===");
 
-    // Processar data de nascimento
-    let birthDateObj: Date;
-    try {
-      if (birthDate.includes('/')) {
-        const [day, month, year] = birthDate.split('/');
-        birthDateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
-      } else {
-        birthDateObj = new Date(birthDate);
-      }
+    const calculatedAge = DateUtils.calculateAge(new Date(birthDate));
 
-      if (isNaN(birthDateObj.getTime())) {
-        throw new Error('Data inválida');
-      }
-    } catch (error) {
-      throw new BadRequestException('Data de nascimento inválida. Use o formato dd/mm/aaaa.');
-    }
+    // Criar responsável
+    const userData: any = {
+      name,
+      telefone: phone,
+      password: await bcrypt.hash("senha-temporaria", 10), // Senha padrão, deve ser alterada posteriormente
+      tipo: "RESPONSAVEL",
+    };
+    if (email) userData.email = email;
+    if (address) userData.endereco = address;
 
-    // Calcular idade
-    const now = new Date();
-    let calculatedAge = now.getFullYear() - birthDateObj.getFullYear();
-    const monthDiff = now.getMonth() - birthDateObj.getMonth();
-    const dayDiff = now.getDate() - birthDateObj.getDate();
-
-    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-      calculatedAge--;
-    }
-
-    // Validações
-    if (birthDateObj > now) {
-      throw new BadRequestException('Data de nascimento não pode ser futura.');
-    }
-
-    if (calculatedAge < 0 || calculatedAge > 18) {
-      throw new BadRequestException('Idade deve estar entre 0 e 18 anos para cadastro.');
-    }
-
-    // Validar telefone
-    const phoneFormats = [
-      /^\(\d{2}\)\s?\d{4,5}-?\d{4}$/,
-      /^\d{2}\s?\d{4,5}-?\d{4}$/,
-      /^\d{10,11}$/
-    ];
-
-    const isValidPhone = phoneFormats.some(regex => regex.test(phone));
-    if (!isValidPhone) {
-      throw new BadRequestException('Telefone deve estar em um dos formatos: (71) 99720-9361, 71 99720-9361, ou 71997209361.');
-    }
-
-    try {
-      // Criar responsável
-      const userData: any = {
-        name,
-        telefone: phone,
-        password: "senha-temporaria",
-        tipo: "RESPONSAVEL",
-      };
-      if (email) userData.email = email;
-      if (address) userData.endereco = address;
-
-      const responsavel = await this.prisma.user.create({
+    // Usar transação para garantir integridade dos dados
+    const result = await this.prisma.$transaction(async (prisma) => {
+      // Criar responsável dentro da transação
+      const responsavel = await prisma.user.create({
         data: userData,
       });
 
-      // Criar criança
-      const novaCrianca = await this.prisma.crianca.create({
+      // Criar criança dentro da transação
+      const novaCrianca = await prisma.crianca.create({
         data: {
           nome: fullName,
-          data_nascimento: birthDateObj,
+          data_nascimento: new Date(birthDate),
           genero: gender,
           diagnostico: diagnosis,
-          diagnosticoDetalhes: '',
+          diagnosticoDetalhes: "",
           parentesco,
           observacoes: notes || "",
           responsavel_id: responsavel.id,
@@ -101,24 +72,63 @@ export class CriancasService {
         },
       });
 
+      if (profissionalId) {
+        await prisma.profissionalCriança.create({
+          data: {
+            crianca_id: novaCrianca.id,
+            profissional_id: profissionalId,
+            status_vinculo: "AGUARDANDO",
+          },
+        });
+      }
+
+      // Gerar código de vínculo e QR Code
+      const codigoVinculo = this.tokenVinculoService.gerarCodigoUnico();
+      const QRCode = await this.tokenVinculoService.gerarQRCode(codigoVinculo);
+
+      const codigosVinculo = await prisma.tokenVinculo.create({
+        data: {
+          codigo: codigoVinculo,
+          crianca_id: novaCrianca.id,
+          status: "AGUARDANDO",
+          profissional_id: profissionalId || null,
+          data_expiracao: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expira em 7 dias
+          qr_code_url: QRCode,
+        },
+      });
+
+      await prisma.historicoVinculos.create({
+        data: {
+          crianca_id: novaCrianca.id,
+          profissional_id: profissionalId || null,
+          responsavel_id: responsavel.id,
+          tipo_evento: "TOKEN_GERADO",
+          descricao: `Código de vínculo gerado para a criança ${novaCrianca.nome}.`,
+        },
+      });
+
       return {
         message: "Criança cadastrada com sucesso!",
         crianca: {
           id: novaCrianca.id,
           nome: novaCrianca.nome,
           idade: calculatedAge,
-          dataDeNascimento: novaCrianca.data_nascimento,
+          dataDeNascimento: novaCrianca.data_nascimento
+            .toISOString()
+            .split("T")[0],
           genero: novaCrianca.genero,
           diagnostico: novaCrianca.diagnostico,
           parentesco: novaCrianca.parentesco,
           observacoes: novaCrianca.observacoes,
           responsavel: novaCrianca.responsavel,
+          status_vinculo_responsavel: novaCrianca.status_vinculo_responsavel,
         },
+        codigoParaVinculo: codigosVinculo.codigo,
+        qrcodeParaVinculo: codigosVinculo.qr_code_url,
       };
-    } catch (error) {
-      console.error("Erro ao cadastrar criança:", error);
-      throw new BadRequestException('Erro ao cadastrar criança no banco de dados.');
-    }
+    });
+
+    return result;
   }
 
   async findAll() {
@@ -135,16 +145,19 @@ export class CriancasService {
         },
       },
       orderBy: {
-        id: 'desc',
+        id: "desc",
       },
     });
 
     // Mapear dados para o formato esperado pelo frontend
-    const criancas = criancasRaw.map(crianca => ({
+    const criancas = criancasRaw.map((crianca) => ({
       id: crianca.id,
       nome: crianca.nome,
-      idade: Math.floor((new Date().getTime() - new Date(crianca.data_nascimento).getTime()) / (1000 * 60 * 60 * 24 * 365)),
-      dataNascimento: crianca.data_nascimento.toISOString().split('T')[0], // YYYY-MM-DD
+      idade: Math.floor(
+        (new Date().getTime() - new Date(crianca.data_nascimento).getTime()) /
+          (1000 * 60 * 60 * 24 * 365)
+      ),
+      dataNascimento: crianca.data_nascimento.toISOString().split("T")[0], // YYYY-MM-DD
       genero: crianca.genero,
       diagnostico: crianca.diagnostico,
       parentesco: crianca.parentesco,
@@ -182,7 +195,7 @@ export class CriancasService {
     });
 
     if (!crianca) {
-      throw new BadRequestException('Criança não encontrada.');
+      throw new BadRequestException("Criança não encontrada.");
     }
 
     // Calcular idade
@@ -191,8 +204,11 @@ export class CriancasService {
     let idade = hoje.getFullYear() - nascimento.getFullYear();
     const mesAtual = hoje.getMonth();
     const mesNascimento = nascimento.getMonth();
-    
-    if (mesAtual < mesNascimento || (mesAtual === mesNascimento && hoje.getDate() < nascimento.getDate())) {
+
+    if (
+      mesAtual < mesNascimento ||
+      (mesAtual === mesNascimento && hoje.getDate() < nascimento.getDate())
+    ) {
       idade--;
     }
 
@@ -203,7 +219,7 @@ export class CriancasService {
         id: crianca.id,
         nome: crianca.nome,
         idade,
-        dataNascimento: crianca.data_nascimento.toISOString().split('T')[0],
+        dataNascimento: crianca.data_nascimento.toISOString().split("T")[0],
         genero: crianca.genero,
         diagnostico: crianca.diagnostico,
         observacoes: crianca.observacoes,
@@ -237,28 +253,41 @@ export class CriancasService {
     });
 
     if (!criancaExistente) {
-      throw new BadRequestException('Criança não encontrada.');
+      throw new BadRequestException("Criança não encontrada.");
     }
 
     try {
       // Atualizar dados da criança
       const dadosAtualizarCrianca: any = {};
-      
-      if (updateCriancaDto.nome) dadosAtualizarCrianca.nome = updateCriancaDto.nome;
+
+      if (updateCriancaDto.nome)
+        dadosAtualizarCrianca.nome = updateCriancaDto.nome;
       if (updateCriancaDto.dataNascimento) {
-        dadosAtualizarCrianca.data_nascimento = new Date(updateCriancaDto.dataNascimento);
+        dadosAtualizarCrianca.data_nascimento = new Date(
+          updateCriancaDto.dataNascimento
+        );
       }
-      if (updateCriancaDto.genero) dadosAtualizarCrianca.genero = updateCriancaDto.genero;
-      if (updateCriancaDto.diagnostico) dadosAtualizarCrianca.diagnostico = updateCriancaDto.diagnostico;
-      if (updateCriancaDto.observacoes) dadosAtualizarCrianca.observacoes = updateCriancaDto.observacoes;
-      if (updateCriancaDto.parentesco) dadosAtualizarCrianca.parentesco = updateCriancaDto.parentesco;
+      if (updateCriancaDto.genero)
+        dadosAtualizarCrianca.genero = updateCriancaDto.genero;
+      if (updateCriancaDto.diagnostico)
+        dadosAtualizarCrianca.diagnostico = updateCriancaDto.diagnostico;
+      if (updateCriancaDto.observacoes)
+        dadosAtualizarCrianca.observacoes = updateCriancaDto.observacoes;
+      if (updateCriancaDto.parentesco)
+        dadosAtualizarCrianca.parentesco = updateCriancaDto.parentesco;
 
       // Atualizar dados do responsável se fornecidos
       const dadosAtualizarResponsavel: any = {};
-      if (updateCriancaDto.nomeResponsavel) dadosAtualizarResponsavel.name = updateCriancaDto.nomeResponsavel;
-      if (updateCriancaDto.telefoneResponsavel) dadosAtualizarResponsavel.telefone = updateCriancaDto.telefoneResponsavel;
-      if (updateCriancaDto.emailResponsavel) dadosAtualizarResponsavel.email = updateCriancaDto.emailResponsavel;
-      if (updateCriancaDto.enderecoResponsavel) dadosAtualizarResponsavel.endereco = updateCriancaDto.enderecoResponsavel;
+      if (updateCriancaDto.nomeResponsavel)
+        dadosAtualizarResponsavel.name = updateCriancaDto.nomeResponsavel;
+      if (updateCriancaDto.telefoneResponsavel)
+        dadosAtualizarResponsavel.telefone =
+          updateCriancaDto.telefoneResponsavel;
+      if (updateCriancaDto.emailResponsavel)
+        dadosAtualizarResponsavel.email = updateCriancaDto.emailResponsavel;
+      if (updateCriancaDto.enderecoResponsavel)
+        dadosAtualizarResponsavel.endereco =
+          updateCriancaDto.enderecoResponsavel;
 
       // Atualizar responsável se há dados para atualizar
       if (Object.keys(dadosAtualizarResponsavel).length > 0) {
@@ -291,8 +320,11 @@ export class CriancasService {
       let idade = hoje.getFullYear() - nascimento.getFullYear();
       const mesAtual = hoje.getMonth();
       const mesNascimento = nascimento.getMonth();
-      
-      if (mesAtual < mesNascimento || (mesAtual === mesNascimento && hoje.getDate() < nascimento.getDate())) {
+
+      if (
+        mesAtual < mesNascimento ||
+        (mesAtual === mesNascimento && hoje.getDate() < nascimento.getDate())
+      ) {
         idade--;
       }
 
@@ -303,7 +335,9 @@ export class CriancasService {
           id: criancaAtualizada.id,
           nome: criancaAtualizada.nome,
           idade,
-          dataNascimento: criancaAtualizada.data_nascimento.toISOString().split('T')[0],
+          dataNascimento: criancaAtualizada.data_nascimento
+            .toISOString()
+            .split("T")[0],
           genero: criancaAtualizada.genero,
           diagnostico: criancaAtualizada.diagnostico,
           observacoes: criancaAtualizada.observacoes,
@@ -318,8 +352,8 @@ export class CriancasService {
         },
       };
     } catch (error) {
-      console.error('Erro ao atualizar criança:', error);
-      throw new BadRequestException('Erro ao atualizar criança.');
+      console.error("Erro ao atualizar criança:", error);
+      throw new BadRequestException("Erro ao atualizar criança.");
     }
   }
 
@@ -330,7 +364,7 @@ export class CriancasService {
     });
 
     if (!crianca) {
-      throw new BadRequestException('Criança não encontrada.');
+      throw new BadRequestException("Criança não encontrada.");
     }
 
     await this.prisma.crianca.delete({

@@ -10,6 +10,9 @@ export class BrazilianPhoneValidator implements ValidatorConstraintInterface {
   validate(phoneNumber: string, args: ValidationArguments) {
     if(!phoneNumber) return false;
 
+    // Verifica se phoneNumber é uma string antes de chamar .replace()
+    if(typeof phoneNumber !== 'string') return false;
+
     // Remove non-digit characters
     const digits = phoneNumber.replace(/\D/g, "");
 

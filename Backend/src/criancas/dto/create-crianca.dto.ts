@@ -1,46 +1,57 @@
-import { IsString, IsNumber, IsOptional, IsEmail, IsEnum, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEmail,
+  IsEnum,
+  ValidateNested,
+  IsDate,
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsAgeRange } from "../../common/decorators/is-age-range.decorator";
+import { IsBrazilianPhone } from "../../common/decorators/is-brasilian-phone";
 
 export enum Gender {
-  MASCULINO = 'Masculino',
-  FEMININO = 'Feminino',
-  OUTRO = 'Outro',
+  MASCULINO = "Masculino",
+  FEMININO = "Feminino",
+  OUTRO = "Outro",
 }
 
 export enum Parentesco {
-  PAI = 'PAI',
-  MAE = 'MAE',
-  AVO = 'AVO',
-  AVOA = 'AVOA',
-  TIO = 'TIO',
-  TIA = 'TIA',
-  TUTOR = 'TUTOR',
-  OUTRO = 'OUTRO',
+  PAI = "PAI",
+  MAE = "MAE",
+  AVO = "AVO",
+  AVOA = "AVOA",
+  TIO = "TIO",
+  TIA = "TIA",
+  TUTOR = "TUTOR",
+  OUTRO = "OUTRO",
 }
 
 export class ResponsibleDto {
-  @ApiProperty({ example: 'Maria Silva' })
+  @ApiProperty({ example: "Maria Silva" })
   @IsString()
   name: string;
 
-  @ApiProperty({ example: '(11) 99999-9999' })
+  @ApiProperty({ example: "(11) 99999-9999" })
   @IsString()
+  @IsBrazilianPhone()
   phone: string;
 
-  @ApiProperty({ example: 'maria@email.com', required: false })
+  @ApiProperty({ example: "maria@email.com", required: false })
   @IsOptional()
   @IsEmail()
   email?: string;
 
-  @ApiProperty({ example: 'Rua das Flores, 123', required: false })
+  @ApiProperty({ example: "Rua das Flores, 123", required: false })
   @IsOptional()
   @IsString()
   address?: string;
 }
 
 export class CreateCriancaDto {
-  @ApiProperty({ example: 'João da Silva' })
+  @ApiProperty({ example: "João da Silva" })
   @IsString()
   fullName: string;
 
@@ -49,19 +60,21 @@ export class CreateCriancaDto {
   @IsNumber()
   age?: number;
 
-  @ApiProperty({ example: '15/05/2018' })
+  @ApiProperty({ example: "2018/05/15" })
   @IsString()
+  // @IsDate()
+  @IsAgeRange(0, 18)
   birthDate: string;
 
-  @ApiProperty({ example: 'Masculino', enum: Gender })
+  @ApiProperty({ example: "Masculino", enum: Gender })
   @IsEnum(Gender)
   gender: Gender;
 
-  @ApiProperty({ example: 'TEA Leve' })
+  @ApiProperty({ example: "TEA Leve" })
   @IsString()
   diagnosis: string;
 
-  @ApiProperty({ example: 'PAI', enum: Parentesco })
+  @ApiProperty({ example: "PAI", enum: Parentesco })
   @IsEnum(Parentesco)
   parentesco: Parentesco;
 
@@ -70,7 +83,7 @@ export class CreateCriancaDto {
   @Type(() => ResponsibleDto)
   responsible: ResponsibleDto;
 
-  @ApiProperty({ example: 'Observações importantes...', required: false })
+  @ApiProperty({ example: "Observações importantes...", required: false })
   @IsOptional()
   @IsString()
   notes?: string;
