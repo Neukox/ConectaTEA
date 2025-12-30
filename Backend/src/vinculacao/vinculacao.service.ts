@@ -12,7 +12,7 @@ import { VincularResponsavelDto } from "./dto/vincularResponsavel.dto";
 export class VinculacaoService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly tokenVinculoService: TokenVinculoService,
+    private readonly tokenVinculoService: TokenVinculoService
   ) {}
 
   async validarCodigoVinculacao(codigo: string, responsavelId: number) {
@@ -141,5 +141,38 @@ export class VinculacaoService {
     }
 
     return historico;
+  }
+
+  async verificarVinculoCriancaProfissional(
+    criancaId: number,
+    profissionalId: number
+  ) {
+    const vinculo = await this.prismaService.profissionalCriança.findUnique({
+      where: {
+        profissional_id_crianca_id: {
+          profissional_id: profissionalId,
+          crianca_id: criancaId,
+        },
+        AND: { status_vinculo: "VINCULADO" },
+      },
+    });
+
+    return vinculo;
+  }
+
+  async verificarVinculoCriancaResponsavel(
+    criancaId: number,
+    responsavelId: number
+  ) {
+    const vinculo = await this.prismaService.crianca.findUnique({
+      where: {
+        id: criancaId,
+        responsavel_id: responsavelId,
+        status_vinculo_responsavel: "VINCULADO",
+      },
+      include: { responsavel: true },
+    });
+
+    return vinculo;
   }
 }
