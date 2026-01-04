@@ -5,6 +5,13 @@ import { PrismaService } from "../prisma/prisma.service";
 export class ProgressoService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async obterUltimoProgresso(metaId: number) {
+    return this.prisma.progresso.findFirst({
+      where: { meta_id: metaId },
+      orderBy: { data: "desc" },
+    });
+  }
+
   calcularDiferencaProgresso(
     progressoAnterior: number,
     progressoAtual: number

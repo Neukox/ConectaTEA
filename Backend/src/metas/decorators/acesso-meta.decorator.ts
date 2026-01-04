@@ -3,6 +3,6 @@ import { UserType } from "@prisma/client";
 import { Roles } from "../../auth/roles.decorator";
 import { MetasGuard } from "../guards/metas.guard";
 
-export const AcessoMeta = (tipo: UserType) => {
-  return applyDecorators(Roles(tipo), UseGuards(MetasGuard));
+export const AcessoMeta = (tipos: UserType[]) => {
+  return applyDecorators(Roles(...tipos), UseGuards(MetasGuard));
 };

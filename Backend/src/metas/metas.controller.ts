@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Req,
@@ -20,6 +21,8 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { FilterMetasDto } from "./dto/filter-metas.dto";
+import { AcessoMeta } from "./decorators/acesso-meta.decorator";
+import { IdParamPipe } from "../common/pipes/id-param.pipe";
 
 @ApiTags("Metas")
 @Controller("metas")
@@ -55,5 +58,19 @@ export class MetasController {
   async findAll(@Req() req: any, @Query() filterMetasDto: FilterMetasDto) {
     const profissional = req.profissional;
     return await this.metasService.findAll(filterMetasDto, profissional.id);
+  }
+
+  @ApiOperation({ summary: "Obter detalhes de uma meta" })
+  @ApiResponse({
+    status: 200,
+  })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @ApiResponse({ status: 404, description: "Meta não encontrada." })
+  @ApiBearerAuth()
+  @Get(":id")
+  @AcessoMeta(["PROFISSIONAL", "RESPONSAVEL"])
+  async findOne(@Param("id", IdParamPipe) id: number) {
+    return await this.metasService.findOne(id);
   }
 }

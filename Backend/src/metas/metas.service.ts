@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateMetaDto } from "./dto/create-meta.dto";
 import { FilterMetasDto } from "./dto/filter-metas.dto";
@@ -47,7 +47,7 @@ export class MetasService {
     };
   }
 
-  async findAll(filters: FilterMetasDto, profissionalId: number) {
+  async findAll(filters: FilterMetasDto, profissionalId?: number) {
     this.logger.debug(
       `Buscando metas para profissional ID: ${profissionalId} com filtros: ${JSON.stringify(filters)}`
     );
@@ -109,16 +109,69 @@ export class MetasService {
           update.progressoAnterior,
           update.progressoAtual
         );
-        
+
         return diferenca;
       });
 
       return {
         ...meta,
         updates: atualizacoesProgresso,
-      }
+      };
     });
 
     return metasComAtualizacoes;
+  }
+
+  async findOne(id: number) {
+    this.logger.debug(`Buscando meta ID: ${id}`);
+
+    const meta = await this.prisma.meta.findFirst({
+      where: {
+        id,
+      },
+      include: {
+        crianca: {
+          select: {
+            nome: true,
+          },
+        },
+        profissional: {
+          select: {
+            usuario: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!meta) {
+      this.logger.warn(`Meta ID: ${id} não encontrada.`);
+      throw new NotFoundException(`Meta não encontrada.`);
+    }
+
+    const ultimoProgressoAtualizado =
+      await this.progressoService.obterUltimoProgresso(meta.id);
+
+    this.logger.log(`Meta ID: ${id} encontrada com sucesso.`);
+
+    return {
+      id: meta.id,
+      titulo: meta.titulo,
+      descricao: meta.descricao,
+      categoria: meta.categoria,
+      prioridade: meta.prioridade,
+      status: meta.status,
+      dataInicio: meta.data_inicio,
+      dataFim: meta.data_fim,
+      crianca: meta.crianca.nome,
+      profissional: meta.profissional.usuario.name,
+      progresso: {
+        atual: meta.progresso,
+        data: ultimoProgressoAtualizado.data,
+      },
+    };
   }
 }
