@@ -3,21 +3,25 @@ import {
   CanActivate,
   ExecutionContext,
   NotFoundException,
-} from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+  Logger,
+} from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
 export class ProfissionalExistsGuard implements CanActivate {
+  private readonly logger = new Logger(ProfissionalExistsGuard.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const userId = request.user?.id;
 
-    console.log('ProfissionalExistsGuard: Verificando profissional para userId:', userId);
+    this.logger.debug(`Verificando profissional para userId: ${userId}`);
 
     if (!userId) {
-      throw new NotFoundException('Usuário não autenticado.');
+      this.logger.warn("Usuário não autenticado.");
+      throw new NotFoundException("Usuário não autenticado.");
     }
 
     const profissional = await this.prisma.profissional.findUnique({
@@ -26,11 +30,13 @@ export class ProfissionalExistsGuard implements CanActivate {
     });
 
     if (!profissional) {
+      this.logger.warn(`Profissional não encontrado para userId: ${userId}`);
       throw new NotFoundException(
-        'Profissional não encontrado para este usuário.',
+        "Profissional não encontrado para este usuário."
       );
     }
 
+    this.logger.debug(`Profissional encontrado: ${JSON.stringify(profissional)}`);
     // Adicionar profissional ao request para uso posterior
     request.profissional = profissional;
 

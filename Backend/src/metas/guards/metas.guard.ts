@@ -2,7 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  LoggerService,
+  Logger,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { UserType } from "@prisma/client";
@@ -12,11 +12,12 @@ import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
 export class MetasGuard implements CanActivate {
+  private readonly logger = new Logger(MetasGuard.name);
+  
   constructor(
     private readonly prisma: PrismaService,
     private readonly vinculacaoService: VinculacaoService,
-    private readonly reflector: Reflector,
-    private readonly logger: LoggerService
+    private readonly reflector: Reflector
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -86,7 +87,7 @@ export class MetasGuard implements CanActivate {
     this.logger.log(
       "MetasGuard: Verificação de vínculo concluída com sucesso."
     );
-    
+
     return true;
   }
 }
