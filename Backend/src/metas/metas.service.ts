@@ -3,12 +3,16 @@ import { PrismaService } from "../prisma/prisma.service";
 import { CreateMetaDto } from "./dto/create-meta.dto";
 import { FilterMetasDto } from "./dto/filter-metas.dto";
 import DateUtils from "../common/utils/date.utils";
+import { ProgressoService } from "../progresso/progresso.service";
 
 @Injectable()
 export class MetasService {
   private readonly logger = new Logger(MetasService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly progressoService: ProgressoService
+  ) {}
 
   async create(dto: CreateMetaDto, profissionalId: number) {
     const startDate = new Date(dto.dataInicio);
@@ -18,7 +22,7 @@ export class MetasService {
       `Criando meta para crianca: ${dto.crianca_id}, com título: ${dto.titulo}`
     );
 
-    const meta = this.prisma.meta.create({
+    const meta = await this.prisma.meta.create({
       data: {
         titulo: dto.titulo,
         descricao: dto.descricao,
@@ -28,10 +32,13 @@ export class MetasService {
         profissional_id: profissionalId,
         data_inicio: startDate,
         data_fim: endDate,
-      },
-      include: {
-        profissional: true,
-        crianca: true,
+        updates: {
+          create: {
+            descricao: "Meta criada.",
+            profissional_id: profissionalId,
+            status: "EM_ANDAMENTO",
+          },
+        },
       },
     });
 
@@ -62,21 +69,30 @@ export class MetasService {
       ...(filters.prioridade && { prioridade: filters.prioridade }),
       ...(filters.status && { status: filters.status }),
       ...(filters.search && {
-        OR: [
-          { titulo: { contains: filters.search, mode: "insensitive" } },
-        ],
+        OR: [{ titulo: { contains: filters.search, mode: "insensitive" } }],
       }),
-      ...(periodoStart &&
-        periodoEnd && {
-          data_inicio: { gte: periodoStart },
-          data_fim: { lte: periodoEnd },
-        }),
     };
+
+    if (periodoStart && periodoEnd) {
+      where.updates = {
+        some: {
+          data: {
+            gte: periodoStart,
+            lte: periodoEnd,
+          },
+        },
+      };
+    }
 
     const metas = await this.prisma.meta.findMany({
       where,
       include: {
-        crianca: true,
+        updates: {
+          select: {
+            progressoAtual: true,
+            progressoAnterior: true,
+          },
+        },
       },
       orderBy: {
         data_inicio: "desc",
@@ -87,6 +103,22 @@ export class MetasService {
       `Encontradas ${metas.length} metas para o profissional ID: ${profissionalId}`
     );
 
-    return metas;
+    const metasComAtualizacoes = metas.map((meta) => {
+      const atualizacoesProgresso = meta.updates.map((update) => {
+        const diferenca = this.progressoService.calcularDiferencaProgresso(
+          update.progressoAnterior,
+          update.progressoAtual
+        );
+        
+        return diferenca;
+      });
+
+      return {
+        ...meta,
+        updates: atualizacoesProgresso,
+      }
+    });
+
+    return metasComAtualizacoes;
   }
 }

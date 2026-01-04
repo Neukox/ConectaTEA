@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "public"."Progresso" ALTER COLUMN "data" SET DEFAULT CURRENT_TIMESTAMP;
