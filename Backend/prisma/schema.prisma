@@ -64,6 +64,19 @@ enum CategoriaMeta {
   MOTORA
 }
 
+enum TipoSessao {
+  TERAPIA_INDIVIDUAL
+  TERAPIA_OCUPACIONAL
+  FONOAUDIOLOGIA
+  AVALIACAO
+}
+
+enum StatusSessao {
+  AGENDADA
+  CONCLUIDA
+  EM_ANDAMENTO
+}
+
 enum Parentesco {
   PAI
   MAE
@@ -232,9 +245,13 @@ model ConexaoProfissional {
 }
 
 model Sessoes {
-  id              Int      @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   data            DateTime
+  duracao         Int // duração em minutos
+  status          StatusSessao @default(AGENDADA)
+  tipo            TipoSessao
   descricao       String
+  observacoes     String?
   crianca_id      Int
   profissional_id Int
 
