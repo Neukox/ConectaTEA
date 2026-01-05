@@ -28,6 +28,7 @@ import { AcessoMeta } from "./decorators/acesso-meta.decorator";
 import { IdParamPipe } from "../common/pipes/id-param.pipe";
 import { UpdateProgressoDto } from "./dto/update-progresso.dto";
 import { UpdateMetaDto } from "./dto/update-meta.dto";
+import { use } from "passport";
 
 @ApiTags("Metas")
 @Controller("metas")
@@ -63,6 +64,22 @@ export class MetasController {
   async findAll(@Req() req: any, @Query() filterMetasDto: FilterMetasDto) {
     const profissional = req.profissional;
     return await this.metasService.findAll(filterMetasDto, profissional.id);
+  }
+
+  @ApiOperation({ summary: "Obter resumo das metas" })
+  @ApiResponse({
+    status: 200,
+    description: "Resumo das metas retornado com sucesso.",
+  })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @ApiBearerAuth()
+  @Get("resumo")
+  @Roles("PROFISSIONAL")
+  @UseGuards(ProfissionalExistsGuard)
+  async resume(@Req() req: any) {
+    const profissional = req.profissional;
+    return await this.metasService.getResumo(profissional.id);
   }
 
   @ApiOperation({ summary: "Obter detalhes de uma meta" })

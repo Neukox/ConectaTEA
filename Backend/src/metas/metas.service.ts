@@ -125,6 +125,50 @@ export class MetasService {
     return metasComAtualizacoes;
   }
 
+  async getResumo(profissionalId: number) {
+    this.logger.debug(`Obtendo resumo das metas`);
+
+    const totalMetas = await this.prisma.meta.count({
+      where: {
+        profissional_id: profissionalId,
+      },
+    });
+
+    const metasPorStatus = await this.prisma.meta.groupBy({
+      by: ["status"],
+      _count: {
+        status: true,
+      },
+    });
+
+    const metasEmAndamento = metasPorStatus.find(
+      (meta) => meta.status === "EM_ANDAMENTO"
+    )?._count.status || 0;
+
+    const metasQuaseConcluidas = metasPorStatus.find(
+      (meta) => meta.status === "QUASE_CONCLUIDA"
+    )?._count.status || 0;
+
+    const metasVencendo = metasPorStatus.find(
+      (meta) => meta.status === "VENCENDO"
+    )?._count.status || 0;
+
+    const metasConcluidas = metasPorStatus.find(
+      (meta) => meta.status === "CONCLUIDA"
+    )?._count.status || 0;
+
+    const resumo = {
+      totalMetas,
+      metasEmAndamento: metasEmAndamento + metasQuaseConcluidas,
+      metasVencendo,
+      metasConcluidas,
+    };
+
+    this.logger.log(`Resumo das metas obtido com sucesso`);
+
+    return resumo;
+  }
+
   async findOne(id: number) {
     this.logger.debug(`Buscando meta ID: ${id}`);
 
