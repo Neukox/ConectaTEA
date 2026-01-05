@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -114,5 +115,20 @@ export class MetasController {
     @Body() dto: UpdateProgressoDto
   ) {
     return await this.metasService.updateProgresso(id, dto);
+  }
+
+  @ApiOperation({ summary: "Remover uma meta" })
+  @ApiResponse({
+    status: 200,
+    description: "Meta removida com sucesso.",
+  })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @ApiResponse({ status: 404, description: "Meta não encontrada." })
+  @ApiBearerAuth()
+  @AcessoMeta(["PROFISSIONAL"])
+  @Delete(":id")
+  async remove(@Param("id", IdParamPipe) id: number) {
+    return await this.metasService.remove(id);
   }
 }

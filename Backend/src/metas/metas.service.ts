@@ -244,6 +244,20 @@ export class MetasService {
     return { message: "Progresso da meta atualizado com sucesso." };
   }
 
+  async remove(id: number) {
+    this.logger.debug(`Removendo meta ID: ${id}`);
+
+    const meta = await this.findOne(id);
+
+    await this.prisma.meta.delete({
+      where: { id: meta.id },
+    });
+
+    this.logger.log(`Meta ID: ${id} removida com sucesso.`);
+
+    return { message: "Meta removida com sucesso." };
+  }
+
   calcularStatus(progresso: number, dataFim: Date): StatusMeta {
     if (progresso === 100) return "CONCLUIDA";
     if (progresso >= 90 && progresso < 100) return "QUASE_CONCLUIDA";

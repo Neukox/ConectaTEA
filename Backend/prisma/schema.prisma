@@ -270,15 +270,15 @@ model Meta {
 model Progresso {
   id                Int        @id @default(autoincrement())
   meta_id           Int
-  data              DateTime @default(now())
+  data              DateTime   @default(now())
   descricao         String?
   status            StatusMeta
-  progressoAnterior Int @default(0)
-  progressoAtual    Int @default(0)
+  progressoAnterior Int        @default(0)
+  progressoAtual    Int        @default(0)
   profissional_id   Int
 
   profissional Profissional @relation(fields: [profissional_id], references: [id])
-  meta         Meta         @relation(fields: [meta_id], references: [id])
+  meta         Meta         @relation(fields: [meta_id], references: [id], onDelete: Cascade)
 
   @@index([meta_id])
   @@index([data])
