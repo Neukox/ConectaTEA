@@ -1,5 +1,6 @@
 import { CategoriaMeta, PrioridadeMeta } from "@prisma/client";
 import {
+  IsDate,
   IsDateString,
   IsEnum,
   IsInt,
@@ -11,6 +12,7 @@ import {
 import { IsNotPastDate } from "../../common/decorators/is-not-past-date.decorator";
 import { IsNotBeforeDate } from "../../common/decorators/is-not-before-date.decorator";
 import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 
 export class CreateMetaDto {
   @ApiProperty({ example: "Aprender a ler", description: "Título da meta" })
@@ -33,14 +35,16 @@ export class CreateMetaDto {
   crianca_id: number;
 
   @ApiProperty({ example: "2024-07-01", description: "Data de início da meta" })
-  @IsDateString()
+  @Type(() => Date)
+  @IsDate()
   @IsNotPastDate()
-  dataInicio: string;
+  dataInicio: Date;
 
   @ApiProperty({ example: "2024-10-01", description: "Data de fim da meta" })
-  @IsDateString()
+  @Type(() => Date)
+  @IsDate()
   @IsNotBeforeDate('dataInicio')
-  dataFim: string;
+  dataFim: Date;
 
   @ApiProperty({ example: "A criança deve ser capaz de ler livros simples.", description: "Descrição da meta" })
   @IsString()

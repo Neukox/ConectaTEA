@@ -26,6 +26,7 @@ import { FilterMetasDto } from "./dto/filter-metas.dto";
 import { AcessoMeta } from "./decorators/acesso-meta.decorator";
 import { IdParamPipe } from "../common/pipes/id-param.pipe";
 import { UpdateProgressoDto } from "./dto/update-progresso.dto";
+import { UpdateMetaDto } from "./dto/update-meta.dto";
 
 @ApiTags("Metas")
 @Controller("metas")
@@ -77,6 +78,25 @@ export class MetasController {
     return await this.metasService.findOne(id);
   }
 
+  @ApiOperation({ summary: "Atualizar uma meta" })
+  @ApiResponse({
+    status: 200,
+    description: "Meta atualizada com sucesso.",
+  })
+  @ApiResponse({ status: 400, description: "Dados inválidos." })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @ApiResponse({ status: 404, description: "Meta não encontrada." })
+  @ApiBearerAuth()
+  @AcessoMeta(["PROFISSIONAL"])
+  @Put(":id")
+  async update(
+    @Param("id", IdParamPipe) id: number,
+    @Body() updateMetaDto: UpdateMetaDto
+  ) {
+    return await this.metasService.update(id, updateMetaDto);
+  }
+
   @ApiOperation({ summary: "Atualizar progresso de uma meta" })
   @ApiResponse({
     status: 200,
@@ -91,7 +111,7 @@ export class MetasController {
   @Patch(":id/progresso")
   async updateProgresso(
     @Param("id", IdParamPipe) id: number,
-    @Body() dto: UpdateProgressoDto,
+    @Body() dto: UpdateProgressoDto
   ) {
     return await this.metasService.updateProgresso(id, dto);
   }

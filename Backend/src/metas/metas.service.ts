@@ -6,6 +6,7 @@ import DateUtils from "../common/utils/date.utils";
 import { ProgressoService } from "../progresso/progresso.service";
 import { UpdateProgressoDto } from "./dto/update-progresso.dto";
 import { StatusMeta } from "@prisma/client";
+import { UpdateMetaDto } from "./dto/update-meta.dto";
 
 @Injectable()
 export class MetasService {
@@ -183,6 +184,28 @@ export class MetasService {
         data: ultimoProgressoAtualizado.data,
       },
     };
+  }
+
+  async update(id: number, dto: UpdateMetaDto) {
+    this.logger.debug(`Atualizando meta ID: ${id}`);
+
+    const meta = await this.findOne(id);
+
+    await this.prisma.meta.update({
+      where: { id },
+      data: {
+        titulo: dto.titulo ?? meta.titulo,
+        descricao: dto.descricao ?? meta.descricao,
+        categoria: dto.categoria ?? meta.categoria,
+        prioridade: dto.prioridade ?? meta.prioridade,
+        data_inicio: dto.dataInicio ? new Date(dto.dataInicio) : meta.dataInicio,
+        data_fim: dto.dataFim ? new Date(dto.dataFim) : meta.dataFim,
+      },
+    });
+
+    this.logger.log(`Meta ID: ${id} atualizada com sucesso.`);
+
+    return { message: "Meta atualizada com sucesso." };
   }
 
   async updateProgresso(metaId: number, dto: UpdateProgressoDto) {
