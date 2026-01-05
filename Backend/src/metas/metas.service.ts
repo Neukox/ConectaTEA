@@ -4,6 +4,8 @@ import { CreateMetaDto } from "./dto/create-meta.dto";
 import { FilterMetasDto } from "./dto/filter-metas.dto";
 import DateUtils from "../common/utils/date.utils";
 import { ProgressoService } from "../progresso/progresso.service";
+import { UpdateProgressoDto } from "./dto/update-progresso.dto";
+import { StatusMeta } from "@prisma/client";
 
 @Injectable()
 export class MetasService {
@@ -132,11 +134,13 @@ export class MetasService {
       include: {
         crianca: {
           select: {
+            id: true,
             nome: true,
           },
         },
         profissional: {
           select: {
+            id: true,
             usuario: {
               select: {
                 name: true,
@@ -166,12 +170,64 @@ export class MetasService {
       status: meta.status,
       dataInicio: meta.data_inicio,
       dataFim: meta.data_fim,
-      crianca: meta.crianca.nome,
-      profissional: meta.profissional.usuario.name,
+      crianca: {
+        id: meta.crianca.id,
+        nome: meta.crianca.nome,
+      },
+      profissional: {
+        id: meta.profissional.id,
+        name: meta.profissional.usuario.name,
+      },
       progresso: {
         atual: meta.progresso,
         data: ultimoProgressoAtualizado.data,
       },
     };
+  }
+
+  async updateProgresso(metaId: number, dto: UpdateProgressoDto) {
+    this.logger.debug(`Atualizando progresso da meta ID: ${metaId}`);
+
+    const meta = await this.findOne(metaId);
+
+    const progressoAnterior = meta.progresso.atual;
+    const progressoAtual = dto.progresso;
+
+    const status = this.calcularStatus(dto.progresso, meta.dataFim);
+
+    this.logger.debug(
+      `Progresso da meta ID: ${metaId} atualizado de ${progressoAnterior} para ${progressoAtual}`
+    );
+
+    this.logger.debug(`Status da meta ID: ${metaId} atualizado para ${status}`);
+
+    await this.prisma.meta.update({
+      where: { id: metaId },
+      data: {
+        progresso: progressoAtual,
+        status,
+        updates: {
+          create: {
+            descricao: dto.descricao || "Progresso atualizado.",
+            progressoAnterior,
+            progressoAtual,
+            profissional_id: meta.profissional.id,
+            status,
+          },
+        },
+      },
+    });
+
+    return { message: "Progresso da meta atualizado com sucesso." };
+  }
+
+  calcularStatus(progresso: number, dataFim: Date): StatusMeta {
+    if (progresso === 100) return "CONCLUIDA";
+    if (progresso >= 90 && progresso < 100) return "QUASE_CONCLUIDA";
+
+    const diasRestantes = DateUtils.daysDifference(new Date(), dataFim);
+    if (diasRestantes <= 7 && progresso < 90) return "VENCENDO";
+
+    return "EM_ANDAMENTO";
   }
 }

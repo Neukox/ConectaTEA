@@ -271,7 +271,7 @@ model Progresso {
   id                Int        @id @default(autoincrement())
   meta_id           Int
   data              DateTime @default(now())
-  descricao         String
+  descricao         String?
   status            StatusMeta
   progressoAnterior Int @default(0)
   progressoAtual    Int @default(0)

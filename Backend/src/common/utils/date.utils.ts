@@ -94,4 +94,20 @@ export default class DateUtils {
 
     return { startDate, endDate };
   }
+  
+  /**
+   * Calcula a diferença em dias entre duas datas.
+   * @param startDate Data de início.
+   * @param endDate Data de fim.
+   * @returns Diferença em dias entre as duas datas.
+   */
+  static daysDifference(startDate: Date, endDate: Date): number {
+    const start = this.parseDate(startDate);
+    const end = this.parseDate(endDate);
+
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  }
 }
