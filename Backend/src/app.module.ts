@@ -15,6 +15,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { VinculacaoModule } from "./vinculacao/vinculacao.module";
 import { TokenVinculoModule } from "./token-vinculo/token-vinculo.module";
 import { ProgressoModule } from './progresso/progresso.module';
+import { SessoesModule } from './sessoes/sessoes.module';
 
 
 @Module({
@@ -41,6 +42,7 @@ import { ProgressoModule } from './progresso/progresso.module';
     VinculacaoModule,
     TokenVinculoModule,
     ProgressoModule,
+    SessoesModule,
   ],
   controllers: [],
   providers: [],
