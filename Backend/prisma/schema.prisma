@@ -75,6 +75,8 @@ enum StatusSessao {
   AGENDADA
   CONCLUIDA
   EM_ANDAMENTO
+  PENDENTE
+  CANCELADA
 }
 
 enum Parentesco {

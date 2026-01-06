@@ -40,9 +40,9 @@ export class SessoesController {
   @Roles("PROFISSIONAL")
   @UseGuards(RolesGuard, ProfissionalExistsGuard)
   @Post()
-  create(@Body() createSessoeDto: CreateSessaoDto, @Req() req: any) {
+  async create(@Body() createSessaoDto: CreateSessaoDto, @Req() req: any) {
     const profissional = req.profissional;
-    return this.sessoesService.create(createSessoeDto, profissional.id);
+    return await this.sessoesService.create(createSessaoDto, profissional.id);
   }
 
   @ApiOperation({ summary: "Listar todas as sessões" })
@@ -56,9 +56,17 @@ export class SessoesController {
   @Roles("PROFISSIONAL")
   @UseGuards(RolesGuard, ProfissionalExistsGuard)
   @Get()
-  findAll(@Query() filterSessoesDto: FilterSessoesDto, @Req() req: any) {
+  async findAll(@Query() filterSessoesDto: FilterSessoesDto, @Req() req: any) {
     const profissional = req.profissional;
-    return this.sessoesService.findAll(profissional.id, filterSessoesDto);
+    return await this.sessoesService.findAll(profissional.id, filterSessoesDto);
+  }
+
+  @Roles("PROFISSIONAL")
+  @UseGuards(RolesGuard, ProfissionalExistsGuard)
+  @Get("resumo")
+  async resumo(@Req() req: any) {
+    const profissional = req.profissional;
+    return await this.sessoesService.getResumo(profissional.id);
   }
 
   @Get(":id")

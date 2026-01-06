@@ -98,6 +98,39 @@ export class SessoesService {
     return formattedSessoes;
   }
 
+  async getResumo(profissionalId: number) {
+    this.logger.log("Calculando resumo das sessões");
+
+    const sessoes = await this.findAll(profissionalId, {});
+
+    const totalSessoesCount = sessoes.length;
+
+    const sessoesConcluidas = sessoes.filter(
+      (sessao) => sessao.status === "CONCLUIDA"
+    ).length;
+
+    const sessoesPendentes = sessoes.filter(
+      (sessao) => sessao.status === "PENDENTE"
+    ).length;
+
+    const sessoesEstaSemana = sessoes.filter((sessao) => {
+      const { startDate, endDate } = DateUtils.periodToDateRange("SEMANAL");
+
+      const sessaoDate = new Date(sessao.data);
+
+      return sessaoDate >= startDate && sessaoDate <= endDate;
+    }).length;
+
+    this.logger.log("Resumo calculado com sucesso");
+
+    return {
+      totalSessoesCount,
+      sessoesConcluidas,
+      sessoesEstaSemana,
+      sessoesPendentes,
+    };
+  }
+
   findOne(id: number) {
     return `This action returns a #${id} sessoes`;
   }
