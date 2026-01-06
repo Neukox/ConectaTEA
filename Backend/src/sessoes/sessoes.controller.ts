@@ -109,8 +109,16 @@ export class SessoesController {
     return await this.sessoesService.updateStatus(id, updateStatusSessaoDto);
   }
 
+  @ApiOperation({ summary: "Remover uma sessão" })
+  @ApiResponse({ status: 200, description: "Sessão removida com sucesso." })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @ApiResponse({ status: 404, description: "Sessão não encontrada." })
+  @ApiBearerAuth()
+  @Roles("PROFISSIONAL")
+  @UseGuards(SessoesGuard)
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.sessoesService.remove(+id);
+  remove(@Param("id", IdParamPipe) id: number) {
+    return this.sessoesService.remove(id);
   }
 }

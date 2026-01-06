@@ -194,7 +194,22 @@ export class SessoesService {
     return { message: "Status da sessão atualizado com sucesso" };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} sessoes`;
+  async remove(id: number) {
+    this.logger.log(`Removendo sessão com ID: ${id}`);
+
+    const sessao = await this.findOne(id);
+
+    if (!sessao) {
+      this.logger.warn(`Sessão com ID: ${id} não encontrada para remoção`);
+      throw new NotFoundException(`Sessão não encontrada`);
+    }
+
+    await this.prisma.sessoes.delete({
+      where: { id },
+    });
+
+    this.logger.log(`Sessão com ID: ${id} removida com sucesso`);
+
+    return { message: "Sessão removida com sucesso" };
   }
 }
