@@ -27,6 +27,7 @@ import { ProfissionalExistsGuard } from "../profissionais/guards/profissional-ex
 import { FilterSessoesDto } from "./dto/filter-sessoes.dto";
 import { IdParamPipe } from "../common/pipes/id-param.pipe";
 import SessoesGuard from "./guards/sessoes.guard";
+import { UpdateStatusSessaoDto } from "./dto/update-status-sessao.dto";
 
 @ApiTags("Sessoes")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -86,6 +87,26 @@ export class SessoesController {
     @Body() updateSessaoDto: UpdateSessaoDto
   ) {
     return await this.sessoesService.update(id, updateSessaoDto);
+  }
+
+  @ApiOperation({ summary: "Atualizar status de uma sessão" })
+  @ApiResponse({
+    status: 200,
+    description: "Status da sessão atualizado com sucesso.",
+  })
+  @ApiResponse({ status: 400, description: "Dados inválidos." })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @ApiResponse({ status: 404, description: "Sessão não encontrada." })
+  @ApiBearerAuth()
+  @Roles("PROFISSIONAL")
+  @UseGuards(SessoesGuard)
+  @Patch(":id/status")
+  async updateStatus(
+    @Param("id", IdParamPipe) id: number,
+    @Body() updateStatusSessaoDto: UpdateStatusSessaoDto
+  ) {
+    return await this.sessoesService.updateStatus(id, updateStatusSessaoDto);
   }
 
   @Delete(":id")

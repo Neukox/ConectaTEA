@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import DateUtils from "../common/utils/date.utils";
 import { FilterSessoesDto } from "./dto/filter-sessoes.dto";
 import { Prisma } from "@prisma/client";
+import { UpdateStatusSessaoDto } from "./dto/update-status-sessao.dto";
 
 @Injectable()
 export class SessoesService {
@@ -164,6 +165,33 @@ export class SessoesService {
     this.logger.log(`Sessão com ID: ${id} atualizada com sucesso`);
 
     return { message: "Sessão atualizada com sucesso" };
+  }
+
+  async updateStatus(id: number, updateStatusSessaoDto: UpdateStatusSessaoDto) {
+    this.logger.log(
+      `Atualizando status da sessão com ID: ${id} para ${updateStatusSessaoDto.status}`
+    );
+    const sessao = await this.findOne(id);
+
+    if (!sessao) {
+      this.logger.warn(
+        `Sessão com ID: ${id} não encontrada para atualização de status`
+      );
+      throw new NotFoundException(`Sessão não encontrada`);
+    }
+
+    await this.prisma.sessoes.update({
+      where: { id },
+      data: {
+        status: updateStatusSessaoDto.status,
+      },
+    });
+
+    this.logger.log(
+      `Status da sessão com ID: ${id} atualizado para ${updateStatusSessaoDto.status} com sucesso`
+    );
+
+    return { message: "Status da sessão atualizado com sucesso" };
   }
 
   remove(id: number) {
