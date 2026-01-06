@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  Req,
   Query,
   Put,
 } from "@nestjs/common";
@@ -28,6 +27,7 @@ import { FilterSessoesDto } from "./dto/filter-sessoes.dto";
 import { IdParamPipe } from "../common/pipes/id-param.pipe";
 import SessoesGuard from "./guards/sessoes.guard";
 import { UpdateStatusSessaoDto } from "./dto/update-status-sessao.dto";
+import { Profissional } from "../common/decorators/profissional.decorator";
 
 @ApiTags("Sessoes")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -44,9 +44,11 @@ export class SessoesController {
   @Roles("PROFISSIONAL")
   @UseGuards(ProfissionalExistsGuard)
   @Post()
-  async create(@Body() createSessaoDto: CreateSessaoDto, @Req() req: any) {
-    const profissional = req.profissional;
-    return await this.sessoesService.create(createSessaoDto, profissional.id);
+  async create(
+    @Body() createSessaoDto: CreateSessaoDto,
+    @Profissional("id") profissionalId: number
+  ) {
+    return await this.sessoesService.create(createSessaoDto, profissionalId);
   }
 
   @ApiOperation({ summary: "Listar todas as sessões" })
@@ -60,17 +62,18 @@ export class SessoesController {
   @Roles("PROFISSIONAL")
   @UseGuards(ProfissionalExistsGuard)
   @Get()
-  async findAll(@Query() filterSessoesDto: FilterSessoesDto, @Req() req: any) {
-    const profissional = req.profissional;
-    return await this.sessoesService.findAll(profissional.id, filterSessoesDto);
+  async findAll(
+    @Query() filterSessoesDto: FilterSessoesDto,
+    @Profissional("id") profissionalId: number
+  ) {
+    return await this.sessoesService.findAll(profissionalId, filterSessoesDto);
   }
 
   @Roles("PROFISSIONAL")
   @UseGuards(ProfissionalExistsGuard)
   @Get("resumo")
-  async resumo(@Req() req: any) {
-    const profissional = req.profissional;
-    return await this.sessoesService.getResumo(profissional.id);
+  async resumo(@Profissional("id") profissionalId: number) {
+    return await this.sessoesService.getResumo(profissionalId);
   }
 
   @ApiOperation({ summary: "Atualizar uma sessão" })
