@@ -6,6 +6,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
+import { Request } from "express";
 
 @Injectable()
 export class ProfissionalExistsGuard implements CanActivate {
@@ -14,8 +15,8 @@ export class ProfissionalExistsGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const userId = request.user?.id;
+    const request: Request = context.switchToHttp().getRequest();
+    const userId = request.user.id;
 
     this.logger.debug(`Verificando profissional para userId: ${userId}`);
 
