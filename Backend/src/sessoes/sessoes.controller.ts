@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   Query,
+  Put,
 } from "@nestjs/common";
 import { SessoesService } from "./sessoes.service";
 import { CreateSessaoDto } from "./dto/create-sessao.dto";
@@ -24,9 +25,11 @@ import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { ProfissionalExistsGuard } from "../profissionais/guards/profissional-exists.guard";
 import { FilterSessoesDto } from "./dto/filter-sessoes.dto";
+import { IdParamPipe } from "../common/pipes/id-param.pipe";
+import SessoesGuard from "./guards/sessoes.guard";
 
 @ApiTags("Sessoes")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller("sessoes")
 export class SessoesController {
   constructor(private readonly sessoesService: SessoesService) {}
@@ -38,7 +41,7 @@ export class SessoesController {
   @ApiResponse({ status: 403, description: "Acesso proibido." })
   @ApiBearerAuth()
   @Roles("PROFISSIONAL")
-  @UseGuards(RolesGuard, ProfissionalExistsGuard)
+  @UseGuards(ProfissionalExistsGuard)
   @Post()
   async create(@Body() createSessaoDto: CreateSessaoDto, @Req() req: any) {
     const profissional = req.profissional;
@@ -54,7 +57,7 @@ export class SessoesController {
   @ApiResponse({ status: 403, description: "Acesso proibido." })
   @ApiBearerAuth()
   @Roles("PROFISSIONAL")
-  @UseGuards(RolesGuard, ProfissionalExistsGuard)
+  @UseGuards(ProfissionalExistsGuard)
   @Get()
   async findAll(@Query() filterSessoesDto: FilterSessoesDto, @Req() req: any) {
     const profissional = req.profissional;
@@ -62,21 +65,27 @@ export class SessoesController {
   }
 
   @Roles("PROFISSIONAL")
-  @UseGuards(RolesGuard, ProfissionalExistsGuard)
+  @UseGuards(ProfissionalExistsGuard)
   @Get("resumo")
   async resumo(@Req() req: any) {
     const profissional = req.profissional;
     return await this.sessoesService.getResumo(profissional.id);
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.sessoesService.findOne(+id);
-  }
-
-  @Patch(":id")
-  update(@Param("id") id: string, @Body() updateSessoeDto: UpdateSessaoDto) {
-    return this.sessoesService.update(+id, updateSessoeDto);
+  @ApiOperation({ summary: "Atualizar uma sessão" })
+  @ApiResponse({ status: 200, description: "Sessão atualizada com sucesso." })
+  @ApiResponse({ status: 400, description: "Dados inválidos." })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @ApiBearerAuth()
+  @Roles("PROFISSIONAL")
+  @UseGuards(SessoesGuard)
+  @Put(":id")
+  async update(
+    @Param("id", IdParamPipe) id: number,
+    @Body() updateSessaoDto: UpdateSessaoDto
+  ) {
+    return await this.sessoesService.update(id, updateSessaoDto);
   }
 
   @Delete(":id")

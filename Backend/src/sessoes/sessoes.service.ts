@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { CreateSessaoDto } from "./dto/create-sessao.dto";
 import { UpdateSessaoDto } from "./dto/update-sessao.dto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -131,12 +131,39 @@ export class SessoesService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} sessoes`;
+  async findOne(id: number) {
+    this.logger.log(`Recuperando sessão com ID: ${id}`);
+
+    const sessao = await this.prisma.sessoes.findUnique({
+      where: { id },
+    });
+
+    return sessao;
   }
 
-  update(id: number, updateSessoeDto: UpdateSessaoDto) {
-    return `This action updates a #${id} sessoes`;
+  async update(id: number, updateSessaoDto: UpdateSessaoDto) {
+    this.logger.log(`Atualizando sessão com ID: ${id}`);
+    const sessao = await this.findOne(id);
+
+    if (!sessao) {
+      this.logger.warn(`Sessão com ID: ${id} não encontrada para atualização`);
+      throw new NotFoundException(`Sessão não encontrada`);
+    }
+
+    await this.prisma.sessoes.update({
+      where: { id },
+      data: {
+        descricao: updateSessaoDto.descricao,
+        data: updateSessaoDto.data,
+        duracao: updateSessaoDto.duracao,
+        tipo: updateSessaoDto.tipoSessao,
+        observacoes: updateSessaoDto.observacoes,
+      },
+    });
+
+    this.logger.log(`Sessão com ID: ${id} atualizada com sucesso`);
+
+    return { message: "Sessão atualizada com sucesso" };
   }
 
   remove(id: number) {
