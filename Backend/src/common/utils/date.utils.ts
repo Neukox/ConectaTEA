@@ -5,6 +5,16 @@
 import { PeriodoType } from "../constants/periodo.constant";
 
 export default class DateUtils {
+  static readonly IntlOptions: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone: "America/Sao_Paulo",
+  };
+
   /**
    * Método para calcular a idade com base na data de nascimento fornecida.
    * @param {string | number | Date} date Data de nascimento como Date, string ou número (timestamp).
@@ -59,10 +69,10 @@ export default class DateUtils {
   /**
    * Converte um período em um intervalo de datas.
    * O intervalo de datas é definido com base no período fornecido.
-   * Se o período for "DIARIO", a data de início e fim será o dia atual.
+   * Se o período for "HOJE", a data de início e fim será o dia atual.
    * Se o período for "SEMANAL", as data de início será 7 dias atrás e a data de fim será o dia atual.
    * Se o período for "MENSAL", a data de início será 30 dias atrás e a data de fim será o dia atual.
-   * @param periodo Período a ser convertido (DIARIO, SEMANAL, MENSAL).
+   * @param periodo Período a ser convertido (HOJE, SEMANAL, MENSAL).
    * @returns Objeto contendo a data de início e a data de fim do intervalo.
    */
 
@@ -94,7 +104,7 @@ export default class DateUtils {
 
     return { startDate, endDate };
   }
-  
+
   /**
    * Calcula a diferença em dias entre duas datas.
    * @param startDate Data de início.
@@ -109,5 +119,22 @@ export default class DateUtils {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     return diffDays;
+  }
+
+  /**
+   * Formata uma data para o formato local especificado.
+   * @param date Data a ser formatada (Date, string ou número).
+   * @param options Opções de formatação de data (padrão: IntlOptions).
+   * @param locale Localização para formatação (padrão: "pt-BR").
+   * @returns Data formatada como string.
+   */
+
+  static localeDate(
+    date: Date | string | number,
+    options: Intl.DateTimeFormatOptions = this.IntlOptions,
+    locale = "pt-BR"
+  ): string {
+    const d = this.parseDate(date);
+    return d.toLocaleDateString(locale, options);
   }
 }

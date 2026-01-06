@@ -2,6 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CreateSessaoDto } from "./dto/create-sessao.dto";
 import { UpdateSessaoDto } from "./dto/update-sessao.dto";
 import { PrismaService } from "../prisma/prisma.service";
+import DateUtils from "../common/utils/date.utils";
+import { FilterSessoesDto } from "./dto/filter-sessoes.dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class SessoesService {
@@ -34,8 +37,65 @@ export class SessoesService {
     };
   }
 
-  findAll() {
-    return `This action returns all sessoes`;
+  async findAll(profissionalId: number, filters: FilterSessoesDto) {
+    this.logger.log("Recuperando todas as sessões");
+
+    const { startDate, endDate } = DateUtils.periodToDateRange(filters.periodo);
+
+    const where: Prisma.SessoesWhereInput = {
+      profissional_id: profissionalId,
+      ...(filters.criancaId && { crianca_id: filters.criancaId }),
+      ...(filters.status && { status: filters.status }),
+      ...(filters.tipo && { tipo: filters.tipo }),
+      ...(filters.periodo && {
+        data: {
+          gte: startDate,
+          lte: endDate,
+        },
+      }),
+    };
+
+    const sessoes = await this.prisma.sessoes.findMany({
+      where,
+      include: {
+        crianca: {
+          select: {
+            nome: true,
+          },
+        },
+        profissional: {
+          select: {
+            usuario: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    this.logger.log(`Total de sessões encontradas: ${sessoes.length}`);
+
+    const formattedSessoes = sessoes.map((sessao) => ({
+      id: sessao.id,
+      descricao: sessao.descricao,
+      data: DateUtils.localeDate(sessao.data),
+      duracao: sessao.duracao,
+      tipo: sessao.tipo,
+      status: sessao.status,
+      observacoes: sessao.observacoes,
+      crianca: {
+        id: sessao.crianca_id,
+        nome: sessao.crianca.nome,
+      },
+      profissional: {
+        id: sessao.profissional_id,
+        nome: sessao.profissional.usuario.name,
+      },
+    }));
+
+    return formattedSessoes;
   }
 
   findOne(id: number) {

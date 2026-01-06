@@ -8,15 +8,22 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from "@nestjs/common";
 import { SessoesService } from "./sessoes.service";
 import { CreateSessaoDto } from "./dto/create-sessao.dto";
 import { UpdateSessaoDto } from "./dto/update-sessao.dto";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { ProfissionalExistsGuard } from "../profissionais/guards/profissional-exists.guard";
+import { FilterSessoesDto } from "./dto/filter-sessoes.dto";
 
 @ApiTags("Sessoes")
 @UseGuards(JwtAuthGuard)
@@ -38,9 +45,20 @@ export class SessoesController {
     return this.sessoesService.create(createSessoeDto, profissional.id);
   }
 
+  @ApiOperation({ summary: "Listar todas as sessões" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de sessões recuperada com sucesso.",
+  })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @ApiBearerAuth()
+  @Roles("PROFISSIONAL")
+  @UseGuards(RolesGuard, ProfissionalExistsGuard)
   @Get()
-  findAll() {
-    return this.sessoesService.findAll();
+  findAll(@Query() filterSessoesDto: FilterSessoesDto, @Req() req: any) {
+    const profissional = req.profissional;
+    return this.sessoesService.findAll(profissional.id, filterSessoesDto);
   }
 
   @Get(":id")
