@@ -272,6 +272,8 @@ model Meta {
   crianca_id  Int
   data_inicio DateTime
   data_fim    DateTime
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
 
   profissional_id Int
 

@@ -1,3 +1,16 @@
+import {
+  differenceInDays,
+  differenceInYears,
+  endOfDay,
+  endOfMonth,
+  endOfWeek,
+  intlFormat,
+  parse,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+
 /**
  * Utilitários para manipulação e cálculo de datas.
  */
@@ -23,26 +36,19 @@ export default class DateUtils {
    */
   static parseDate(date: string | number | Date): Date {
     if (date instanceof Date) {
-      const d = new Date(date.getTime());
-      if (isNaN(d.getTime())) throw new Error("Data inválida");
-      return d;
+      return date;
     }
 
     if (typeof date === "number") {
-      const d = new Date(date);
-      if (isNaN(d.getTime())) throw new Error("Data inválida");
-      return d;
+      return new Date(date);
     }
 
-    if (typeof date === "string") {
-      const d = new Date(date);
-      if (isNaN(d.getTime())) throw new Error("Data inválida");
-      return d;
-    }
+    // Tenta analisar a string usando o formato ISO 8601
+    const parsedDate = parse(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx", new Date());
 
-    const parsedDate = new Date(date);
-    if (isNaN(parsedDate.getTime())) throw new Error("Data inválida");
-    return parsedDate;
+    if (!isNaN(parsedDate.getTime())) {
+      return parsedDate;
+    }
   }
 
   /**
@@ -55,15 +61,8 @@ export default class DateUtils {
     const birth = this.parseDate(birthDate);
     const today = new Date();
 
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    const dayDiff = today.getDate() - birth.getDate();
-
-    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-      age--;
-    }
-
-    return age;
+    // Usa differenceInYears do date-fns para calcular anos completos
+    return differenceInYears(today, birth);
   }
 
   /**
@@ -77,29 +76,23 @@ export default class DateUtils {
    */
 
   static periodToDateRange(periodo: PeriodoType) {
-    const endDate = new Date();
+    const now = new Date();
+    let endDate: Date;
     let startDate: Date;
 
     switch (periodo) {
       case "HOJE":
-        startDate = new Date(endDate);
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
+        startDate = startOfDay(now);
+        endDate = endOfDay(now);
         break;
       case "SEMANAL":
-        startDate = new Date(endDate);
-        startDate.setDate(endDate.getDate() - 7);
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
+        startDate = startOfWeek(now);
+        endDate = endOfWeek(now);
         break;
       case "MENSAL":
-        startDate = new Date(endDate);
-        startDate.setMonth(endDate.getMonth() - 1);
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
+        startDate = startOfMonth(now);
+        endDate = endOfMonth(now);
         break;
-      default:
-        startDate = new Date(0); // Data mínima possível
     }
 
     return { startDate, endDate };
@@ -112,13 +105,7 @@ export default class DateUtils {
    * @returns Diferença em dias entre as duas datas.
    */
   static daysDifference(startDate: Date, endDate: Date): number {
-    const start = this.parseDate(startDate);
-    const end = this.parseDate(endDate);
-
-    const diffTime = end.getTime() - start.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays;
+    return differenceInDays(endDate, startDate);
   }
 
   /**
@@ -135,6 +122,6 @@ export default class DateUtils {
     locale = "pt-BR"
   ): string {
     const d = this.parseDate(date);
-    return d.toLocaleDateString(locale, options);
+    return intlFormat(d, options, { locale });
   }
 }

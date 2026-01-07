@@ -16,6 +16,7 @@ import { VinculacaoModule } from "./vinculacao/vinculacao.module";
 import { TokenVinculoModule } from "./token-vinculo/token-vinculo.module";
 import { ProgressoModule } from './progresso/progresso.module';
 import { SessoesModule } from './sessoes/sessoes.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 
 @Module({
@@ -43,6 +44,7 @@ import { SessoesModule } from './sessoes/sessoes.module';
     TokenVinculoModule,
     ProgressoModule,
     SessoesModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],
