@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { startOfMonth, startOfWeek } from "date-fns";
+import DateUtils from "../common/utils/date.utils";
 
 @Injectable()
 export class DashboardService {
@@ -114,5 +115,76 @@ export class DashboardService {
       taxaProgresso: taxaProgresso,
       taxaProgressoEsteMes: taxaProgressoEsteMes,
     };
+  }
+
+  async obterCriancasProfissional(profissionalId: number) {
+    const criancas = await this.prisma.profissionalCriança.findMany({
+      where: { profissional_id: profissionalId },
+      orderBy: { data_vinculo: "desc" },
+      take: 4,
+      select: {
+        status_vinculo: true,
+        profissional: {
+          select: {
+            id: true,
+            titulo: true,
+            usuario: { select: { name: true } },
+          },
+        },
+        crianca: {
+          select: {
+            id: true,
+            nome: true,
+            data_nascimento: true,
+            diagnostico: true,
+          },
+        },
+      },
+    });
+
+    return criancas.map((vinculo) => {
+      const idade = DateUtils.calculateAge(vinculo.crianca.data_nascimento)
+      
+      return {
+        id: vinculo.crianca.id,
+        nome: vinculo.crianca.nome,
+        idade: idade,
+        diagnostico: vinculo.crianca.diagnostico,
+        status: vinculo.status_vinculo,
+        profissional: vinculo.profissional.titulo.concat(
+          " ",
+          vinculo.profissional.usuario.name
+        ),
+      };
+    });
+  }
+
+  async obterMetasProfissional(profissionalId: number) {
+    // Obter crianças vinculadas ao profissional
+    const criancas = await this.prisma.meta.findMany({
+      where: { profissional_id: profissionalId },
+      orderBy: { updated_at: "desc" },
+      take: 4,
+      select: {
+        id: true,
+        titulo: true,
+        status: true,
+        progresso: true,
+        crianca: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+      },
+    });
+
+    return criancas.map((meta) => ({
+      id: meta.id,
+      titulo: meta.titulo,
+      status: meta.status,
+      progresso: meta.progresso,
+      crianca: meta.crianca.nome,
+    }));
   }
 }
