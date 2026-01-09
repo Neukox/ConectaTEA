@@ -1,8 +1,8 @@
 import { TooltipProvider } from '~/components/ui/tooltip'
-import type { DadosDashboard } from '../../types'
+import type { DadosDashboard } from '../../../types'
 import DashboardStatsTooltip, {
   type DashboardStatsTooltipProps,
-} from '../DashboardStatsTooltip'
+} from '../../DashboardStatsTooltip'
 import { FaBullseye, FaChild } from 'react-icons/fa'
 import { FaUserDoctor } from 'react-icons/fa6'
 import { IoMdTrendingUp } from 'react-icons/io'
@@ -11,7 +11,9 @@ interface DashboardStatsViewProps {
   data: DadosDashboard
 }
 
-export default function DashboardStatsView({ data }: DashboardStatsViewProps) {
+export default function DashboardStatsProfisionalView({
+  data,
+}: DashboardStatsViewProps) {
   const dataToView: DashboardStatsTooltipProps[] = [
     {
       card: {

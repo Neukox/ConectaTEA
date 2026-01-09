@@ -4,14 +4,8 @@ import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
 import { CadastrarCriancaDialog } from '~/features/CadastrarCrianca'
 import { CadastrarMetaDialog } from '~/features/Metas'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '~/components/ui/tooltip'
-import { FaPlus } from 'react-icons/fa'
 import { HiPlus } from 'react-icons/hi'
+import DashboardStatsProfisional from '~/features/Dashboard/components/profissional/DashboardStatsProfisional'
 
 const criancas = [
   {
@@ -239,57 +233,7 @@ export default function Dashboard() {
         />
 
         {/* Cards superiores */}
-        <TooltipProvider>
-          <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-            {[
-              {
-                valor: 24,
-                label: 'Total de Crianças',
-                sub: '+2 este mês',
-                tooltip:
-                  'Quantidade total de crianças cadastradas na plataforma.',
-              },
-              {
-                valor: 8,
-                label: 'Profissionais Ativos',
-                sub: '+1 este mês',
-                tooltip: 'Número de profissionais ativos atualmente.',
-              },
-              {
-                valor: 47,
-                label: 'Metas Ativas',
-                sub: '+5 esta semana',
-                tooltip: 'Total de metas em andamento para as crianças.',
-              },
-              {
-                valor: '78%',
-                label: 'Taxa de Progresso',
-                sub: '+12% este mês',
-                tooltip: 'Porcentagem média de progresso das metas.',
-              },
-            ].map((card, i) => (
-              <Tooltip key={i}>
-                <TooltipTrigger asChild>
-                  <div className='flex cursor-pointer items-center gap-4 rounded-2xl border border-transparent bg-white p-6 shadow transition-all duration-200 hover:-translate-y-2 hover:border-green-400 hover:bg-white hover:shadow-xl focus:-translate-y-2'>
-                    <div className='flex h-14 w-14 items-center justify-center rounded-xl border border-green-100 bg-green-50 transition-all duration-200 hover:border-green-400 hover:bg-green-100'>
-                      {cardIcons[i]}
-                    </div>
-                    <div>
-                      <p className='text-2xl font-bold'>{card.valor}</p>
-                      <p className='font-medium text-gray-600'>{card.label}</p>
-                      <span className='text-sm font-semibold text-green-600'>
-                        {card.sub}
-                      </span>
-                    </div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{card.tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-        </TooltipProvider>
+        <DashboardStatsProfisional />
 
         {/* Conteúdo principal */}
         <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
