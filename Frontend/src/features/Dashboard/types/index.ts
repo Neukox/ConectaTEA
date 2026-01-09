@@ -13,7 +13,7 @@ export interface DadosDashboard {
 }
 
 export interface DadosCriancasDashboard {
-  criancaId: number
+  id: number
   nome: string
   idade: number
   status: StatusVinculoProfissionalCrianca

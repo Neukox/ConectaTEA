@@ -42,13 +42,13 @@ export default function DashboardCriancasProfissional() {
     <div className='space-y-4'>
       {data.map((crianca: DadosCriancasDashboard) => (
         <DashboardCriancaCard
-          key={crianca.criancaId}
+          key={crianca.id}
           crianca={{
             ...crianca,
             avatar: buildAvatarUrl(crianca.nome),
           }}
           onCardClick={() =>
-            navigate(`/profissional/criancas/detalhes/${crianca.criancaId}`)
+            navigate(`/profissional/criancas/detalhes/${crianca.id}`)
           }
         />
       ))}
