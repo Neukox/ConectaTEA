@@ -1,11 +1,11 @@
 import { cn } from '~/lib/utils'
-import type { DadosCriancasDashboard } from '../../types'
+import type { DadosCriancasDashboard } from '~/features/Dashboard/types'
 import { StatusVinculoProfissionalCriancaMap } from '~/features/Criancas/types'
 import { HiOutlineDotsHorizontal } from 'react-icons/hi'
 
 interface DashboardCriancaCardProps {
   crianca: DadosCriancasDashboard & {
-    avatar: string
+    avatar?: string
   }
   onCardClick?: () => void
 }
