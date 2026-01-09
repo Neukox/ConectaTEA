@@ -88,6 +88,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --container-5xs: 10rem;
+  --container-4xs: 12rem;
 }
 
 @layer base {

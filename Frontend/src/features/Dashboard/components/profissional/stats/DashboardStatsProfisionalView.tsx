@@ -53,7 +53,7 @@ export default function DashboardStatsProfisionalView({
     },
     {
       card: {
-        label: 'Taxa de Progresso Média',
+        label: 'Taxa de Progresso',
         valor: `${Math.round(data.taxaProgresso)}%`,
         sub:
           data.taxaProgressoEsteMes > 0
@@ -64,6 +64,7 @@ export default function DashboardStatsProfisionalView({
       icon: IoMdTrendingUp,
     },
   ]
+
   return (
     <TooltipProvider>
       <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
