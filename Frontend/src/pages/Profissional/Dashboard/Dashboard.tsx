@@ -10,6 +10,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '~/components/ui/tooltip'
+import { FaPlus } from 'react-icons/fa'
+import { HiPlus } from 'react-icons/hi'
 
 const criancas = [
   {
@@ -299,19 +301,7 @@ export default function Dashboard() {
                 onClick={() => setShowModal(true)}
                 className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700'
               >
-                <svg
-                  className='h-5 w-5'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M12 4v16m8-8H4'
-                  />
-                </svg>
+                <HiPlus className='size-4' />
                 Adicionar
               </button>
             </div>
@@ -390,19 +380,7 @@ export default function Dashboard() {
                 onClick={() => setShowMetaModal(true)}
                 className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700'
               >
-                <svg
-                  className='h-5 w-5'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M12 4v16m8-8H4'
-                  />
-                </svg>
+                <HiPlus className='size-4' />
                 Nova Meta
               </button>
             </div>
