@@ -91,6 +91,16 @@ export class VinculacaoService {
         select: { aceito: true, data_aceite: true },
       });
 
+      await prisma.crianca.update({
+        where: {
+          id: vincularResponsavelDto.criancaId,
+          responsavel_id: vincularResponsavelDto.responsavelId,
+        },
+        data: {
+          status_vinculo_responsavel: "VINCULADO",
+        },
+      });
+
       const vinculacaoProfissional = await prisma.profissionalCriança.update({
         where: {
           profissional_id_crianca_id: {
