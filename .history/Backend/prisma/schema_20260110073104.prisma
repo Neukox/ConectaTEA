@@ -1,0 +1,381 @@
+generator client {
+  provider = "prisma-client-js"
+  ignoreDeprecations = "6.0"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  PROFISSIONAL
+  RESPONSAVEL
+}
+
+enum PrioridadeMeta {
+  BAIXA
+  MEDIA
+  ALTA
+}
+
+enum StatusResponsavelVinculo {
+  AGUARDANDO_VINCULO
+  VINCULADO
+  DESVINCULADO
+  CODIGO_EXPIRADO
+}
+
+enum StatusProfissionalVinculo {
+  AGUARDANDO
+  VINCULADO
+  DESVINCULADO
+  SUSPENSO
+}
+
+enum StatusTokenVinculo {
+  AGUARDANDO
+  USADO
+  EXPIRADO
+  CANCELADO
+}
+
+enum StatusVinculacao {
+  TOKEN_GERADO
+  TOKEN_USADO
+  TOKEN_EXPIRADO
+  TOKEN_CANCELADO
+  VINCULO_CRIADO
+  VINCULO_ENCERRADO
+}
+
+enum StatusMeta {
+  EM_ANDAMENTO
+  VENCENDO
+  QUASE_CONCLUIDA
+  CONCLUIDA
+}
+
+enum CategoriaMeta {
+  COMUNICACAO
+  SOCIAL
+  COGNITIVA
+  COMPORTAMENTAL
+  AUTONOMIA
+  MOTORA
+}
+
+enum TipoSessao {
+  TERAPIA_INDIVIDUAL
+  TERAPIA_OCUPACIONAL
+  FONOAUDIOLOGIA
+  AVALIACAO
+}
+
+enum StatusSessao {
+  AGENDADA
+  CONCLUIDA
+  EM_ANDAMENTO
+  PENDENTE
+  CANCELADA
+}
+
+enum Parentesco {
+  PAI
+  MAE
+  AVO
+  AVOA
+  TIO
+  TIA
+  TUTOR
+  OUTRO
+}
+
+enum StatusConexao {
+  PENDENTE
+  ACEITO
+  RECUSADO
+}
+
+enum AuditAction {
+  CONEXAO_ENVIADA
+  CONEXAO_ACEITA
+  CONEXAO_RECUSADA
+  CONEXAO_REMOVIDA
+  PERFIL_ATUALIZADO
+  LOGIN
+  LOGOUT
+}
+
+enum RedeSocialTipo {
+  LINKEDIN
+  INSTAGRAM
+  FACEBOOK
+  SITE
+  OUTRO
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?
+  password  String
+  telefone  String?
+  endereco  String?
+  tipo      UserType
+  criado_em DateTime @default(now())
+
+  // Relacionamentos
+  criancas          Crianca[]           @relation("ResponsavelCrianças")
+  profissional      Profissional?
+  auditLogs         AuditLog[]
+  tokensUsados      TokenVinculo[]      @relation("TokensUsadosPorResponsavel")
+  consentimentos    Consentimento[]     @relation("ResponsavelConsentimentos")
+  historicoVinculos HistoricoVinculos[] @relation("ResponsavelHistorico")
+}
+
+model Crianca {
+  id                         Int                      @id @default(autoincrement())
+  nome                       String
+  data_nascimento            DateTime
+  genero                     String
+  diagnostico                String
+  diagnosticoDetalhes        String?
+  observacoes                String?
+  parentesco                 Parentesco
+  status_vinculo_responsavel StatusResponsavelVinculo @default(AGUARDANDO_VINCULO)
+
+  responsavel_id Int
+  responsavel    User @relation("ResponsavelCrianças", fields: [responsavel_id], references: [id])
+
+  // Relacionamentos
+  sessoes           Sessoes[]
+  metas             Meta[]
+  prof_crianca      ProfissionalCriança[]
+  tokensVinculo     TokenVinculo[]         @relation("TokensCrianca")
+  consentimentos    Consentimento[]        @relation("ConsentimentosCrianca")
+  historicoVinculos HistoricoVinculos[]    @relation("HistoricoCrianca")
+}
+
+model Profissional {
+  id                    Int    @id @default(autoincrement())
+  usuario_id            Int    @unique
+  especialidade         String
+  registro_profissional String
+
+  // 🔹 Novos campos para o perfil
+  titulo              String? // Ex: "Psicólogo Clínico"
+  formacaoAcademica   String? // Ex: "Psicologia - USP"
+  sobre               String? // Biografia
+  fotoPerfilUrl       String? // URL da foto de perfil
+  codigoIdentificacao String? @unique // Ex: "PROF-001"
+
+  usuario User @relation(fields: [usuario_id], references: [id])
+
+  // Relacionamentos
+  sessoes           Sessoes[]
+  prof_crianca      ProfissionalCriança[]
+  conexoesEnviadas  ConexaoProfissional[]     @relation("ConexoesEnviadas")
+  conexoesRecebidas ConexaoProfissional[]     @relation("ConexoesRecebidas")
+  locaisAtendimento LocalAtendimento[]
+  redesSociais      RedeSocial[]
+  areasAtuacao      AreaAtuacaoProfissional[]
+  tokensGerados     TokenVinculo[]            @relation("TokensGeradosPorProfissional")
+  consentimentos    Consentimento[]           @relation("ConsentimentosProfissional")
+  historicoVinculos HistoricoVinculos[]       @relation("HistoricoProfissional")
+  metas             Meta[]
+  progressos        Progresso[]
+}
+
+model LocalAtendimento {
+  id              Int          @id @default(autoincrement())
+  nome            String
+  cidade          String
+  profissional_id Int
+  profissional    Profissional @relation(fields: [profissional_id], references: [id])
+}
+
+model RedeSocial {
+  id              Int          @id @default(autoincrement())
+  tipo            String // "LinkedIn", "Instagram", "Facebook"
+  url             String?
+  profissional_id Int
+  profissional    Profissional @relation(fields: [profissional_id], references: [id])
+}
+
+model AreaAtuacao {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+
+  profissionais AreaAtuacaoProfissional[]
+}
+
+model AreaAtuacaoProfissional {
+  profissional_id Int
+  area_id         Int
+
+  profissional Profissional @relation(fields: [profissional_id], references: [id])
+  area         AreaAtuacao  @relation(fields: [area_id], references: [id])
+
+  @@id([profissional_id, area_id])
+}
+
+model ProfissionalCriança {
+  profissional_id   Int
+  crianca_id        Int
+  status_vinculo    StatusProfissionalVinculo @default(AGUARDANDO)
+  data_vinculo      DateTime                  @default(now())
+  data_desvinculo   DateTime?
+  motivo_desvinculo String?
+
+  profissional Profissional @relation(fields: [profissional_id], references: [id])
+  crianca      Crianca      @relation(fields: [crianca_id], references: [id])
+
+  @@id([profissional_id, crianca_id])
+}
+
+model ConexaoProfissional {
+  id             Int           @id @default(autoincrement())
+  solicitante_id Int
+  solicitado_id  Int
+  status         StatusConexao @default(PENDENTE)
+  criado_em      DateTime      @default(now())
+
+  solicitante Profissional @relation("ConexoesEnviadas", fields: [solicitante_id], references: [id])
+  solicitado  Profissional @relation("ConexoesRecebidas", fields: [solicitado_id], references: [id])
+
+  // Removida constraint única para permitir múltiplas solicitações entre os mesmos profissionais
+}
+
+model Sessoes {
+  id              Int          @id @default(autoincrement())
+  data            DateTime
+  duracao         Int // duração em minutos
+  status          StatusSessao @default(AGENDADA)
+  tipo            TipoSessao
+  descricao       String
+  observacoes     String?
+  crianca_id      Int
+  profissional_id Int
+
+  crianca      Crianca      @relation(fields: [crianca_id], references: [id])
+  profissional Profissional @relation(fields: [profissional_id], references: [id])
+}
+
+model Meta {
+  id          Int            @id @default(autoincrement())
+  titulo      String
+  descricao   String
+  categoria   CategoriaMeta
+  prioridade  PrioridadeMeta
+  status      StatusMeta     @default(EM_ANDAMENTO)
+  progresso   Int            @default(0) // porcentagem
+  crianca_id  Int
+  data_inicio DateTime
+  data_fim    DateTime
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+
+  profissional_id Int
+
+  crianca Crianca     @relation(fields: [crianca_id], references: [id])
+  updates Progresso[]
+
+  profissional Profissional @relation(fields: [profissional_id], references: [id])
+
+  @@index([crianca_id])
+  @@index([profissional_id])
+  @@index([data_inicio])
+  @@index([data_fim])
+}
+
+model Progresso {
+  id                Int        @id @default(autoincrement())
+  meta_id           Int
+  data              DateTime   @default(now())
+  descricao         String?
+  status            StatusMeta
+  progressoAnterior Int        @default(0)
+  progressoAtual    Int        @default(0)
+  profissional_id   Int
+
+  profissional Profissional @relation(fields: [profissional_id], references: [id])
+  meta         Meta         @relation(fields: [meta_id], references: [id], onDelete: Cascade)
+
+  @@index([meta_id])
+  @@index([data])
+}
+
+model AuditLog {
+  id        Int         @id @default(autoincrement())
+  userId    Int?
+  action    AuditAction
+  details   String?
+  createdAt DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([createdAt])
+}
+
+model HistoricoVinculos {
+  id              Int              @id @default(autoincrement())
+  responsavel_id  Int?
+  profissional_id Int
+  crianca_id      Int
+  tipo_evento     StatusVinculacao
+  descricao       String?
+  data_evento     DateTime         @default(now())
+
+  profissional Profissional @relation("HistoricoProfissional", fields: [profissional_id], references: [id])
+  crianca      Crianca      @relation("HistoricoCrianca", fields: [crianca_id], references: [id])
+  responsavel  User?        @relation("ResponsavelHistorico", fields: [responsavel_id], references: [id])
+
+  @@index([crianca_id])
+  @@index([profissional_id])
+  @@index([data_evento])
+}
+
+model Consentimento {
+  id              Int       @id @default(autoincrement())
+  responsavel_id  Int
+  profissional_id Int
+  crianca_id      Int
+  aceito          Boolean   @default(false)
+  data_aceite     DateTime  @default(now())
+  data_revogado   DateTime?
+  ip_address      String?
+  user_agent      String?
+
+  responsavel  User         @relation("ResponsavelConsentimentos", fields: [responsavel_id], references: [id])
+  profissional Profissional @relation("ConsentimentosProfissional", fields: [profissional_id], references: [id])
+  crianca      Crianca      @relation("ConsentimentosCrianca", fields: [crianca_id], references: [id])
+
+  @@unique([crianca_id, responsavel_id, profissional_id])
+  @@index([crianca_id])
+  @@index([responsavel_id])
+}
+
+model TokenVinculo {
+  id              Int                @id @default(autoincrement())
+  codigo          String             @unique
+  qr_code_url     String?
+  profissional_id Int
+  crianca_id      Int
+  status          StatusTokenVinculo @default(AGUARDANDO)
+  data_criacao    DateTime           @default(now())
+  data_expiracao  DateTime
+  data_uso        DateTime?
+  usado_por       Int?
+
+  // Relações
+  profissional Profissional @relation(name: "TokensGeradosPorProfissional", fields: [profissional_id], references: [id])
+  crianca      Crianca      @relation(name: "TokensCrianca", fields: [crianca_id], references: [id])
+  usuario      User?        @relation(name: "TokensUsadosPorResponsavel", fields: [usado_por], references: [id])
+
+  @@index([profissional_id])
+  @@index([crianca_id])
+  @@index([codigo])
+  @@index([status])
+}
