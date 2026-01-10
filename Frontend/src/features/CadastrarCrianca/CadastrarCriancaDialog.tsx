@@ -12,6 +12,7 @@ import {
   type CadastroCriancaFormData,
 } from '../../api/protected/axiosCadastroCrianca'
 import { useNotificacoesContext } from '../../api/barraNotificacao'
+import { parseDateToString } from '~/lib/date.utils'
 
 interface CadastrarCriancaDialogProps {
   open: boolean
@@ -59,7 +60,7 @@ export function CadastrarCriancaDialog({
       const dadosParaEnvio = {
         nomeCompleto: String(formData.nomeCompleto).trim(),
         idade: Number(formData.idade) || 0,
-        dataNascimento: String(formData.dataNascimento).trim(),
+        dataNascimento: parseDateToString(formData.dataNascimento).toDateString(),
         genero: formData.genero,
         diagnostico: String(formData.diagnostico).trim(),
         diagnosticoOutro: String(formData.diagnosticoOutro || '').trim(),
@@ -70,6 +71,8 @@ export function CadastrarCriancaDialog({
         parentesco: formData.parentesco,
         observacoes: String(formData.observacoes || '').trim(),
       }
+
+      console.log('Dados para envio:', dadosParaEnvio)
 
       // Usar a função de cadastro com tipagem correta
       await cadastrarCrianca(dadosParaEnvio)

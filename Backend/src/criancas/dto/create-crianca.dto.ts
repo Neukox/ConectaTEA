@@ -61,8 +61,8 @@ export class CreateCriancaDto {
   age?: number;
 
   @ApiProperty({ example: "2018/05/15" })
-  @IsString()
-  // @IsDate()
+  @Type(() => Date)
+  @IsDate()
   @IsAgeRange(0, 18)
   birthDate: string;
 

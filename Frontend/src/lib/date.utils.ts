@@ -1,9 +1,11 @@
+import { parse } from 'date-fns'
+
 export function formatDate(dateString: string): string {
   const date = new Date(dateString)
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
+    year: 'numeric',
   })
 }
 
@@ -16,4 +18,8 @@ export function calculateAge(birthDate: string | Date): number {
     age--
   }
   return age
+}
+
+export function parseDateToString(dateString: string): Date {
+  return parse(dateString, 'yyyy-MM-dd', new Date())
 }
