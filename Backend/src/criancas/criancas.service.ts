@@ -162,6 +162,7 @@ export class CriancasService {
       diagnostico: crianca.diagnostico,
       parentesco: crianca.parentesco,
       observacoes: crianca.observacoes,
+      status_vinculo_responsavel: crianca.status_vinculo_responsavel,
       responsavel: {
         id: crianca.responsavel.id,
         nome: crianca.responsavel.name, // Mapear name para nome

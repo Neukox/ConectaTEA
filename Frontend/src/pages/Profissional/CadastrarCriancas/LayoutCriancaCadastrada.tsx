@@ -4,6 +4,7 @@ import type { CriancaListagem } from '../../../api/protected/axiosCadastroCrianc
 import { useConfirmacao } from '../../../hooks/useConfirmacao'
 import BarraConfirmacao from '../../../components/features/ModalConfirmacao'
 import ModalVerDetalhesCriancaCadastrada from './ModalVerDetalhesCriancaCadastrada'
+import type { StatusVinculoProfissionalCrianca } from '~/features/Criancas/types'
 
 // Interface para o profissional
 interface ProfissionalInfo {
@@ -111,14 +112,16 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
         {/* Botões de ação */}
         <div className='ml-4 flex gap-2'>
           {/* Botão para visualizar código de vínculo (quando ainda aguardando) */}
-          <button
-            onClick={() => onVisualizarCodigo?.(crianca.id)}
-            className='flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-50'
-            title='Visualizar código de vínculo'
-          >
-            <QrCode className='h-4 w-4' />
-            <span className='hidden sm:inline'>Código</span>
-          </button>
+          {crianca.status_vinculo_responsavel === 'AGUARDANDO_VINCULO' && (
+            <button
+              onClick={() => onVisualizarCodigo?.(crianca.id)}
+              className='flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-50'
+              title='Visualizar código de vínculo'
+            >
+              <QrCode className='h-4 w-4' />
+              <span className='hidden sm:inline'>Código</span>
+            </button>
+          )}
           <button
             onClick={handleVerDetalhes}
             className='rounded-lg border border-green-600 px-4 py-2 text-sm text-green-600 transition-colors hover:bg-green-50'

@@ -9,7 +9,7 @@ export type Parentesco =
   | 'OUTRO'
 
 export type StatusVinculoProfissionalCrianca =
-  | 'AGUARDANDO'
+  | 'AGUARDANDO_VINCULO'
   | 'VINCULADO'
   | 'DESVINCULADO'
   | 'SUSPENSO'
@@ -43,7 +43,7 @@ export const Parentesco = {
 } satisfies Record<Parentesco, string>
 
 export const StatusVinculoProfissionalCriancaMap = {
-  AGUARDANDO: 'Aguardando',
+  AGUARDANDO_VINCULO: 'Aguardando',
   VINCULADO: 'Vinculado',
   DESVINCULADO: 'Desvinculado',
   SUSPENSO: 'Suspenso',
