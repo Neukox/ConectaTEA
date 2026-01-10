@@ -9,10 +9,16 @@ export type Parentesco =
   | 'OUTRO'
 
 export type StatusVinculoProfissionalCrianca =
-  | 'AGUARDANDO_VINCULO'
+  | 'AGUARDANDO'
   | 'VINCULADO'
   | 'DESVINCULADO'
   | 'SUSPENSO'
+
+export type StatusVinculoResponsavelCrianca =
+  | 'AGUARDANDO_VINCULO'
+  | 'VINCULADO'
+  | 'DESVINCULADO'
+  | 'CODIGO_EXPIRADO'
 
 export interface Crianca {
   id: number
@@ -43,7 +49,7 @@ export const Parentesco = {
 } satisfies Record<Parentesco, string>
 
 export const StatusVinculoProfissionalCriancaMap = {
-  AGUARDANDO_VINCULO: 'Aguardando',
+  AGUARDANDO: 'Aguardando',
   VINCULADO: 'Vinculado',
   DESVINCULADO: 'Desvinculado',
   SUSPENSO: 'Suspenso',
