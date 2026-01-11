@@ -5,7 +5,7 @@ import { FilterMetasDto } from "./dto/filter-metas.dto";
 import DateUtils from "../common/utils/date.utils";
 import { ProgressoService } from "../progresso/progresso.service";
 import { UpdateProgressoDto } from "./dto/update-progresso.dto";
-import { StatusMeta } from "@prisma/client";
+import { Meta, StatusMeta } from "@prisma/client";
 import { UpdateMetaDto } from "./dto/update-meta.dto";
 
 @Injectable()
@@ -141,21 +141,21 @@ export class MetasService {
       },
     });
 
-    const metasEmAndamento = metasPorStatus.find(
-      (meta) => meta.status === "EM_ANDAMENTO"
-    )?._count.status || 0;
+    const metasEmAndamento =
+      metasPorStatus.find((meta) => meta.status === "EM_ANDAMENTO")?._count
+        .status || 0;
 
-    const metasQuaseConcluidas = metasPorStatus.find(
-      (meta) => meta.status === "QUASE_CONCLUIDA"
-    )?._count.status || 0;
+    const metasQuaseConcluidas =
+      metasPorStatus.find((meta) => meta.status === "QUASE_CONCLUIDA")?._count
+        .status || 0;
 
-    const metasVencendo = metasPorStatus.find(
-      (meta) => meta.status === "VENCENDO"
-    )?._count.status || 0;
+    const metasVencendo =
+      metasPorStatus.find((meta) => meta.status === "VENCENDO")?._count
+        .status || 0;
 
-    const metasConcluidas = metasPorStatus.find(
-      (meta) => meta.status === "CONCLUIDA"
-    )?._count.status || 0;
+    const metasConcluidas =
+      metasPorStatus.find((meta) => meta.status === "CONCLUIDA")?._count
+        .status || 0;
 
     const resumo = {
       totalMetas,
@@ -242,7 +242,9 @@ export class MetasService {
         descricao: dto.descricao ?? meta.descricao,
         categoria: dto.categoria ?? meta.categoria,
         prioridade: dto.prioridade ?? meta.prioridade,
-        data_inicio: dto.dataInicio ? new Date(dto.dataInicio) : meta.dataInicio,
+        data_inicio: dto.dataInicio
+          ? new Date(dto.dataInicio)
+          : meta.dataInicio,
         data_fim: dto.dataFim ? new Date(dto.dataFim) : meta.dataFim,
       },
     });
@@ -310,5 +312,21 @@ export class MetasService {
     if (diasRestantes <= 7 && progresso < 90) return "VENCENDO";
 
     return "EM_ANDAMENTO";
+  }
+
+  countMetasByStatus(metas: Meta[]) {
+    const metasMap: Record<StatusMeta, number> = {
+      CONCLUIDA: 0,
+      QUASE_CONCLUIDA: 0,
+      VENCENDO: 0,
+      EM_ANDAMENTO: 0,
+    };
+
+    const mapped = metas.reduce((acc, meta) => {
+      acc[meta.status] = (acc[meta.status] || 0) + 1;
+      return acc;
+    }, metasMap);
+
+    return mapped;
   }
 }
