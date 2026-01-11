@@ -102,6 +102,20 @@ export default class DateUtils {
         startDate = startOfMonth(now);
         endDate = endOfMonth(now);
         break;
+      case "SEMESTRAL":
+        startDate = startOfMonth(
+          new Date(now.getFullYear(), now.getMonth() - 6, 1)
+        );
+        endDate = endOfMonth(now);
+        break;
+      case "ANUAL":
+        startDate = startOfMonth(
+          new Date(now.getFullYear() - 1, now.getMonth(), 1)
+        );
+        endDate = endOfMonth(now);
+        break;
+      default:
+        throw new Error(`Período desconhecido: ${periodo}`);
     }
 
     return { startDate, endDate };
