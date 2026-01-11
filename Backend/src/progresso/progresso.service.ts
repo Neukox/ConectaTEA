@@ -1,6 +1,17 @@
 import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { MetasService } from "../metas/metas.service";
+import {
+  eachMonthOfInterval,
+  endOfMonth,
+  format,
+  startOfMonth,
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CategoriaMeta, Meta, Progresso } from "@prisma/client";
+import DateUtils from "../common/utils/date.utils";
+import { PeriodoType } from "../common/constants/periodo.constant";
+import { start } from "repl";
 
 @Injectable()
 export class ProgressoService {
@@ -105,6 +116,40 @@ export class ProgressoService {
     };
   }
 
+  async obterEvolucaoPorCategoria(
+    profissionalId: number,
+    periodo: PeriodoType = "SEMESTRAL"
+  ) {
+    this.logger.debug(
+      `Obtendo evolução por categoria para profissional ID: ${profissionalId}`
+    );
+
+    const { startDate, endDate } = DateUtils.periodToDateRange(periodo);
+
+    const progressos = await this.prisma.progresso.findMany({
+      where: {
+        profissional_id: profissionalId,
+        data: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: { meta: { select: { categoria: true } } },
+    });
+
+    const evolucao = this.calcularEvolucaoPorCategoria(
+      progressos,
+      startDate,
+      endDate
+    );
+
+    this.logger.log(
+      `Evolução por categoria obtida com sucesso para profissional ID: ${profissionalId}`
+    );
+
+    return evolucao;
+  }
+
   async obterUltimoProgresso(metaId: number) {
     return this.prisma.progresso.findFirst({
       where: { meta_id: metaId },
@@ -123,5 +168,55 @@ export class ProgressoService {
     if (progressoList.length === 0) return 0;
     const soma = progressoList.reduce((acc, val) => acc + val, 0);
     return soma / progressoList.length;
+  }
+
+  // Fazer calculo de evolução por categoria de meta
+  calcularEvolucaoPorCategoria(
+    progressos: (Progresso & { meta: { categoria: CategoriaMeta } })[],
+    dataInicio: Date,
+    dataFim: Date
+  ) {
+    // Agrupar por categoria e calcular média de progresso
+    const categorias = Object.values(CategoriaMeta);
+
+    // Gerar série temporal mensal
+    const meses = eachMonthOfInterval({ start: dataInicio, end: dataFim });
+
+    const resultado = meses.map((mes) => {
+      const periodo = format(mes, "MMM/yy", { locale: ptBR });
+
+      const ponto: Record<string, any> = { periodo };
+
+      // Filtrar progressos do mês
+      const start = startOfMonth(mes);
+      const end = endOfMonth(mes);
+      
+      const progressosNoMes = progressos.filter((progresso) => {
+        return progresso.data >= start && progresso.data <= end;
+      });
+
+      // Calcular média por categoria
+      categorias.forEach((categoria) => {
+        const progressosCategoria = progressosNoMes.filter(
+          (progresso) => progresso.meta.categoria === categoria
+        );
+
+        const progressoMedio =
+          progressosCategoria.length > 0
+            ? Math.round(
+                progressosCategoria.reduce(
+                  (sum, p) => sum + p.progressoAtual,
+                  0
+                ) / progressosCategoria.length
+              )
+            : 0;
+
+        ponto[categoria] = progressoMedio;
+      });
+
+      return ponto;
+    });
+
+    return resultado;
   }
 }
