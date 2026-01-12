@@ -53,7 +53,9 @@ export class ProgressoController {
     );
   }
 
-  @ApiOperation({ summary: "Obter distribuição por categoria (para profissional)" })
+  @ApiOperation({
+    summary: "Obter distribuição por categoria (para profissional)",
+  })
   @ApiResponse({ status: 200, description: "Distribuição obtida com sucesso." })
   @ApiResponse({ status: 401, description: "Não autorizado." })
   @ApiResponse({ status: 404, description: "Profissional não encontrado." })
@@ -65,6 +67,25 @@ export class ProgressoController {
     @Query() filterProgressosDto?: FilterProgressosDto
   ) {
     return this.progressoService.obterDistruibuicaoPorCategoria(
+      id,
+      filterProgressosDto?.periodo
+    );
+  }
+
+  @ApiOperation({
+    summary: "Obter médias de progresso por criança (para profissional)",
+  })
+  @ApiResponse({ status: 200, description: "Progresso obtido com sucesso." })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 404, description: "Profissional não encontrado." })
+  @Get("crianca")
+  @Roles("PROFISSIONAL")
+  @UseGuards(ProfissionalExistsGuard)
+  async progressoPorCrianca(
+    @Profissional("id") id: number,
+    @Query() filterProgressosDto?: FilterProgressosDto
+  ) {
+    return this.progressoService.obterProgressosPorCrianca(
       id,
       filterProgressosDto?.periodo
     );

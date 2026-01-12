@@ -12,6 +12,7 @@ import { CategoriaMeta, Prisma } from "@prisma/client";
 import DateUtils from "../common/utils/date.utils";
 import { PeriodoType } from "../common/constants/periodo.constant";
 import { ProgressoComCategoriaMeta } from "./interfaces/progresso.interface";
+import { MetasComCrianca } from "../metas/interfaces/metas.interface";
 
 @Injectable()
 export class ProgressoService {
@@ -177,6 +178,39 @@ export class ProgressoService {
     return distribuicao;
   }
 
+  async obterProgressosPorCrianca(
+    profissionalId: number,
+    periodo: PeriodoType = "SEMESTRAL"
+  ) {
+    this.logger.debug(
+      `Obtendo progressos por criança para profissional ID: ${profissionalId}`
+    );
+
+    const { startDate, endDate } = DateUtils.periodToDateRange(periodo);
+
+    const metas = await this.prisma.meta.findMany({
+      where: {
+        profissional_id: profissionalId,
+        created_at: { gte: startDate, lte: endDate },
+      },
+      include: {
+        crianca: {
+          select: {
+            nome: true,
+          },
+        },
+      },
+    });
+
+    const progressoPorCrianca = this.calcularMediaProgressosPorCrianca(metas);
+
+    this.logger.log(
+      `Progressos por criança obtidos com sucesso para profissional ID: ${profissionalId}`
+    );
+
+    return progressoPorCrianca;
+  }
+
   async obterUltimoProgresso(metaId: number) {
     return this.prisma.progresso.findFirst({
       where: { meta_id: metaId },
@@ -276,5 +310,24 @@ export class ProgressoService {
     });
 
     return distribuicao;
+  }
+
+  calcularMediaProgressosPorCrianca(metas: MetasComCrianca[]) {
+    const progressoPorCrianca: Record<string, number> = {};
+
+    const nomes = metas.map((meta) => meta.crianca.nome);
+    const criancas = new Set(nomes);
+
+    criancas.forEach((nome) => {
+      const metasCrianca = metas.filter((meta) => meta.crianca.nome === nome);
+
+      const progressoMetas = metasCrianca.map((meta) => meta.progresso || 0);
+
+      const progressoMedio = this.calcularMediaProgresso(progressoMetas);
+
+      progressoPorCrianca[nome] = progressoMedio;
+    });
+
+    return progressoPorCrianca;
   }
 }
