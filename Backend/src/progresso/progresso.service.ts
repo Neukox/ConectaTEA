@@ -8,10 +8,10 @@ import {
   startOfMonth,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CategoriaMeta, Meta, Progresso } from "@prisma/client";
+import { CategoriaMeta, Prisma } from "@prisma/client";
 import DateUtils from "../common/utils/date.utils";
 import { PeriodoType } from "../common/constants/periodo.constant";
-import { start } from "repl";
+import { ProgressoComCategoriaMeta } from "./interfaces/progresso.interface";
 
 @Injectable()
 export class ProgressoService {
@@ -150,11 +150,55 @@ export class ProgressoService {
     return evolucao;
   }
 
+  async obterDistruibuicaoPorCategoria(
+    profissionalId: number,
+    periodo: PeriodoType = "SEMESTRAL"
+  ) {
+    this.logger.debug(
+      `Obtendo distribuição por categoria para profissional ID: ${profissionalId}`
+    );
+
+    const { startDate, endDate } = DateUtils.periodToDateRange(periodo);
+
+    const progressos = await this.obterProgressosComCategoriaMeta({
+      profissional_id: profissionalId,
+      data: {
+        gte: startDate,
+        lte: endDate,
+      },
+    });
+
+    const distribuicao = this.calcularDistribuicaoPorCategoria(progressos);
+
+    this.logger.log(
+      `Distribuição por categoria obtida com sucesso para profissional ID: ${profissionalId}`
+    );
+
+    return distribuicao;
+  }
+
   async obterUltimoProgresso(metaId: number) {
     return this.prisma.progresso.findFirst({
       where: { meta_id: metaId },
       orderBy: { data: "desc" },
     });
+  }
+
+  async obterProgressosComCategoriaMeta(
+    where: Prisma.ProgressoWhereInput
+  ): Promise<ProgressoComCategoriaMeta[]> {
+    const progressos = await this.prisma.progresso.findMany({
+      where,
+      include: {
+        meta: {
+          select: {
+            categoria: true,
+          },
+        },
+      },
+    });
+
+    return progressos;
   }
 
   calcularDiferencaProgresso(
@@ -172,7 +216,7 @@ export class ProgressoService {
 
   // Fazer calculo de evolução por categoria de meta
   calcularEvolucaoPorCategoria(
-    progressos: (Progresso & { meta: { categoria: CategoriaMeta } })[],
+    progressos: ProgressoComCategoriaMeta[],
     dataInicio: Date,
     dataFim: Date
   ) {
@@ -190,7 +234,7 @@ export class ProgressoService {
       // Filtrar progressos do mês
       const start = startOfMonth(mes);
       const end = endOfMonth(mes);
-      
+
       const progressosNoMes = progressos.filter((progresso) => {
         return progresso.data >= start && progresso.data <= end;
       });
@@ -218,5 +262,19 @@ export class ProgressoService {
     });
 
     return resultado;
+  }
+
+  calcularDistribuicaoPorCategoria(progressos: ProgressoComCategoriaMeta[]) {
+    const distribuicao: Record<string, number> = {};
+
+    Object.values(CategoriaMeta).forEach((categoria) => {
+      const count = progressos.filter(
+        (progresso) => progresso.meta.categoria === categoria
+      ).length;
+
+      distribuicao[categoria] = count;
+    });
+
+    return distribuicao;
   }
 }

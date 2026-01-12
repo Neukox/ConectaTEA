@@ -52,4 +52,21 @@ export class ProgressoController {
       filterProgressosDto?.periodo
     );
   }
+
+  @ApiOperation({ summary: "Obter distribuição por categoria (para profissional)" })
+  @ApiResponse({ status: 200, description: "Distribuição obtida com sucesso." })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 404, description: "Profissional não encontrado." })
+  @Get("distribuicao-categoria")
+  @Roles("PROFISSIONAL")
+  @UseGuards(ProfissionalExistsGuard)
+  async distribuicaoPorCategoria(
+    @Profissional("id") id: number,
+    @Query() filterProgressosDto?: FilterProgressosDto
+  ) {
+    return this.progressoService.obterDistruibuicaoPorCategoria(
+      id,
+      filterProgressosDto?.periodo
+    );
+  }
 }
