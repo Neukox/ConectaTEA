@@ -1,5 +1,8 @@
 // import { api } from '../apiClient'
 
+import type { CreateMetaData } from '~/features/Metas/schemas/create-meta.schema'
+import type { UpdateMetaData } from '~/features/Metas/schemas/update-meta.schema'
+
 export interface CadastroMetaData {
   titulo: string
   categoria: string
@@ -12,7 +15,7 @@ export interface CadastroMetaData {
 }
 
 // Mock function to simulate API call
-export const cadastrarMeta = async (data: CadastroMetaData): Promise<void> => {
+export const cadastrarMeta = async (data: CreateMetaData): Promise<void> => {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -27,7 +30,7 @@ export const cadastrarMeta = async (data: CadastroMetaData): Promise<void> => {
 // Mock function to simulate API call for update
 export const atualizarMeta = async (
   id: number,
-  data: CadastroMetaData,
+  data: UpdateMetaData,
 ): Promise<void> => {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 1000))

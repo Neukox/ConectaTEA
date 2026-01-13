@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -7,18 +6,22 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { Button } from '~/components/ui/button'
+import { cadastrarMeta } from '../../../api/protected/axiosMetas'
+import { useNotificacoesContext } from '../../../api/barraNotificacao'
+import { useForm } from 'react-hook-form'
 import {
-  cadastrarMeta,
-  atualizarMeta,
-  type CadastroMetaData,
-} from '../../api/protected/axiosMetas'
-import { useNotificacoesContext } from '../../api/barraNotificacao'
+  CreateMetaSchema,
+  type CreateMetaData,
+} from '../schemas/create-meta.schema'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { CategoriaMeta, PrioridadeMeta } from '../types'
+import { useMutation } from '@tanstack/react-query'
+import { QUERY_KEYS, queryClient } from '~/api/query-client'
 
 interface CadastrarMetaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
-  metaToEdit?: (CadastroMetaData & { id: number }) | null
 }
 
 // Mock data for children - in a real app this would come from an API
@@ -33,72 +36,33 @@ export function CadastrarMetaDialog({
   open,
   onOpenChange,
   onSuccess,
-  metaToEdit,
 }: CadastrarMetaDialogProps) {
   const { notificarSucesso, notificarErro } = useNotificacoesContext()
 
-  const getInitialFormData = (): CadastroMetaData => ({
-    titulo: '',
-    categoria: '',
-    prioridade: 'media',
-    criancaId: 0,
-    dataInicio: '',
-    dataFim: '',
-    descricao: '',
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateMetaData>({
+    resolver: zodResolver(CreateMetaSchema),
+    defaultValues: {
+      prioridade: PrioridadeMeta.MEDIA,
+    },
   })
 
-  const [formData, setFormData] =
-    useState<CadastroMetaData>(getInitialFormData())
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (open && metaToEdit) {
-      setFormData({
-        titulo: metaToEdit.titulo,
-        categoria: metaToEdit.categoria,
-        prioridade: metaToEdit.prioridade,
-        criancaId: metaToEdit.criancaId,
-        profissionalId: metaToEdit.profissionalId,
-        dataInicio: metaToEdit.dataInicio,
-        dataFim: metaToEdit.dataFim,
-        descricao: metaToEdit.descricao,
+  const mutation = useMutation({
+    mutationFn: cadastrarMeta,
+    onSuccess: () => {
+      notificarSucesso('Meta cadastrada!', 'A meta foi criada com sucesso.', {
+        duration: 5000,
       })
-    } else if (open && !metaToEdit) {
-      setFormData(getInitialFormData())
-    }
-  }, [open, metaToEdit])
-
-  const fecharModal = () => {
-    setFormData(getInitialFormData())
-    onOpenChange(false)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      if (metaToEdit) {
-        await atualizarMeta(metaToEdit.id, formData)
-        notificarSucesso(
-          'Meta atualizada!',
-          `A meta "${formData.titulo}" foi atualizada com sucesso.`,
-          { duration: 5000 },
-        )
-      } else {
-        await cadastrarMeta(formData)
-        notificarSucesso(
-          'Meta cadastrada!',
-          `A meta "${formData.titulo}" foi criada com sucesso.`,
-          { duration: 5000 },
-        )
-      }
-
-      setFormData(getInitialFormData())
       fecharModal()
-
       onSuccess?.()
-    } catch (error) {
-      console.error('Erro ao salvar meta:', error)
+
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METAS] })
+    },
+    onError: () => {
       notificarErro(
         'Erro ao salvar',
         'Não foi possível salvar as alterações da meta.',
@@ -106,10 +70,19 @@ export function CadastrarMetaDialog({
           duration: 5000,
         },
       )
-    } finally {
-      setLoading(false)
-    }
+    },
+  })
+
+  const fecharModal = () => {
+    reset()
+    onOpenChange(false)
   }
+
+  const submitForm = async (data: CreateMetaData) => {
+    mutation.mutate(data)
+  }
+
+  const loading = mutation.isPending;
 
   return (
     <Dialog
@@ -119,17 +92,15 @@ export function CadastrarMetaDialog({
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto p-0'>
         <DialogHeader className='border-b bg-white p-6'>
           <DialogTitle className='text-2xl font-bold text-gray-900'>
-            {metaToEdit ? 'Editar Meta Terapêutica' : 'Nova Meta Terapêutica'}
+            Nova Meta Terapêutica
           </DialogTitle>
           <DialogDescription className='mt-1 text-sm text-gray-600'>
-            {metaToEdit
-              ? 'Atualize as informações da meta'
-              : 'Defina uma nova meta para acompanhamento'}
+            Defina uma nova meta para acompanhamento
           </DialogDescription>
         </DialogHeader>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(submitForm)}
           className='p-6'
         >
           <div className='grid grid-cols-1 gap-6'>
@@ -141,13 +112,15 @@ export function CadastrarMetaDialog({
               <input
                 type='text'
                 required
-                value={formData.titulo}
-                onChange={(e) =>
-                  setFormData({ ...formData, titulo: e.target.value })
-                }
+                {...register('titulo')}
                 className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
                 placeholder='Ex: Melhorar comunicação verbal'
               />
+              {errors.titulo && (
+                <p className='mt-1 text-sm text-red-500'>
+                  {errors.titulo.message}
+                </p>
+              )}
             </div>
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
@@ -158,20 +131,23 @@ export function CadastrarMetaDialog({
                 </label>
                 <select
                   required
-                  value={formData.categoria}
-                  onChange={(e) =>
-                    setFormData({ ...formData, categoria: e.target.value })
-                  }
+                  {...register('categoria')}
                   className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
                 >
-                  <option value=''>Selecione...</option>
-                  <option value='Comunicação'>Comunicação</option>
-                  <option value='Social'>Social</option>
-                  <option value='Comportamental'>Comportamental</option>
-                  <option value='Cognitiva'>Cognitiva</option>
-                  <option value='Autonomia'>Autonomia</option>
-                  <option value='Motora'>Motora</option>
+                  {Object.entries(CategoriaMeta).map(([key, value]) => (
+                    <option
+                      key={key}
+                      value={value}
+                    >
+                      {value}
+                    </option>
+                  ))}
                 </select>
+                {errors.categoria && (
+                  <p className='mt-1 text-sm text-red-500'>
+                    {errors.categoria.message}
+                  </p>
+                )}
               </div>
 
               {/* Prioridade */}
@@ -181,19 +157,23 @@ export function CadastrarMetaDialog({
                 </label>
                 <select
                   required
-                  value={formData.prioridade}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      prioridade: e.target.value as 'alta' | 'media' | 'baixa',
-                    })
-                  }
+                  {...register('prioridade')}
                   className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
                 >
-                  <option value='alta'>Alta</option>
-                  <option value='media'>Média</option>
-                  <option value='baixa'>Baixa</option>
+                  {Object.entries(PrioridadeMeta).map(([key, value]) => (
+                    <option
+                      key={key}
+                      value={value}
+                    >
+                      {value}
+                    </option>
+                  ))}
                 </select>
+                {errors.prioridade && (
+                  <p className='mt-1 text-sm text-red-500'>
+                    {errors.prioridade.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -204,13 +184,7 @@ export function CadastrarMetaDialog({
               </label>
               <select
                 required
-                value={formData.criancaId}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    criancaId: Number(e.target.value),
-                  })
-                }
+                {...register('criancaId', { valueAsNumber: true })}
                 className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
               >
                 <option value={0}>Selecione a criança...</option>
@@ -234,12 +208,14 @@ export function CadastrarMetaDialog({
                 <input
                   type='date'
                   required
-                  value={formData.dataInicio}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dataInicio: e.target.value })
-                  }
+                  {...register('dataInicio')}
                   className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
                 />
+                {errors.dataInicio && (
+                  <p className='mt-1 text-sm text-red-500'>
+                    {errors.dataInicio.message}
+                  </p>
+                )}
               </div>
 
               {/* Data Fim */}
@@ -250,12 +226,14 @@ export function CadastrarMetaDialog({
                 <input
                   type='date'
                   required
-                  value={formData.dataFim}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dataFim: e.target.value })
-                  }
+                  {...register('dataFim')}
                   className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
                 />
+                {errors.dataFim && (
+                  <p className='mt-1 text-sm text-red-500'>
+                    {errors.dataFim.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -265,15 +243,17 @@ export function CadastrarMetaDialog({
                 Descrição Detalhada
               </label>
               <textarea
-                value={formData.descricao}
-                onChange={(e) =>
-                  setFormData({ ...formData, descricao: e.target.value })
-                }
+                {...register('descricao')}
                 className='w-full resize-none rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
                 rows={4}
                 placeholder='Descreva os objetivos específicos e estratégias...'
               />
             </div>
+            {errors.descricao && (
+              <p className='mt-1 text-sm text-red-500'>
+                {errors.descricao.message}
+              </p>
+            )}
           </div>
 
           {/* Botões */}
@@ -292,11 +272,7 @@ export function CadastrarMetaDialog({
               className='flex-1 bg-green-600 hover:bg-green-700'
               disabled={loading}
             >
-              {loading
-                ? 'Salvando...'
-                : metaToEdit
-                  ? 'Salvar Alterações'
-                  : 'Criar Meta'}
+              {loading ? 'Salvando...' : 'Salvar Meta'}
             </Button>
           </div>
         </form>

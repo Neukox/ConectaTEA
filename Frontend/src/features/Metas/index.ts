@@ -1,2 +1,2 @@
-export * from './CadastrarMetaDialog'
+export * from './components/CadastrarMetaDialog'
 export * from './AtualizarProgressoDialog'

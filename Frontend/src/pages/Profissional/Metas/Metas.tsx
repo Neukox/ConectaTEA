@@ -1,16 +1,25 @@
 import React from 'react'
-import { Filter, Target, TrendingUp, CheckCircle2, AlertTriangle } from 'lucide-react'
+import {
+  Filter,
+  Target,
+  TrendingUp,
+  CheckCircle2,
+  AlertTriangle,
+} from 'lucide-react'
 import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
 import { CadastrarMetaDialog, AtualizarProgressoDialog } from '~/features/Metas'
-import { type CadastroMetaData } from '~/api/protected/axiosMetas'
 import { TooltipProvider } from '~/components/ui/tooltip'
-import { SummaryCard, MetaCard, metas, type Meta } from '~/features/Metas/components'
+import { SummaryCard, MetaCard, metas } from '~/features/Metas/components'
+import type { UpdateMetaData } from '~/features/Metas/schemas/update-meta.schema'
+import { AtualizarMetaDialog } from '~/features/Metas/components/AtualizarMetaDialog'
+import type { Meta } from '~/features/Metas/types'
+import { format } from 'date-fns'
 
 export default function MetasPage() {
   const [showModal, setShowModal] = React.useState(false)
   const [metaParaEditar, setMetaParaEditar] = React.useState<
-    (CadastroMetaData & { id: number }) | null
+    (UpdateMetaData & { id: number }) | null
   >(null)
   const [showProgressoModal, setShowProgressoModal] = React.useState(false)
   const [metaParaProgresso, setMetaParaProgresso] = React.useState<{
@@ -20,17 +29,16 @@ export default function MetasPage() {
   } | null>(null)
 
   const handleEdit = (meta: Meta) => {
-    // Converter Meta para CadastroMetaData (adaptar campos se necessário)
-    const metaData: CadastroMetaData & { id: number } = {
+    const metaData: (UpdateMetaData & { id: number }) | null = {
       id: meta.id,
       titulo: meta.titulo,
       categoria: meta.categoria,
       prioridade: meta.prioridade,
-      criancaId: 1, // Mock ID, já que não temos o ID real da criança na interface Meta
-      dataInicio: meta.periodo.split(' - ')[0].split('/').reverse().join('-'), // Converter DD/MM/YYYY para YYYY-MM-DD
-      dataFim: meta.periodo.split(' - ')[1].split('/').reverse().join('-'),
+      dataInicio: format(meta.data_inicio, 'yyyy-MM-dd'),
+      dataFim: format(meta.data_fim, 'yyyy-MM-dd'),
       descricao: meta.descricao || '',
     }
+
     setMetaParaEditar(metaData)
     setShowModal(true)
   }
@@ -141,13 +149,17 @@ export default function MetasPage() {
       <CadastrarMetaDialog
         open={showModal}
         onOpenChange={handleCloseModal}
-        metaToEdit={metaParaEditar}
       />
 
       <AtualizarProgressoDialog
         open={showProgressoModal}
         onOpenChange={handleCloseProgressoModal}
         meta={metaParaProgresso}
+      />
+      <AtualizarMetaDialog
+        open={showModal}
+        onOpenChange={handleCloseModal}
+        metaToEdit={metaParaEditar}
       />
     </PageLayout>
   )

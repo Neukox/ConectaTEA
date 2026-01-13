@@ -96,6 +96,12 @@ export class MetasService {
             progressoAnterior: true,
           },
         },
+        crianca: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
       },
       orderBy: {
         data_inicio: "desc",

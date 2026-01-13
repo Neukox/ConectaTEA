@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@hookform/resolvers':
+        specifier: 5.2.2
+        version: 5.2.2(react-hook-form@7.71.0(react@19.2.0))
       '@radix-ui/react-dialog':
         specifier: 1.1.15
         version: 1.1.15(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -59,6 +62,9 @@ importers:
       react-dom:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
+      react-hook-form:
+        specifier: 7.71.0
+        version: 7.71.0(react@19.2.0)
       react-icons:
         specifier: 5.5.0
         version: 5.5.0(react@19.2.0)
@@ -444,6 +450,11 @@ packages:
 
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha1-oqHjgS0UUl9yXQEac+zrQf71vBw=}
+
+  '@hookform/resolvers@5.2.2':
+    resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
+    peerDependencies:
+      react-hook-form: ^7.55.0
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha1-F8Vcp9Qmcz/jxWGQa4Fzwza0Cnc=}
@@ -913,7 +924,7 @@ packages:
     resolution: {integrity: sha1-8ZO3PcMWxBcPLoKogdoPVQ1VG5w=}
 
   '@standard-schema/utils@0.3.0':
-    resolution: {integrity: sha1-PV5gjxbCOQwQUo6Y5Zrva/c8rns=}
+    resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
   '@tailwindcss/node@4.1.17':
     resolution: {integrity: sha1-7ECjcpMkb07qstrADkQlr5Jy9gA=}
@@ -2004,6 +2015,12 @@ packages:
     peerDependencies:
       react: ^19.2.0
 
+  react-hook-form@7.71.0:
+    resolution: {integrity: sha512-oFDt/iIFMV9ZfV52waONXzg4xuSlbwKUPvXVH2jumL1me5qFhBMc4knZxuXiZ2+j6h546sYe3ZKJcg/900/iHw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
+
   react-icons@5.5.0:
     resolution: {integrity: sha1-iqJdNUP/hCMWhdMzEWTAApnN+vI=}
     peerDependencies:
@@ -2596,6 +2613,11 @@ snapshots:
       react-dom: 19.2.0(react@19.2.0)
 
   '@floating-ui/utils@0.2.10': {}
+
+  '@hookform/resolvers@5.2.2(react-hook-form@7.71.0(react@19.2.0))':
+    dependencies:
+      '@standard-schema/utils': 0.3.0
+      react-hook-form: 7.71.0(react@19.2.0)
 
   '@humanfs/core@0.19.1': {}
 
@@ -4009,6 +4031,10 @@ snapshots:
     dependencies:
       react: 19.2.0
       scheduler: 0.27.0
+
+  react-hook-form@7.71.0(react@19.2.0):
+    dependencies:
+      react: 19.2.0
 
   react-icons@5.5.0(react@19.2.0):
     dependencies:
