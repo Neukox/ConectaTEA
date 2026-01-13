@@ -5,6 +5,7 @@ import { NotificacoesProvider } from './api/barraNotificacao/NotificacoesProvide
 import { AuthProvider } from './contexts/AuthProvider'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './api/query-client.ts'
+import { ModalProvider } from './contexts/modal/provider.tsx'
 
 export default function App() {
   const location = useLocation()
@@ -15,7 +16,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <NotificacoesProvider position='top-right'>
-          <AppRoutes />
+          <ModalProvider>
+            <AppRoutes />
+          </ModalProvider>
         </NotificacoesProvider>
       </AuthProvider>
     </QueryClientProvider>

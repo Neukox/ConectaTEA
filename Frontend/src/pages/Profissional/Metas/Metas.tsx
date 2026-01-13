@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   Filter,
   Target,
@@ -8,63 +7,12 @@ import {
 } from 'lucide-react'
 import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
-import { CadastrarMetaDialog, AtualizarProgressoDialog } from '~/features/Metas'
 import { TooltipProvider } from '~/components/ui/tooltip'
 import { SummaryCard, MetaCard, metas } from '~/features/Metas/components'
-import type { UpdateMetaData } from '~/features/Metas/schemas/update-meta.schema'
-import { AtualizarMetaDialog } from '~/features/Metas/components/AtualizarMetaDialog'
-import type { Meta } from '~/features/Metas/types'
-import { format } from 'date-fns'
+import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
 
 export default function MetasPage() {
-  const [showModal, setShowModal] = React.useState(false)
-  const [metaParaEditar, setMetaParaEditar] = React.useState<
-    (UpdateMetaData & { id: number }) | null
-  >(null)
-  const [showProgressoModal, setShowProgressoModal] = React.useState(false)
-  const [metaParaProgresso, setMetaParaProgresso] = React.useState<{
-    id: number
-    titulo: string
-    progresso: number
-  } | null>(null)
-
-  const handleEdit = (meta: Meta) => {
-    const metaData: (UpdateMetaData & { id: number }) | null = {
-      id: meta.id,
-      titulo: meta.titulo,
-      categoria: meta.categoria,
-      prioridade: meta.prioridade,
-      dataInicio: format(meta.data_inicio, 'yyyy-MM-dd'),
-      dataFim: format(meta.data_fim, 'yyyy-MM-dd'),
-      descricao: meta.descricao || '',
-    }
-
-    setMetaParaEditar(metaData)
-    setShowModal(true)
-  }
-
-  const handleCloseModal = (open: boolean) => {
-    setShowModal(open)
-    if (!open) {
-      setMetaParaEditar(null)
-    }
-  }
-
-  const handleUpdateProgress = (meta: Meta) => {
-    setMetaParaProgresso({
-      id: meta.id,
-      titulo: meta.titulo,
-      progresso: meta.progresso,
-    })
-    setShowProgressoModal(true)
-  }
-
-  const handleCloseProgressoModal = (open: boolean) => {
-    setShowProgressoModal(open)
-    if (!open) {
-      setMetaParaProgresso(null)
-    }
-  }
+  const { openCadastrarMetaModal } = useMetasModal()
 
   return (
     <PageLayout>
@@ -73,7 +21,7 @@ export default function MetasPage() {
         description='Gerencie as metas terapêuticas das crianças'
       >
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => openCadastrarMetaModal()}
           className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
         >
           <span className='text-lg'>+</span>
@@ -140,27 +88,9 @@ export default function MetasPage() {
           <MetaCard
             key={m.id}
             meta={m}
-            onEdit={handleEdit}
-            onUpdateProgress={handleUpdateProgress}
           />
         ))}
       </div>
-
-      <CadastrarMetaDialog
-        open={showModal}
-        onOpenChange={handleCloseModal}
-      />
-
-      <AtualizarProgressoDialog
-        open={showProgressoModal}
-        onOpenChange={handleCloseProgressoModal}
-        meta={metaParaProgresso}
-      />
-      <AtualizarMetaDialog
-        open={showModal}
-        onOpenChange={handleCloseModal}
-        metaToEdit={metaParaEditar}
-      />
     </PageLayout>
   )
 }

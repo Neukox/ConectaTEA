@@ -11,11 +11,10 @@ import { Badge } from './Badge'
 import { OutlineButton } from './OutlineButton'
 import { ProgressBar } from './ProgressBar'
 import { format } from 'date-fns'
+import { useMetasModal } from '../hooks/useMetasModal'
 
 interface MetaCardProps {
   meta: MetasInfo
-  onEdit: (meta: Meta) => void
-  onUpdateProgress: (meta: Meta) => void
 }
 
 // Função para gerar URL de avatar baseada no nome
@@ -23,8 +22,10 @@ interface MetaCardProps {
 const buildAvatarUrl = (nome: string) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=random`
 
-export function MetaCard({ meta, onEdit, onUpdateProgress }: MetaCardProps) {
+export function MetaCard({ meta }: MetaCardProps) {
   const navigate = useNavigate()
+  const { openAtualizarMetaModal, openAtualizarProgressoModal } = useMetasModal()
+
   let prioridadeTone: 'default' | 'success' | 'warning' | 'danger' = 'default'
   if (meta.prioridade === 'ALTA') prioridadeTone = 'danger'
   else if (meta.prioridade === 'MEDIA') prioridadeTone = 'warning'
@@ -42,6 +43,26 @@ export function MetaCard({ meta, onEdit, onUpdateProgress }: MetaCardProps) {
 
     return `+${value}%`
   })
+
+  const onEdit = (meta: Meta) => {
+    openAtualizarMetaModal({
+      id: meta.id,
+      titulo: meta.titulo,
+      categoria: meta.categoria,
+      prioridade: meta.prioridade,
+      dataInicio: format(meta.data_inicio, 'yyyy-MM-dd'),
+      dataFim: format(meta.data_fim, 'yyyy-MM-dd'),
+      descricao: meta.descricao || '',
+    })
+  }
+
+  const onUpdateProgress = (meta: Meta) => {
+    openAtualizarProgressoModal({
+      id: meta.id,
+      titulo: meta.titulo,
+      progresso: meta.progresso,
+    })
+  }
 
   return (
     <div className='rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md'>

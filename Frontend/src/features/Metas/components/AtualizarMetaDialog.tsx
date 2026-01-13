@@ -15,13 +15,13 @@ import {
   type UpdateMetaData,
 } from '../schemas/update-meta.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CategoriaMeta, PrioridadeMeta } from '../types'
+import { CategoriaMeta, PrioridadeMeta, type MetaToEdit } from '../types'
 
 interface AtualizarMetaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
-  metaToEdit?: UpdateMetaData & { id: number }
+  metaToEdit?: MetaToEdit
 }
 
 export function AtualizarMetaDialog({

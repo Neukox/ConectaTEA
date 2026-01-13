@@ -1,3 +1,5 @@
+import type { UpdateMetaData } from '../schemas/update-meta.schema'
+
 export type StatusMeta =
   | 'EM_ANDAMENTO'
   | 'VENCENDO'
@@ -34,14 +36,14 @@ export const PrioridadeMeta = {
   BAIXA: 'Baixa',
   MEDIA: 'Média',
   ALTA: 'Alta',
-} satisfies Record<PrioridadeMeta, string>;
+} satisfies Record<PrioridadeMeta, string>
 
 export const StatusMeta = {
   EM_ANDAMENTO: 'Em andamento',
   VENCENDO: 'Vencendo',
   QUASE_CONCLUIDA: 'Quase concluída',
   CONCLUIDA: 'Concluída',
-} satisfies Record<StatusMeta, string>;
+} satisfies Record<StatusMeta, string>
 
 export const CategoriaMeta = {
   COMUNICACAO: 'Comunicação',
@@ -50,12 +52,22 @@ export const CategoriaMeta = {
   COMPORTAMENTAL: 'Comportamental',
   AUTONOMIA: 'Autonomia',
   MOTORA: 'Motora',
-} satisfies Record<CategoriaMeta, string>;
+} satisfies Record<CategoriaMeta, string>
 
 export interface MetasInfo extends Meta {
   crianca: {
     id: number
     nome: string
   }
-  updates: number[];
+  updates: number[]
+}
+
+export interface MetaToEdit extends UpdateMetaData {
+  id: number
+}
+
+export interface MetaToUpdateProgress {
+  id: number
+  titulo: string
+  progresso: number
 }
