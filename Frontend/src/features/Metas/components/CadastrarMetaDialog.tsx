@@ -82,7 +82,7 @@ export function CadastrarMetaDialog({
     mutation.mutate(data)
   }
 
-  const loading = mutation.isPending;
+  const loading = mutation.isPending
 
   return (
     <Dialog
@@ -248,12 +248,12 @@ export function CadastrarMetaDialog({
                 rows={4}
                 placeholder='Descreva os objetivos específicos e estratégias...'
               />
+              {errors.descricao && (
+                <p className='mt-1 text-sm text-red-500'>
+                  {errors.descricao.message}
+                </p>
+              )}
             </div>
-            {errors.descricao && (
-              <p className='mt-1 text-sm text-red-500'>
-                {errors.descricao.message}
-              </p>
-            )}
           </div>
 
           {/* Botões */}

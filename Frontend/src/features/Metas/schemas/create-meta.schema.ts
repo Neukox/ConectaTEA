@@ -18,22 +18,22 @@ export const CreateMetaSchema = z
     dataInicio: z
       .string()
       .nonempty('Data de início é obrigatória')
-      .refine((date) => new Date(date) < new Date(), {
+      .refine((date) => new Date(date) >= new Date(), {
         message: 'A data de início não pode ser uma data anterior a hoje',
       }),
     dataFim: z
       .string()
       .nonempty('Data de fim é obrigatória')
-      .refine((date) => new Date(date) < new Date(), {
-        message: 'A data de fim não pode ser uma data anterior a hoje',
+      .refine((date) => new Date(date) >= new Date(), {
+        message: 'A data de início não pode ser uma data anterior a hoje',
       }),
     descricao: z
       .string()
-      .min(10, 'A descrição deve ter ao menos 10 caracteres')
-      .max(1000, 'A descrição deve ter no máximo 1000 caracteres'),
+      .max(1000, 'A descrição deve ter no máximo 1000 caracteres')
+      .optional(),
   })
   .refine((data) => new Date(data.dataInicio) < new Date(data.dataFim), {
-    message: 'A data de início não pode ser posterior à data de fim',
+    message: 'A data de fim não pode ser posterior à data de início',
     path: ['dataFim'],
   })
 
