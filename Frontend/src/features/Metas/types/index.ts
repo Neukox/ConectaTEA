@@ -51,3 +51,11 @@ export const CategoriaMeta = {
   AUTONOMIA: 'Autonomia',
   MOTORA: 'Motora',
 } satisfies Record<CategoriaMeta, string>;
+
+export interface MetasInfo extends Meta {
+  crianca: {
+    id: number
+    nome: string
+  }
+  updates: number[];
+}
