@@ -1,7 +1,8 @@
-// import { api } from '../apiClient'
-
+import { AxiosError } from 'axios'
 import type { CreateMetaData } from '~/features/Metas/schemas/create-meta.schema'
 import type { UpdateMetaData } from '~/features/Metas/schemas/update-meta.schema'
+import { metas } from '~/features/mockData'
+import type { ResponseError } from '../types'
 
 export interface CadastroMetaData {
   titulo: string
@@ -48,4 +49,11 @@ export const atualizarProgresso = async (
   await new Promise((resolve) => setTimeout(resolve, 1000))
   console.log('Progresso atualizado:', id, novoProgresso)
   return Promise.resolve()
+}
+
+export const listarMetas = async () => {
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+  // Simulate fetching data
+  return Promise.resolve([]) // Replace with actual data
 }

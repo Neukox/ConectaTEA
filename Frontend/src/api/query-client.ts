@@ -17,4 +17,5 @@ export const QUERY_KEYS = {
   DASHBOARD_PROFISSIONAL_CRIANCAS: 'dashboard-profissional-criancas',
   METAS: 'metas',
   META: 'meta',
+  CRIANCAS: 'criancas',
 }

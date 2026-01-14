@@ -8,7 +8,7 @@ import {
 import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
 import { TooltipProvider } from '~/components/ui/tooltip'
-import { SummaryCard, MetaCard, metas } from '~/features/Metas/components'
+import { SummaryCard, MetasList } from '~/features/Metas/components'
 import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
 
 export default function MetasPage() {
@@ -83,14 +83,7 @@ export default function MetasPage() {
       </div>
 
       {/* Lista de Metas */}
-      <div className='mt-6 space-y-5'>
-        {metas.map((m) => (
-          <MetaCard
-            key={m.id}
-            meta={m}
-          />
-        ))}
-      </div>
+      <MetasList />
     </PageLayout>
   )
 }
