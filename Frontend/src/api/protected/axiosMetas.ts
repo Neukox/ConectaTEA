@@ -1,19 +1,5 @@
-import { AxiosError } from 'axios'
 import type { CreateMetaData } from '~/features/Metas/schemas/create-meta.schema'
 import type { UpdateMetaData } from '~/features/Metas/schemas/update-meta.schema'
-import { metas } from '~/features/mockData'
-import type { ResponseError } from '../types'
-
-export interface CadastroMetaData {
-  titulo: string
-  categoria: string
-  prioridade: 'alta' | 'media' | 'baixa'
-  criancaId: number
-  profissionalId?: number
-  dataInicio: string
-  dataFim: string
-  descricao: string
-}
 
 // Mock function to simulate API call
 export const cadastrarMeta = async (data: CreateMetaData): Promise<void> => {
@@ -51,9 +37,21 @@ export const atualizarProgresso = async (
   return Promise.resolve()
 }
 
-export const listarMetas = async () => {
+export interface MetasFilters {
+  categoria?: string
+  prioridade?: string
+  status?: string
+  periodo?: string
+  search?: string
+}
+
+export const listarMetas = async (filtros?: MetasFilters) => {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 1000))
   // Simulate fetching data
+  console.log('Filtros aplicados:', filtros)
   return Promise.resolve([]) // Replace with actual data
+
+  // In production:
+  // return api.get('/metas', { params: filtros })
 }

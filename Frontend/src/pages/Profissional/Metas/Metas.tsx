@@ -5,14 +5,41 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react'
+import { useState } from 'react'
 import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
 import { TooltipProvider } from '~/components/ui/tooltip'
-import { SummaryCard, MetasList } from '~/features/Metas/components'
+import {
+  SummaryCard,
+  MetasList,
+  FiltrosMetas,
+} from '~/features/Metas/components'
 import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
+import type { MetasFilters } from '~/features/Metas/types'
+import useDebounce from '~/hooks/useDebounce'
 
 export default function MetasPage() {
   const { openCadastrarMetaModal } = useMetasModal()
+  const [filtros, setFiltros] = useState<MetasFilters>({})
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const atualizarFiltrosDebounced = useDebounce(
+    (novosFiltros: MetasFilters) => {
+      setFiltros(novosFiltros)
+    },
+    500,
+  )
+
+  const handleAplicarFiltros = (novosFiltros: MetasFilters) => {
+    setFiltros(novosFiltros)
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchTerm(value)
+
+    atualizarFiltrosDebounced({ ...filtros, search: value })
+  }
 
   return (
     <PageLayout>
@@ -71,19 +98,26 @@ export default function MetasPage() {
               <input
                 type='text'
                 placeholder='Buscar metas por nome da criança ou título...'
+                value={searchTerm}
+                onChange={handleSearchChange}
                 className='w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100'
               />
             </div>
-            <button className='inline-flex items-center gap-2 rounded-md border border-green-300 px-4 py-2 text-sm font-medium text-green-800 hover:bg-green-50'>
-              <Filter className='h-4 w-4' />
-              Filtrar
-            </button>
+            <FiltrosMetas
+              filtros={filtros}
+              onAplicarFiltros={handleAplicarFiltros}
+            >
+              <button className='inline-flex items-center gap-2 rounded-md border border-green-300 px-4 py-2 text-sm font-medium text-green-800 hover:bg-green-50'>
+                <Filter className='h-4 w-4' />
+                Filtrar
+              </button>
+            </FiltrosMetas>
           </div>
         </div>
       </div>
 
       {/* Lista de Metas */}
-      <MetasList />
+      <MetasList filtros={filtros} />
     </PageLayout>
   )
 }

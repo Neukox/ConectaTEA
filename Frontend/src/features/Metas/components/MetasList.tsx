@@ -3,8 +3,13 @@ import { MetaCard } from './MetaCard'
 import MetaCardsSkeleton from './MetaCardsSkeleton'
 import { ErrorContainer } from '~/components/common/ErrorContainer'
 import NotFoundData from '~/components/common/NotFoundData'
+import type { MetasFilters } from '../types'
 
-export function MetasList() {
+interface MetasListProps {
+  filtros?: MetasFilters
+}
+
+export function MetasList({ filtros }: MetasListProps) {
   const {
     data: metas,
     isLoading,
@@ -12,7 +17,7 @@ export function MetasList() {
     error,
     refetch,
     isRefetching,
-  } = useMetas()
+  } = useMetas(filtros)
 
   if (isLoading) {
     return (

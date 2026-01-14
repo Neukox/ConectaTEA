@@ -1,4 +1,7 @@
 import type { UpdateMetaData } from '../schemas/update-meta.schema'
+import type { MetasFilters } from '~/api/protected/axiosMetas'
+
+export type { MetasFilters }
 
 export type StatusMeta =
   | 'EM_ANDAMENTO'
