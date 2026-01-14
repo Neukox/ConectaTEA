@@ -1,4 +1,5 @@
-export { SummaryCard } from './SummaryCard'
+export { SummaryCardMeta } from './SummaryCardMeta'
+export { ResumoMetas } from './ResumoMetas'
 export { OutlineButton } from './OutlineButton'
 export { MetaCard } from './MetaCard'
 export * from './MetaCardsSkeleton'

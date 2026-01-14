@@ -1,18 +1,13 @@
 import {
   Filter,
-  Target,
-  TrendingUp,
-  CheckCircle2,
-  AlertTriangle,
 } from 'lucide-react'
 import { useState } from 'react'
 import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
-import { TooltipProvider } from '~/components/ui/tooltip'
 import {
-  SummaryCard,
   MetasList,
   FiltrosMetas,
+  ResumoMetas,
 } from '~/features/Metas/components'
 import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
 import type { MetasFilters } from '~/features/Metas/types'
@@ -58,36 +53,7 @@ export default function MetasPage() {
 
       {/* Toolbar topo */}
       <div className='mt-6'>
-        <div>
-          <TooltipProvider>
-            <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-              <SummaryCard
-                icon={Target}
-                label='Total de Metas'
-                value={47}
-                tooltip='Quantidade total de metas cadastradas.'
-              />
-              <SummaryCard
-                icon={TrendingUp}
-                label='Em Andamento'
-                value={32}
-                tooltip='Metas que estão em andamento no momento.'
-              />
-              <SummaryCard
-                icon={AlertTriangle}
-                label='Vencendo'
-                value={8}
-                tooltip='Metas próximas do prazo de vencimento.'
-              />
-              <SummaryCard
-                icon={CheckCircle2}
-                label='Concluídas'
-                value={15}
-                tooltip='Metas já concluídas.'
-              />
-            </div>
-          </TooltipProvider>
-        </div>
+        <ResumoMetas />
       </div>
 
       {/* Busca + Filtro */}

@@ -72,3 +72,28 @@ export const verMeta = async (id: number) => {
   // In production:
   // return api.get(`/metas/${id}`)
 }
+
+export interface ResumoMetas {
+  totalMetas: number
+  metasEmAndamento: number
+  metasVencendo: number
+  metasConcluidas: number
+}
+
+export const obterResumoMetas = async (): Promise<ResumoMetas> => {
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  // Mock data baseado no retorno do backend
+  const resumo: ResumoMetas = {
+    totalMetas: 47,
+    metasEmAndamento: 32,
+    metasVencendo: 8,
+    metasConcluidas: 15,
+  }
+
+  return Promise.resolve(resumo)
+
+  // In production:
+  // return api.get('/metas/resumo')
+}

@@ -3,7 +3,7 @@ import { Button } from '~/components/ui/button'
 import { cn } from '~/lib/utils'
 
 interface ErrorContainerProps {
-  onRetry: () => void | Promise<unknown>
+  onRetry?: () => void | Promise<unknown>
   isRetrying?: boolean
   errorMessage?: string
   errorDescription?: string
@@ -33,16 +33,18 @@ export function ErrorContainer({
           <p className='text-sm text-red-600'>{errorDescription}</p>
         </div>
       </div>
-      <Button
-        size='sm'
-        className='w-fit'
-        onClick={() => {
-          void onRetry()
-        }}
-        disabled={isRetrying}
-      >
-        {isRetrying ? 'Tentando novamente...' : 'Tentar novamente'}
-      </Button>
+      {onRetry && (
+        <Button
+          size='default'
+          variant='default'
+          onClick={() => {
+            void onRetry()
+          }}
+          disabled={isRetrying}
+        >
+          {isRetrying ? 'Tentando novamente...' : 'Tentar novamente'}
+        </Button>
+      )}
     </div>
   )
 }
