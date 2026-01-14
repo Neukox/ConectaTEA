@@ -1,4 +1,4 @@
-import type { MetasInfo } from '~/features/Metas/types'
+import type { MetaDetails, MetasInfo } from '~/features/Metas/types'
 
 export const metas: MetasInfo[] = [
   {
@@ -80,5 +80,96 @@ export const metas: MetasInfo[] = [
       nome: 'Ana Costa',
     },
     updates: [5, 10, 15],
+  },
+]
+
+export const metaDetalhes: MetaDetails[] = [
+  {
+    id: 1,
+    titulo: 'Melhorar comunicação verbal',
+    categoria: 'COMUNICACAO',
+    status: 'EM_ANDAMENTO',
+    prioridade: 'MEDIA',
+    descricao: 'Descrição detalhada da meta 1',
+    dataInicio: new Date('2024-01-10'),
+    dataFim: new Date('2024-04-10'),
+    crianca: {
+      id: 1,
+      nome: 'João Silva',
+    },
+    profissional: {
+      id: 1,
+      name: 'Dra. Fernanda Souza',
+    },
+    progresso: {
+      atual: 75,
+      data: new Date('2024-03-15'),
+    },
+  },
+  {
+    id: 2,
+    titulo: 'Desenvolver habilidades sociais',
+    categoria: 'SOCIAL',
+    status: 'EM_ANDAMENTO',
+    prioridade: 'ALTA',
+    descricao: 'Descrição detalhada da meta 2',
+    dataInicio: new Date('2024-02-15'),
+    dataFim: new Date('2024-05-15'),
+    crianca: {
+      id: 2,
+      nome: 'Maria Oliveira',
+    },
+    profissional: {
+      id: 1,
+      name: 'Dra. Fernanda Souza',
+    },
+    progresso: {
+      atual: 45,
+      data: new Date('2024-03-10'),
+    },
+  },
+  {
+    id: 3,
+    titulo: 'Reduzir comportamentos repetitivos',
+    categoria: 'COMPORTAMENTAL',
+    status: 'QUASE_CONCLUIDA',
+    prioridade: 'ALTA',
+    descricao: 'Descrição detalhada da meta 3',
+    dataInicio: new Date('2023-11-30'),
+    dataFim: new Date('2024-02-28'),
+    crianca: {
+      id: 3,
+      nome: 'Lucas Pereira',
+    },
+    profissional: {
+      id: 1,
+      name: 'Dra. Fernanda Souza',
+    },
+    progresso: {
+      atual: 90,
+      data: new Date('2024-02-20'),
+    },
+  },
+  {
+    id: 4,
+    titulo: 'Aumentar tempo de atenção focada',
+    categoria: 'COGNITIVA',
+    status: 'EM_ANDAMENTO',
+    prioridade: 'BAIXA',
+    descricao: 'Descrição detalhada da meta 4',
+    dataInicio: new Date('2024-01-09'),
+    dataFim: new Date('2024-04-09'),
+    crianca: {
+      id: 4,
+      nome: 'Ana Costa',
+    },
+    profissional: {
+      id: 1,
+      name: 'Dra. Fernanda Souza',
+    },
+    progresso: {
+      atual: 30,
+      data: new Date('2024-03-05'),
+    },
   },
 ]

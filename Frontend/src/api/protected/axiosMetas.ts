@@ -1,5 +1,6 @@
 import type { CreateMetaData } from '~/features/Metas/schemas/create-meta.schema'
 import type { UpdateMetaData } from '~/features/Metas/schemas/update-meta.schema'
+import { metaDetalhes, metas } from '~/features/mockData'
 
 // Mock function to simulate API call
 export const cadastrarMeta = async (data: CreateMetaData): Promise<void> => {
@@ -50,8 +51,24 @@ export const listarMetas = async (filtros?: MetasFilters) => {
   await new Promise((resolve) => setTimeout(resolve, 1000))
   // Simulate fetching data
   console.log('Filtros aplicados:', filtros)
-  return Promise.resolve([]) // Replace with actual data
+  return Promise.resolve(metas) // Replace with actual data
 
   // In production:
   // return api.get('/metas', { params: filtros })
+}
+
+export const verMeta = async (id: number) => {
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+  // Simulate fetching data
+  const meta = metaDetalhes.find((m) => m.id === id)
+
+  if (!meta) {
+    return Promise.reject(new Error('Meta not found'))
+  }
+
+  return Promise.resolve(meta)
+
+  // In production:
+  // return api.get(`/metas/${id}`)
 }

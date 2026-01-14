@@ -74,3 +74,26 @@ export interface MetaToUpdateProgress {
   titulo: string
   progresso: number
 }
+
+export interface MetaDetails {
+  id: number
+  titulo: string
+  descricao: string
+  categoria: CategoriaMeta
+  prioridade: PrioridadeMeta
+  status: StatusMeta
+  dataInicio: Date
+  dataFim: Date
+  crianca: {
+    id: number
+    nome: string
+  }
+  profissional: {
+    id: number
+    name: string
+  }
+  progresso: {
+    atual: number
+    data: Date
+  }
+}
