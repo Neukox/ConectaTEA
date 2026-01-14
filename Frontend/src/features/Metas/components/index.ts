@@ -1,7 +1,5 @@
 export { SummaryCard } from './SummaryCard'
-export { Badge } from './Badge'
 export { OutlineButton } from './OutlineButton'
-export { ProgressBar } from './ProgressBar'
 export { MetaCard } from './MetaCard'
 export * from './MetaCardsSkeleton'
 export { MetasList } from './MetasList'

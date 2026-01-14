@@ -7,9 +7,9 @@ import {
   type Meta,
   type MetasInfo,
 } from '../types'
-import { Badge } from './Badge'
+import { Badge } from '~/components/ui/badge'
 import { OutlineButton } from './OutlineButton'
-import { ProgressBar } from './ProgressBar'
+import { ProgressBar } from '~/components/common/ProgressBar'
 import { format } from 'date-fns'
 import { useMetasModal } from '../hooks/useMetasModal'
 
@@ -24,12 +24,13 @@ const buildAvatarUrl = (nome: string) =>
 
 export function MetaCard({ meta }: MetaCardProps) {
   const navigate = useNavigate()
-  const { openAtualizarMetaModal, openAtualizarProgressoModal } = useMetasModal()
+  const { openAtualizarMetaModal, openAtualizarProgressoModal } =
+    useMetasModal()
 
   let prioridadeTone: 'default' | 'success' | 'warning' | 'danger' = 'default'
   if (meta.prioridade === 'ALTA') prioridadeTone = 'danger'
   else if (meta.prioridade === 'MEDIA') prioridadeTone = 'warning'
-  else prioridadeTone = 'default'
+  else prioridadeTone = 'success'
 
   const dataInicio = format(meta.data_inicio, 'dd/MM/yyyy')
   const dataFim = format(meta.data_fim, 'dd/MM/yyyy')
@@ -109,21 +110,29 @@ export function MetaCard({ meta }: MetaCardProps) {
         </div>
       </div>
       <div className='mt-6'>
-        <div className='mb-2 text-sm font-semibold text-gray-700'>
-          Progresso
-        </div>
-        <ProgressBar value={meta.progresso} />
+        <ProgressBar value={meta.progresso}>
+          <div className='mb-2 flex justify-between text-right text-sm font-bold'>
+            <span>Progreso</span>
+            <span className='text-green-800'>{meta.progresso}%</span>
+          </div>
+        </ProgressBar>
       </div>
       <div className='mt-4 flex flex-wrap items-center gap-2'>
         {progressUpdates.map((update, index) => (
           <Badge
             key={index}
+            variant='outline'
             tone={update.startsWith('+') ? 'success' : 'danger'}
+            className='font-medium'
           >
             {update}
           </Badge>
         ))}
-        <Badge tone={prioridadeTone}>
+        <Badge
+          variant='outline'
+          tone={prioridadeTone}
+          className='font-medium'
+        >
           Prioridade {PrioridadeMeta[meta.prioridade]}
         </Badge>
       </div>
