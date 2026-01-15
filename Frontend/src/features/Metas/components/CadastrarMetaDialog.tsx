@@ -6,7 +6,6 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { Button } from '~/components/ui/button'
-import { cadastrarMeta } from '../../../api/protected/axiosMetas'
 import { useNotificacoesContext } from '../../../api/barraNotificacao'
 import { useForm } from 'react-hook-form'
 import {
@@ -15,22 +14,14 @@ import {
 } from '../schemas/create-meta.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CategoriaMeta, PrioridadeMeta } from '../types'
-import { useMutation } from '@tanstack/react-query'
-import { QUERY_KEYS, queryClient } from '~/api/query-client'
+import useCriancas from '~/features/Criancas/hooks/useCriancas'
+import useCadastrarMeta from '../hooks/useCadastrarMeta'
 
 interface CadastrarMetaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
 }
-
-// Mock data for children - in a real app this would come from an API
-const criancasMock = [
-  { id: 1, nome: 'Ana Silva' },
-  { id: 2, nome: 'João Pedro' },
-  { id: 3, nome: 'Sofia Costa' },
-  { id: 4, nome: 'Lucas Ferreira' },
-]
 
 export function CadastrarMetaDialog({
   open,
@@ -47,22 +38,22 @@ export function CadastrarMetaDialog({
   } = useForm<CreateMetaData>({
     resolver: zodResolver(CreateMetaSchema),
     defaultValues: {
-      prioridade: PrioridadeMeta.MEDIA,
+      categoria: 'COMUNICACAO',
+      prioridade: 'MEDIA',
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: cadastrarMeta,
-    onSuccess: () => {
+  const { data: criancas } = useCriancas()
+
+  const mutation = useCadastrarMeta({
+    success: () => {
       notificarSucesso('Meta cadastrada!', 'A meta foi criada com sucesso.', {
         duration: 5000,
       })
       fecharModal()
       onSuccess?.()
-
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METAS] })
     },
-    onError: () => {
+    error: () => {
       notificarErro(
         'Erro ao salvar',
         'Não foi possível salvar as alterações da meta.',
@@ -137,7 +128,7 @@ export function CadastrarMetaDialog({
                   {Object.entries(CategoriaMeta).map(([key, value]) => (
                     <option
                       key={key}
-                      value={value}
+                      value={key}
                     >
                       {value}
                     </option>
@@ -163,7 +154,7 @@ export function CadastrarMetaDialog({
                   {Object.entries(PrioridadeMeta).map(([key, value]) => (
                     <option
                       key={key}
-                      value={value}
+                      value={key}
                     >
                       {value}
                     </option>
@@ -184,11 +175,11 @@ export function CadastrarMetaDialog({
               </label>
               <select
                 required
-                {...register('criancaId', { valueAsNumber: true })}
+                {...register('crianca_id', { valueAsNumber: true })}
                 className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
               >
-                <option value={0}>Selecione a criança...</option>
-                {criancasMock.map((c) => (
+                <option value=''>Selecione a criança...</option>
+                {criancas?.criancas.map((c) => (
                   <option
                     key={c.id}
                     value={c.id}

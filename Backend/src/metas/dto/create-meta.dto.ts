@@ -1,7 +1,7 @@
 import { CategoriaMeta, PrioridadeMeta } from "@prisma/client";
 import {
   IsDate,
-  IsDateString,
+  IsOptional,
   IsEnum,
   IsInt,
   IsString,
@@ -38,17 +38,21 @@ export class CreateMetaDto {
   @Type(() => Date)
   @IsDate()
   @IsNotPastDate()
-  dataInicio: Date;
+  data_inicio: Date;
 
   @ApiProperty({ example: "2024-10-01", description: "Data de fim da meta" })
   @Type(() => Date)
   @IsDate()
-  @IsNotBeforeDate('dataInicio')
-  dataFim: Date;
+  @IsNotBeforeDate("data_inicio")
+  data_fim: Date;
 
-  @ApiProperty({ example: "A criança deve ser capaz de ler livros simples.", description: "Descrição da meta" })
+  @ApiProperty({
+    example: "A criança deve ser capaz de ler livros simples.",
+    description: "Descrição da meta",
+  })
   @IsString()
   @MinLength(10)
   @MaxLength(500)
+  @IsOptional()
   descricao: string;
 }

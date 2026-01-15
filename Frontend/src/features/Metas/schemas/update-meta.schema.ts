@@ -8,10 +8,10 @@ export const UpdateMetaSchema = z
       .nonempty('O título é obrigatório')
       .min(3, 'O título deve ter ao menos 3 caracteres')
       .max(100, 'O título deve ter no máximo 100 caracteres'),
-    categoria: z.enum(CategoriaMeta, {
+    categoria: z.enum(Object.keys(CategoriaMeta), {
       error: 'Categoria é obrigatória',
     }),
-    prioridade: z.enum(PrioridadeMeta, {
+    prioridade: z.enum(Object.keys(PrioridadeMeta), {
       error: 'Prioridade é obrigatória',
     }),
     dataInicio: z

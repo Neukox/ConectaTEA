@@ -8,13 +8,13 @@ export const CreateMetaSchema = z
       .nonempty('O título é obrigatório')
       .min(3, 'O título deve ter ao menos 3 caracteres')
       .max(100, 'O título deve ter no máximo 100 caracteres'),
-    categoria: z.enum(CategoriaMeta, {
+    categoria: z.enum(Object.keys(CategoriaMeta), {
       error: 'Categoria é obrigatória',
     }),
-    prioridade: z.enum(PrioridadeMeta, {
+    prioridade: z.enum(Object.keys(PrioridadeMeta), {
       error: 'Prioridade é obrigatória',
     }),
-    criancaId: z.number({ error: 'Selecione uma criança' }),
+    crianca_id: z.number({ error: 'Selecione uma criança' }),
     dataInicio: z
       .string()
       .nonempty('Data de início é obrigatória')
