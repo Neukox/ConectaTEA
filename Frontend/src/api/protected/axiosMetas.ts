@@ -28,13 +28,18 @@ export const atualizarMeta = async (
   return Promise.resolve()
 }
 
+export interface AtualizarProgressoData {
+  id: number
+  progresso: number
+  descricao?: string
+}
+
 // Mock function to update progress
 export const atualizarProgresso = async (
-  id: number,
-  novoProgresso: number,
-): Promise<void> => {
+  data: AtualizarProgressoData,
+) => {
   await new Promise((resolve) => setTimeout(resolve, 1000))
-  console.log('Progresso atualizado:', id, novoProgresso)
+  console.log('Progresso atualizado:', data.id, data.progresso, data.descricao)
   return Promise.resolve()
 }
 

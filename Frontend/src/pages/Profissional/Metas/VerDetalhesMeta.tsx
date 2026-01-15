@@ -24,11 +24,21 @@ import { ptBR } from 'date-fns/locale'
 import NotFoundData from '~/components/common/NotFoundData'
 import VerDetalhesMetaSkeleton from './VerDetalhesMetaSkeleton'
 import VerDetalhesMetaError from './VerDetalhesMetaError'
+import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
 
 export default function VerDetalhesMeta() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { data: meta, isLoading, isError, error, refetch, isRefetching } = useDetalhesMeta(Number(id))
+  const {
+    data: meta,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useDetalhesMeta(Number(id))
+
+  const { openAtualizarProgressoModal } = useMetasModal()
 
   // Estado de carregamento
   if (isLoading) {
@@ -42,7 +52,7 @@ export default function VerDetalhesMeta() {
       error instanceof Error
         ? error.message
         : 'Erro ao carregar detalhes da meta'
-    
+
     const errorDescription =
       error?.response?.data?.message ||
       'Não foi possível carregar os detalhes da meta. Por favor, tente novamente.'
@@ -114,7 +124,16 @@ export default function VerDetalhesMeta() {
               </h1>
             </div>
             <div className='flex items-center gap-2'>
-              <button className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700'>
+              <button
+                className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700'
+                onClick={() =>
+                  openAtualizarProgressoModal({
+                    id: meta.id,
+                    titulo: meta.titulo,
+                    progresso: meta.progresso.atual,
+                  })
+                }
+              >
                 <TrendingUp className='h-4 w-4' />
                 Atualizar Progresso
               </button>

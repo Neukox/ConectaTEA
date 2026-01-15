@@ -7,8 +7,8 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { Button } from '~/components/ui/button'
-import { atualizarProgresso } from '../../api/protected/axiosMetas'
-import { useNotificacoesContext } from '../../api/barraNotificacao'
+import { useNotificacoesContext } from '~/api/barraNotificacao'
+import useAtualizarProgresso from '../hooks/useAtualizarProgresso'
 
 interface AtualizarProgressoDialogProps {
   open: boolean
@@ -25,7 +25,7 @@ export function AtualizarProgressoDialog({
 }: AtualizarProgressoDialogProps) {
   const { notificarSucesso, notificarErro } = useNotificacoesContext()
   const [progresso, setProgresso] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [descricao, setDescricao] = useState('')
 
   useEffect(() => {
     if (open && meta) {
@@ -33,32 +33,40 @@ export function AtualizarProgressoDialog({
     }
   }, [open, meta])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!meta) return
-
-    setLoading(true)
-    try {
-      await atualizarProgresso(meta.id, progresso)
+  // Usar o hook de mutação com atualização optimista
+  const mutation = useAtualizarProgresso({
+    success: () => {
       notificarSucesso(
         'Progresso atualizado!',
-        `O progresso da meta "${meta.titulo}" foi atualizado para ${progresso}%.`,
+        `O progresso da meta "${meta?.titulo}" foi atualizado para ${progresso}%.`,
         { duration: 5000 },
       )
       onOpenChange(false)
       onSuccess?.()
-    } catch (error) {
-      console.error('Erro ao atualizar progresso:', error)
+    },
+    error: (error) => {
+      console.error('Erro ao atualizar progresso da meta:', error)
       notificarErro(
         'Erro ao atualizar',
         'Não foi possível atualizar o progresso da meta.',
         { duration: 5000 },
       )
-    } finally {
-      setLoading(false)
-    }
+    },
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!meta) return
+
+    mutation.mutate({
+      id: meta.id,
+      progresso,
+      descricao,
+    })
   }
 
+  console.log('Renderizando AtualizarProgressoDialog com meta:', meta)
+  
   return (
     <Dialog
       open={open}
@@ -102,6 +110,22 @@ export function AtualizarProgressoDialog({
               <span>100%</span>
             </div>
           </div>
+          <div>
+            <label
+              htmlFor='descricao'
+              className='mb-2 block text-sm font-medium text-gray-700'
+            >
+              Descrição (opcional)
+            </label>
+            <textarea
+              id='descricao'
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
+              placeholder='Descreva o que foi feito para alcançar esse progresso...'
+              rows={4}
+            />
+          </div>
 
           <div className='flex gap-4'>
             <Button
@@ -109,16 +133,16 @@ export function AtualizarProgressoDialog({
               variant='outline'
               onClick={() => onOpenChange(false)}
               className='flex-1'
-              disabled={loading}
+              disabled={mutation.isPending}
             >
               Cancelar
             </Button>
             <Button
               type='submit'
               className='flex-1 bg-green-600 hover:bg-green-700'
-              disabled={loading}
+              disabled={mutation.isPending}
             >
-              {loading ? 'Salvando...' : 'Salvar'}
+              {mutation.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </form>
