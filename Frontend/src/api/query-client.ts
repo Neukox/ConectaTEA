@@ -19,4 +19,5 @@ export const QUERY_KEYS = {
   META: 'meta',
   METAS_RESUMO: 'metas-resumo',
   CRIANCAS: 'criancas',
+  PROGRESSO_RESUMO: 'progresso-resumo',
 }

@@ -9,7 +9,7 @@ import {
   ProgressoHeader,
   progressoCriancaData,
   ProgressoPorCrianca,
-  ProgressoResumo,
+  ProfissionalProgressoResumo,
 } from '~/features/Progresso'
 
 export default function Progresso() {
@@ -30,7 +30,7 @@ export default function Progresso() {
 
       <div className='flex flex-col gap-6'>
         {/* Stats Cards */}
-        <ProgressoResumo />
+        <ProfissionalProgressoResumo />
         {/* Charts Row 1 */}
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
           <EvolucaoPorCategoria data={evolucaoData} />

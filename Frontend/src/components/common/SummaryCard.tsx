@@ -51,7 +51,7 @@ interface SummaryCardProps
   extends VariantProps<typeof summaryCardIconVariants>,
     VariantProps<typeof summaryCardVariants> {
   label?: string
-  value: string | number
+  value: string | number | undefined
   sub?: string
   icon: IconType
 }
@@ -77,7 +77,7 @@ export default function SummaryCard({
           <Icon />
         </div>
         <div>
-          <p className='text-2xl font-bold'>{value}</p>
+          <p className='text-2xl font-bold'>{value || 0}</p>
           <p className='font-medium text-gray-600'>{label}</p>
           <span className='text-sm text-gray-600'>{sub}</span>
         </div>
