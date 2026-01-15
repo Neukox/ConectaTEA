@@ -23,9 +23,9 @@ const summaryCardIconVariants = cva(
   {
     variants: {
       iconSize: {
-        small: 'text-2xl',
-        medium: 'text-3.5xl',
-        large: 'text-4xl',
+        small: 'text-1.5xl',
+        medium: 'text-2xl',
+        large: 'text-3xl',
       },
       iconColor: {
         default:
@@ -79,7 +79,7 @@ export default function SummaryCard({
         <div>
           <p className='text-2xl font-bold'>{value}</p>
           <p className='font-medium text-gray-600'>{label}</p>
-          <span className='text-sm font-semibold text-green-600'>{sub}</span>
+          <span className='text-sm text-gray-600'>{sub}</span>
         </div>
       </div>
     </div>

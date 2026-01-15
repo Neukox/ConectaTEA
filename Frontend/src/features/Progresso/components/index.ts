@@ -1,0 +1,7 @@
+export { AtualizacaoCard } from './AtualizacaoCard'
+export { AtualizacoesRecentes } from './AtualizacoesRecentes'
+export { DistribuicaoPorCategoria } from './DistribuicaoPorCategoria'
+export { EvolucaoPorCategoria } from './EvolucaoPorCategoria'
+export { ProgressoHeader } from './ProgressoHeader'
+export { ProgressoPorCrianca } from './ProgressoPorCrianca'
+export { ProgressoResumo } from './ProgressoResumo'
