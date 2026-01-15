@@ -12,11 +12,13 @@ ConectaTEA is a web platform for specialized monitoring of children with ASD (Au
 - **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite 7
 - **Styling**: Tailwind CSS 4 with tailwindcss-animate
-- **UI Components**: Radix UI primitives (@radix-ui/react-dialog, @radix-ui/react-slot, @radix-ui/react-switch)
+- **UI Components**: Shadcn UI (Radix UI + Tailwind)
 - **Icons**: lucide-react, react-icons
 - **Routing**: react-router-dom 7
 - **HTTP Client**: axios 1.13.2
-- **Forms/Validation**: zod 4
+- **Forms/Validation**: react-hook-form, zod 4
+- **State Management**: React Context API
+- **Server State**: Tanstack Query
 - **Charts**: recharts 3
 
 ### Backend
@@ -67,12 +69,17 @@ ConectaTEA/
 ├── Backend/           # NestJS application
 │   ├── src/
 │   │   ├── auth/      # JWT authentication, guards, strategies
+│   │   ├── common/    # Common utilities, decorators, filters
 │   │   ├── users/     # User management
 │   │   ├── profissionais/  # Professional profiles
 │   │   ├── criancas/  # Children management
 │   │   ├── conexoes/  # Professional connections (friend requests)
 │   │   ├── metas/     # Goals for children
 │   │   ├── prisma/    # Prisma service wrapper
+│   │   ├── sessoes/   # Session records
+│   │   ├── vinculacao/ # Professional and responsible linking
+│   │   ├── tokens-vinculo/ # Link tokens management
+│   │   ├── progresso/ # Progress tracking
 │   │   └── private/   # Private/admin endpoints
 │   └── prisma/
 │       └── schema.prisma  # Database schema
@@ -85,6 +92,7 @@ ConectaTEA/
         ├── layouts/   # Layout components
         ├── pages/     # Page components (route-specific)
         ├── routes/    # Route definitions
+        ├── features/  # Feature-specific modules
         └── lib/       # Utility functions
 ```
 
@@ -101,6 +109,14 @@ The application uses PostgreSQL with the following core models:
 - **LocalAtendimento**: Professional service locations
 - **RedeSocial**: Social media links for professionals
 - **AreaAtuacao**: Areas of expertise (many-to-many with Profissional)
+- **AreaAtuacaoProfissional**: Join table for AreaAtuacao and Profissional
+- **TokenVinculo**: Tokens for linking professionals and responsables
+- **Progresso**: Progress tracking entries
+- **ConexaoProfissonal**: Professional connection requests
+- **ProfissionalCrianca**: Linking professionals to children
+- **HistoricoVinculos**: History of professional-responsible linkages
+- **Consentimento**: Consent forms signed by responsables
+- **TokensVinculo**: Tokens for linking professionals and responsables
 - **AuditLog**: Audit trail for important actions
 
 ### Authentication Flow
@@ -112,8 +128,8 @@ The application uses PostgreSQL with the following core models:
    - Guards protect routes: `@UseGuards(JwtAuthGuard)` for authentication, `@Roles()` decorator with `RolesGuard` for authorization
 
 2. **Frontend**:
-   - Token is stored in `localStorage` under key `token`
-   - `api` client (axios instance in `api/apiClient.ts`) automatically adds `Authorization: Bearer <token>` header
+   - Token is stored in cookies (HTTP-only).
+   - `api` client (axios instance in `api/apiClient.ts`) automatically sends cookies with requests (`withCredentials: true`).
    - `AuthContext` provides global auth state with `user`, `isAuthenticated`, `isLoading`
    - `ProtectedRoute` component wraps routes requiring authentication, checks user role
 
@@ -132,6 +148,9 @@ Key endpoints:
 - `POST /api/criancas` - Create child record (protected)
 - `POST /api/conexoes/enviar` - Send connection request (protected)
 - `GET /api/conexoes/recebidas` - Get received connection requests (protected)
+- `POST /api/metas` - Create goal for child (protected)
+- `GET /api/sessoes` - List sessions (protected)
+- `GET /api/progresso` - Log progress entry (protected)
 
 ### Frontend Routing
 
@@ -152,7 +171,7 @@ All protected routes use `<ProtectedRoute allowedRoles={[...]}>` wrapper.
 
 ### UI Component System
 
-The app uses a custom component library built on Radix UI primitives:
+The app uses a custom component library built on Shadcn UI and Radix:
 - Components are in [Frontend/src/components/ui/](../Frontend/src/components/ui/)
 - Styling uses Tailwind with `tailwind-merge` for conditional classes
 - `class-variance-authority` for variant-based component APIs
@@ -202,6 +221,14 @@ VITE_API_URL=http://localhost:3000/api
 - **API organization**: API calls are organized by feature in [Frontend/src/api/protected/](../Frontend/src/api/protected/) (e.g., `axiosCadastroCrianca.ts`, `axiosProfissionais.ts`)
 - **Route protection**: Use `ProtectedRoute` component wrapper, never check auth inline
 - **Styling approach**: Tailwind utility classes, avoid inline styles
+- **Component variants**: Use `cva` for components with multiple style variants
+- **State management**: Minimal global state, prefer local component state and Context API
+- **Error handling**: Centralized error handling in API client, show notifications via `barraNotificacao`
+- **File naming**: Use `.tsx` for components, `.ts` for non-JSX files
+- **Folder structure**: Group by feature (e.g., `criancas`, `profissionais`, `metas`)
+- **Reusable components**: Place in `components/ui/` or `features/` for feature-specific components, never duplicate UI elements.
+- **Form handling**: Use `react-hook-form` with `zod` for schema validation, avoid manual form state management (if possible).
+- **API State Management**: Use Tanstack Query for server state management, caching, and data synchronization.
 
 ## Testing
 
@@ -212,7 +239,7 @@ VITE_API_URL=http://localhost:3000/api
 - **E2E tests**: Use `test/jest-e2e.json` config
 
 ### Frontend
-- **No test setup yet**: Tests are not currently configured in the frontend
+- **No test setup yet**: Tests are not currently confavoid duplicationigured in the frontend
 
 ## Common Pitfalls
 
