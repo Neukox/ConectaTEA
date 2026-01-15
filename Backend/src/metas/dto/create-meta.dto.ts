@@ -38,13 +38,13 @@ export class CreateMetaDto {
   @Type(() => Date)
   @IsDate()
   @IsNotPastDate()
-  data_inicio: Date;
+  dataInicio: Date;
 
   @ApiProperty({ example: "2024-10-01", description: "Data de fim da meta" })
   @Type(() => Date)
   @IsDate()
-  @IsNotBeforeDate("data_inicio")
-  data_fim: Date;
+  @IsNotBeforeDate("dataInicio")
+  dataFim: Date;
 
   @ApiProperty({
     example: "A criança deve ser capaz de ler livros simples.",
