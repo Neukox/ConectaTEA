@@ -110,7 +110,7 @@ export class ProgressoService {
     this.logger.log(`Resumo dos progressos obtido com sucesso`);
 
     return {
-      media_progreeso: mediaProgresso,
+      media_progresso: mediaProgresso,
       metas_ativas: metasAtivas,
       metas_concluidas: metasConcluidas,
       criancas_ativas: criancasAtivas,

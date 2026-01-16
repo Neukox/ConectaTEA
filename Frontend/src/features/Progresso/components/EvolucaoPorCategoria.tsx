@@ -9,6 +9,7 @@ import {
 } from 'recharts'
 import type { EvolucaoPorCategoriaData } from '../types'
 import { CategoriaMeta } from '~/features/Metas/types'
+import { categoriaColors } from '../data/mockData'
 
 interface EvolucaoPorCategoriaProps {
   data: EvolucaoPorCategoriaData[]
@@ -49,14 +50,14 @@ export function EvolucaoPorCategoria({ data }: EvolucaoPorCategoriaProps) {
           <Line
             type='monotone'
             dataKey={CategoriaMeta.SOCIAL}
-            stroke='#EC4899'
+            stroke={categoriaColors.SOCIAL}
             strokeWidth={2}
             dot={{ r: 4 }}
           />
           <Line
             type='monotone'
             dataKey={CategoriaMeta.COMUNICACAO}
-            stroke='#8B5CF6'
+            stroke={categoriaColors.COMUNICACAO}
             strokeWidth={2}
             dot={{ r: 4 }}
           />
@@ -70,21 +71,21 @@ export function EvolucaoPorCategoria({ data }: EvolucaoPorCategoriaProps) {
           <Line
             type='monotone'
             dataKey={CategoriaMeta.COGNITIVA}
-            stroke='#06B6D4'
+            stroke={categoriaColors.COGNITIVA}
             strokeWidth={2}
             dot={{ r: 4 }}
           />
           <Line
             type='monotone'
             dataKey={CategoriaMeta.COMPORTAMENTAL}
-            stroke='#F59E0B'
+            stroke={categoriaColors.COMPORTAMENTAL}
             strokeWidth={2}
             dot={{ r: 4 }}
           />
           <Line
             type='monotone'
             dataKey={CategoriaMeta.AUTONOMIA}
-            stroke='#10B981'
+            stroke={categoriaColors.AUTONOMIA}
             strokeWidth={2}
             dot={{ r: 4 }}
           />
