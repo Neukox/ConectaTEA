@@ -20,4 +20,5 @@ export const QUERY_KEYS = {
   METAS_RESUMO: 'metas-resumo',
   CRIANCAS: 'criancas',
   PROGRESSO_RESUMO: 'progresso-resumo',
+  EVOLUCAO_CATEGORIA_PROGRESSO: 'evolucao-categoria-progresso',
 }

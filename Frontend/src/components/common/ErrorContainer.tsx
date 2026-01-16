@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react'
 import { FiAlertTriangle } from 'react-icons/fi'
 import { Button } from '~/components/ui/button'
 import { cn } from '~/lib/utils'
@@ -36,12 +37,14 @@ export function ErrorContainer({
       {onRetry && (
         <Button
           size='default'
-          variant='default'
+          variant='outline'
+          className='gap-2 border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800'
           onClick={() => {
             void onRetry()
           }}
           disabled={isRetrying}
         >
+          <RefreshCw className='size-4' />
           {isRetrying ? 'Tentando novamente...' : 'Tentar novamente'}
         </Button>
       )}

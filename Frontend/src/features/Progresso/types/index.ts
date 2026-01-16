@@ -1,9 +1,8 @@
-export interface EvolucaoData {
-  name: string
-  social: number
-  comunicacao: number
-  motora: number
-  cognitiva: number
+import { CategoriaMeta } from '~/features/Metas/types'
+
+export interface EvolucaoPorCategoriaData
+  extends Record<CategoriaMeta, number> {
+  periodo: string
 }
 
 export interface DistribuicaoData {

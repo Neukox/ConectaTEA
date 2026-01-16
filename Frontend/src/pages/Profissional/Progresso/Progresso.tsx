@@ -4,8 +4,7 @@ import {
   atualizacoesRecentes,
   distribuicaoData,
   DistribuicaoPorCategoria,
-  evolucaoData,
-  EvolucaoPorCategoria,
+  EvolucaoCategoriaProfissional,
   ProgressoHeader,
   progressoCriancaData,
   ProgressoPorCrianca,
@@ -33,7 +32,12 @@ export default function Progresso() {
         <ProfissionalProgressoResumo />
         {/* Charts Row 1 */}
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-          <EvolucaoPorCategoria data={evolucaoData} />
+          <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+            <h3 className='mb-6 text-lg font-bold text-gray-900'>
+              Evolução por Categoria
+            </h3>
+            <EvolucaoCategoriaProfissional />
+          </div>
           <DistribuicaoPorCategoria data={distribuicaoData} />
         </div>
 

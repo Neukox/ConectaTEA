@@ -7,56 +7,89 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { EvolucaoData } from '../types'
+import type { EvolucaoPorCategoriaData } from '../types'
+import { CategoriaMeta } from '~/features/Metas/types'
 
 interface EvolucaoPorCategoriaProps {
-  data: EvolucaoData[]
+  data: EvolucaoPorCategoriaData[]
 }
 
 export function EvolucaoPorCategoria({ data }: EvolucaoPorCategoriaProps) {
+  const formatedData = data.map((item) => ({
+    ...item,
+    [CategoriaMeta.SOCIAL]: item.SOCIAL,
+    [CategoriaMeta.COMUNICACAO]: item.COMUNICACAO,
+    [CategoriaMeta.MOTORA]: item.MOTORA,
+    [CategoriaMeta.COGNITIVA]: item.COGNITIVA,
+    [CategoriaMeta.COMPORTAMENTAL]: item.COMPORTAMENTAL,
+    [CategoriaMeta.AUTONOMIA]: item.AUTONOMIA,
+  }))
+
   return (
-    <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
-      <h3 className='mb-6 text-lg font-bold text-gray-900'>
-        Evolução por Categoria
-      </h3>
-      <div className='h-80'>
-        <ResponsiveContainer width='100%' height='100%'>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray='3 3' vertical={false} />
-            <XAxis dataKey='name' axisLine={false} tickLine={false} />
-            <YAxis axisLine={false} tickLine={false} />
-            <Tooltip />
-            <Line
-              type='monotone'
-              dataKey='social'
-              stroke='#EC4899'
-              strokeWidth={2}
-              dot={{ r: 4 }}
-            />
-            <Line
-              type='monotone'
-              dataKey='comunicacao'
-              stroke='#8B5CF6'
-              strokeWidth={2}
-              dot={{ r: 4 }}
-            />
-            <Line
-              type='monotone'
-              dataKey='motora'
-              stroke='#22C55E'
-              strokeWidth={2}
-              dot={{ r: 4 }}
-            />
-            <Line
-              type='monotone'
-              dataKey='cognitiva'
-              stroke='#06B6D4'
-              strokeWidth={2}
-              dot={{ r: 4 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+    <div className='h-100'>
+      <ResponsiveContainer
+        width='100%'
+        height='100%'
+      >
+        <LineChart data={formatedData}>
+          <CartesianGrid
+            strokeDasharray='3 3'
+            vertical={false}
+          />
+          <XAxis
+            dataKey='periodo'
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip />
+          <Line
+            type='monotone'
+            dataKey={CategoriaMeta.SOCIAL}
+            stroke='#EC4899'
+            strokeWidth={2}
+            dot={{ r: 4 }}
+          />
+          <Line
+            type='monotone'
+            dataKey={CategoriaMeta.COMUNICACAO}
+            stroke='#8B5CF6'
+            strokeWidth={2}
+            dot={{ r: 4 }}
+          />
+          <Line
+            type='monotone'
+            dataKey={CategoriaMeta.MOTORA}
+            stroke='#22C55E'
+            strokeWidth={2}
+            dot={{ r: 4 }}
+          />
+          <Line
+            type='monotone'
+            dataKey={CategoriaMeta.COGNITIVA}
+            stroke='#06B6D4'
+            strokeWidth={2}
+            dot={{ r: 4 }}
+          />
+          <Line
+            type='monotone'
+            dataKey={CategoriaMeta.COMPORTAMENTAL}
+            stroke='#F59E0B'
+            strokeWidth={2}
+            dot={{ r: 4 }}
+          />
+          <Line
+            type='monotone'
+            dataKey={CategoriaMeta.AUTONOMIA}
+            stroke='#10B981'
+            strokeWidth={2}
+            dot={{ r: 4 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   )
 }
