@@ -21,7 +21,7 @@ export function ErrorContainer({
   return (
     <div
       className={cn(
-        'flex h-full flex-col items-center justify-center gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center',
+        'flex flex-col items-center justify-center gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center',
         className,
       )}
     >

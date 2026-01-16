@@ -5,21 +5,29 @@ export interface EvolucaoPorCategoriaData
   periodo: string
 }
 
-export interface DistribuicaoPorCategoriaData extends Record<CategoriaMeta, number> {}
+export interface DistribuicaoPorCategoriaData
+  extends Record<CategoriaMeta, number> {}
 
 export interface ProgressoCriancaData {
   nome: string
   progresso: number
 }
 
-export interface Atualizacao {
-  nome: string
-  meta: string
-  aumento: string
+export interface ProgressoRecente {
+  id: number
+  data: Date
   descricao: string
-  profissional: string
-  data: string
-  progressoAtual: number
+  diferenca: number
+  progresso_atual: number
+  meta: {
+    id: number
+    titulo: string
+  }
+  crianca: string
+  profissional: {
+    titulo: string
+    nome: string
+  }
 }
 
 export interface ProgressoStats {

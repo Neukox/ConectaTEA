@@ -5,7 +5,7 @@ import {
   EvolucaoCategoriaProfissional,
   ProgressoHeader,
   ProfissionalProgressoResumo,
-  ProgressoPorCriancaContainer
+  ProgressoPorCriancaContainer,
 } from '~/features/Progresso'
 import DistribuicaoCategoriaProfissional from '~/features/Progresso/components/profissional/DistribuicaoCategoriaProfissional'
 
@@ -52,7 +52,12 @@ export default function Progresso() {
             </h3>
             <ProgressoPorCriancaContainer />
           </div>
-          <AtualizacoesRecentes atualizacoes={atualizacoesRecentes} />
+          <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+            <h3 className='mb-6 text-lg font-bold text-gray-900'>
+              Atualizações Recentes
+            </h3>
+            <AtualizacoesRecentes />
+          </div>
         </div>
       </div>
     </PageLayout>

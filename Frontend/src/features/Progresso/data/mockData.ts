@@ -3,6 +3,7 @@ import type {
   DistribuicaoPorCategoriaData,
   EvolucaoPorCategoriaData,
   ProgressoCriancaData,
+  ProgressoRecente,
   ProgressoStats,
 } from '../types'
 
@@ -82,34 +83,55 @@ export const progressoCriancaData: ProgressoCriancaData[] = [
   { nome: 'Carlos Mendes', progresso: 72 },
 ]
 
-export const atualizacoesRecentes = [
+export const atualizacoesRecentes: ProgressoRecente[] = [
   {
-    nome: 'Ana Silva',
-    meta: 'Melhorar comunicação verbal',
-    aumento: '+10%',
+    id: 1,
+    crianca: 'Ana Silva',
+    meta: {
+      id: 1,
+      titulo: 'Melhorar habilidades de comunicação',
+    },
+    diferenca: 7,
     descricao:
       'Demonstrou melhora significativa na formação de frases completas',
-    profissional: 'Dr. João Santos',
-    data: '11/01/2024',
-    progressoAtual: 75,
+    profissional: {
+      titulo: 'Dr.',
+      nome: 'João Santos',
+    },
+    data: new Date('2024-01-12'),
+    progresso_atual: 75,
   },
   {
-    nome: 'Pedro Costa',
-    meta: 'Desenvolver habilidades sociais',
-    aumento: '+5%',
+    id: 2,
+    crianca: 'Pedro Costa',
+    meta: {
+      id: 2,
+      titulo: 'Desenvolver habilidades sociais',
+    },
+    diferenca: 5,
     descricao: 'Maior participação em atividades em grupo',
-    profissional: 'Dra. Ana Lima',
-    data: '10/01/2024',
-    progressoAtual: 45,
+    profissional: {
+      titulo: 'Dra.',
+      nome: 'Ana Lima',
+    },
+    data: new Date('2024-01-10'),
+    progresso_atual: 45,
   },
   {
-    nome: 'Sofia Oliveira',
-    meta: 'Reduzir comportamentos repetitivos',
-    aumento: '+5%',
+    id: 3,
+    crianca: 'Sofia Oliveira',
+    meta: {
+      id: 3,
+      titulo: 'Reduzir comportamentos repetitivos',
+    },
+    diferenca: 5,
     descricao: 'Redução notável de estereotipias durante as sessões',
-    profissional: 'Dr. Roberto Silva',
-    data: '09/01/2024',
-    progressoAtual: 90,
+    profissional: {
+      titulo: 'Dr.',
+      nome: 'Roberto Silva',
+    },
+    data: new Date('2024-01-09'),
+    progresso_atual: 90,
   },
 ]
 

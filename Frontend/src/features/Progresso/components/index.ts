@@ -1,5 +1,5 @@
 export { AtualizacaoCard } from './AtualizacaoCard'
-export { AtualizacoesRecentes } from './AtualizacoesRecentes'
+export { AtualizacoesRecentes } from './profissional/AtualizacoesRecentes'
 export { DistribuicaoPorCategoria } from './DistribuicaoPorCategoria'
 export { EvolucaoPorCategoria } from './EvolucaoPorCategoria'
 export { ProgressoHeader } from './ProgressoHeader'

@@ -1,4 +1,10 @@
-import { distribuicaoData, evolucaoData, progressoCriancaData, statsCards } from '../data/mockData'
+import {
+  distribuicaoData,
+  evolucaoData,
+  progressoCriancaData,
+  statsCards,
+  atualizacoesRecentes,
+} from '../data/mockData'
 
 // Mock service to get progresso resumo
 export async function getProgressoResumo() {
@@ -22,4 +28,10 @@ export async function getDistribuicaoPorCategoria() {
 export async function getProgressoPorCrianca() {
   await new Promise((resolve) => setTimeout(resolve, 1000))
   return Promise.resolve(progressoCriancaData)
+}
+
+// Mock service to get atualizações recentes
+export async function getAtualizacoesRecentes() {
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+  return Promise.resolve(atualizacoesRecentes)
 }
