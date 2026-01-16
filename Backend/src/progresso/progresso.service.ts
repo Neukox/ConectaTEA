@@ -313,7 +313,7 @@ export class ProgressoService {
   }
 
   calcularMediaProgressosPorCrianca(metas: MetasComCrianca[]) {
-    const progressoPorCrianca: Record<string, number> = {};
+    const progressoPorCrianca = [];
 
     const nomes = metas.map((meta) => meta.crianca.nome);
     const criancas = new Set(nomes);
@@ -325,7 +325,10 @@ export class ProgressoService {
 
       const progressoMedio = this.calcularMediaProgresso(progressoMetas);
 
-      progressoPorCrianca[nome] = progressoMedio;
+      progressoPorCrianca.push({
+        nome: nome,
+        progresso: Math.round(progressoMedio),
+      });
     });
 
     return progressoPorCrianca;

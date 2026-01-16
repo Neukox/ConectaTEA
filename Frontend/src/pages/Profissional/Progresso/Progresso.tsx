@@ -4,9 +4,8 @@ import {
   atualizacoesRecentes,
   EvolucaoCategoriaProfissional,
   ProgressoHeader,
-  progressoCriancaData,
-  ProgressoPorCrianca,
   ProfissionalProgressoResumo,
+  ProgressoPorCriancaContainer
 } from '~/features/Progresso'
 import DistribuicaoCategoriaProfissional from '~/features/Progresso/components/profissional/DistribuicaoCategoriaProfissional'
 
@@ -47,7 +46,12 @@ export default function Progresso() {
 
         {/* Charts Row 2 & Recent Updates */}
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-          <ProgressoPorCrianca data={progressoCriancaData} />
+          <div className='flex flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+            <h3 className='mb-6 text-lg font-bold text-gray-900'>
+              Progresso por Criança
+            </h3>
+            <ProgressoPorCriancaContainer />
+          </div>
           <AtualizacoesRecentes atualizacoes={atualizacoesRecentes} />
         </div>
       </div>

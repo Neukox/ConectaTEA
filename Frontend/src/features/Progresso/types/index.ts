@@ -8,7 +8,7 @@ export interface EvolucaoPorCategoriaData
 export interface DistribuicaoPorCategoriaData extends Record<CategoriaMeta, number> {}
 
 export interface ProgressoCriancaData {
-  name: string
+  nome: string
   progresso: number
 }
 

@@ -2,6 +2,7 @@ import type { CategoriaMeta } from '~/features/Metas/types'
 import type {
   DistribuicaoPorCategoriaData,
   EvolucaoPorCategoriaData,
+  ProgressoCriancaData,
   ProgressoStats,
 } from '../types'
 
@@ -74,11 +75,11 @@ export const distribuicaoData: DistribuicaoPorCategoriaData = {
   MOTORA: 5,
 }
 
-export const progressoCriancaData = [
-  { name: 'Ana Silva', progresso: 78 },
-  { name: 'Pedro Costa', progresso: 65 },
-  { name: 'Sofia Oliveira', progresso: 85 },
-  { name: 'Carlos Mendes', progresso: 72 },
+export const progressoCriancaData: ProgressoCriancaData[] = [
+  { nome: 'Ana Silva', progresso: 78 },
+  { nome: 'Pedro Costa', progresso: 65 },
+  { nome: 'Sofia Oliveira', progresso: 85 },
+  { nome: 'Carlos Mendes', progresso: 72 },
 ]
 
 export const atualizacoesRecentes = [
