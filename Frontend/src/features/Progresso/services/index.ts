@@ -1,3 +1,4 @@
+import { api } from '~/api/apiClient'
 import {
   distribuicaoData,
   evolucaoData,
@@ -6,32 +7,31 @@ import {
   atualizacoesRecentes,
 } from '../data/mockData'
 
-// Mock service to get progresso resumo
 export async function getProgressoResumo() {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  return Promise.resolve(statsCards)
+  const response = await api.get('/progresso/resumo')
+  return response.data
 }
 
 // Mock service to get evolução por categoria
 export async function getEvolucaoPorCategoria() {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  return Promise.resolve(evolucaoData)
+  const response = await api.get('/progresso/evolucao-categoria')
+  return response.data
 }
 
 // Mock service to get distribuição por categoria
 export async function getDistribuicaoPorCategoria() {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  return Promise.resolve(distribuicaoData)
+  const response = await api.get('/progresso/distribuicao-categoria')
+  return response.data
 }
 
 // Mock service to get progresso por criança
 export async function getProgressoPorCrianca() {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  return Promise.resolve(progressoCriancaData)
+  const response = await api.get('/progresso/crianca')
+  return response.data
 }
 
 // Mock service to get atualizações recentes
 export async function getAtualizacoesRecentes() {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  return Promise.resolve(atualizacoesRecentes)
+  const response = await api.get('/progresso/recentes')
+  return response.data
 }
