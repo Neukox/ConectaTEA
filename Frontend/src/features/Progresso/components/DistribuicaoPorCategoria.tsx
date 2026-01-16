@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   Cell,
   Legend,
@@ -6,39 +7,58 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts'
-import type { DistribuicaoData } from '../types'
+import type { DistribuicaoPorCategoriaData } from '../types'
+import { CategoriaMeta } from '~/features/Metas/types'
+import { categoriaColors } from '../data/mockData'
 
 interface DistribuicaoPorCategoriaProps {
-  data: DistribuicaoData[]
+  data: DistribuicaoPorCategoriaData
 }
 
-export function DistribuicaoPorCategoria({ data }: DistribuicaoPorCategoriaProps) {
+export function DistribuicaoPorCategoria({
+  data,
+}: DistribuicaoPorCategoriaProps) {
+  const mappedData = useMemo(() => {
+    const entries = Object.entries(data) as [CategoriaMeta, number][]
+
+    return entries.map(([key, value]) => ({
+      name: CategoriaMeta[key],
+      value: value,
+      color: categoriaColors[key],
+    }))
+  }, [data])
+
   return (
-    <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
-      <h3 className='mb-6 text-lg font-bold text-gray-900'>
-        Distribuição por Categoria
-      </h3>
-      <div className='flex h-80 items-center justify-center'>
-        <ResponsiveContainer width='100%' height='100%'>
-          <PieChart>
-            <Pie
-              data={data}
-              cx='50%'
-              cy='50%'
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={2}
-              dataKey='value'
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend layout='vertical' verticalAlign='middle' align='right' />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+    <div className='flex h-100 items-center justify-center'>
+      <ResponsiveContainer
+        width='100%'
+        height='100%'
+      >
+        <PieChart>
+          <Pie
+            data={mappedData}
+            cx='50%'
+            cy='50%'
+            innerRadius={60}
+            outerRadius={100}
+            paddingAngle={2}
+            dataKey='value'
+          >
+            {mappedData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.color}
+              />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend
+            layout='vertical'
+            verticalAlign='middle'
+            align='right'
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   )
 }

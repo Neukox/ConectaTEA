@@ -21,4 +21,7 @@ export const QUERY_KEYS = {
   CRIANCAS: 'criancas',
   PROGRESSO_RESUMO: 'progresso-resumo',
   EVOLUCAO_CATEGORIA_PROGRESSO: 'evolucao-categoria-progresso',
+  DISTRIBUICAO_CATEGORIA_PROGRESSO: 'distribuicao-categoria-progresso',
+  PROGRESSO_POR_CRIANCA: 'progresso-por-crianca',
+  PROGRESSOS_RECENTES: 'progressos-recentes',
 }

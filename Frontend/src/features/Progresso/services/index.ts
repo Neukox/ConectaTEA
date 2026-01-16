@@ -1,4 +1,4 @@
-import { evolucaoData, statsCards } from '../data/mockData'
+import { distribuicaoData, evolucaoData, statsCards } from '../data/mockData'
 
 // Mock service to get progresso resumo
 export async function getProgressoResumo() {
@@ -10,4 +10,10 @@ export async function getProgressoResumo() {
 export async function getEvolucaoPorCategoria() {
   await new Promise((resolve) => setTimeout(resolve, 1000))
   return Promise.resolve(evolucaoData)
+}
+
+// Mock service to get distribuição por categoria
+export async function getDistribuicaoPorCategoria() {
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+  return Promise.resolve(distribuicaoData)
 }

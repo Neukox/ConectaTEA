@@ -2,14 +2,13 @@ import { PageLayout } from '~/components/layout'
 import {
   AtualizacoesRecentes,
   atualizacoesRecentes,
-  distribuicaoData,
-  DistribuicaoPorCategoria,
   EvolucaoCategoriaProfissional,
   ProgressoHeader,
   progressoCriancaData,
   ProgressoPorCrianca,
   ProfissionalProgressoResumo,
 } from '~/features/Progresso'
+import DistribuicaoCategoriaProfissional from '~/features/Progresso/components/profissional/DistribuicaoCategoriaProfissional'
 
 export default function Progresso() {
   const handleExport = () => {
@@ -38,7 +37,12 @@ export default function Progresso() {
             </h3>
             <EvolucaoCategoriaProfissional />
           </div>
-          <DistribuicaoPorCategoria data={distribuicaoData} />
+          <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+            <h3 className='mb-6 text-lg font-bold text-gray-900'>
+              Distribuição por Categoria
+            </h3>
+            <DistribuicaoCategoriaProfissional />
+          </div>
         </div>
 
         {/* Charts Row 2 & Recent Updates */}

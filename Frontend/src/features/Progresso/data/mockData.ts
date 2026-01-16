@@ -1,4 +1,9 @@
-import type { EvolucaoPorCategoriaData, ProgressoStats } from '../types'
+import type { CategoriaMeta } from '~/features/Metas/types'
+import type {
+  DistribuicaoPorCategoriaData,
+  EvolucaoPorCategoriaData,
+  ProgressoStats,
+} from '../types'
 
 // Mock de dados para evolução por categoria (formato retornado pelo backend)
 // Período: Últimos 6 meses (Ago/25 a Jan/26)
@@ -59,13 +64,15 @@ export const evolucaoData: EvolucaoPorCategoriaData[] = [
   },
 ]
 
-export const distribuicaoData = [
-  { name: 'Social', value: 20, color: '#EC4899' },
-  { name: 'Comunicação', value: 25, color: '#8B5CF6' },
-  { name: 'Motora', value: 15, color: '#22C55E' },
-  { name: 'Cognitiva', value: 18, color: '#06B6D4' },
-  { name: 'Comportamental', value: 22, color: '#6366F1' },
-]
+// Mock de dados para distribuição por categoria
+export const distribuicaoData: DistribuicaoPorCategoriaData = {
+  COMUNICACAO: 25,
+  SOCIAL: 20,
+  COGNITIVA: 30,
+  COMPORTAMENTAL: 15,
+  AUTONOMIA: 5,
+  MOTORA: 5,
+}
 
 export const progressoCriancaData = [
   { name: 'Ana Silva', progresso: 78 },
@@ -111,3 +118,12 @@ export const statsCards: ProgressoStats = {
   metas_concluidas: 15,
   criancas_ativas: 24,
 }
+
+export const categoriaColors = {
+  SOCIAL: '#EC4899',
+  COMUNICACAO: '#8B5CF6',
+  COGNITIVA: '#06B6D4',
+  COMPORTAMENTAL: '#FBBF24',
+  AUTONOMIA: '#F59E0B',
+  MOTORA: '#22C55E',
+} satisfies Record<CategoriaMeta, string>

@@ -5,12 +5,7 @@ export interface EvolucaoPorCategoriaData
   periodo: string
 }
 
-export interface DistribuicaoData {
-  name: string
-  value: number
-  color: string
-  [key: string]: string | number
-}
+export interface DistribuicaoPorCategoriaData extends Record<CategoriaMeta, number> {}
 
 export interface ProgressoCriancaData {
   name: string
