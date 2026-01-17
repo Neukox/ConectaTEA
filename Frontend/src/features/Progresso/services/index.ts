@@ -1,11 +1,5 @@
 import { api } from '~/api/apiClient'
-import {
-  distribuicaoData,
-  evolucaoData,
-  progressoCriancaData,
-  statsCards,
-  atualizacoesRecentes,
-} from '../data/mockData'
+import type { ProgressoFilters } from '../types'
 
 export async function getProgressoResumo() {
   const response = await api.get('/progresso/resumo')
@@ -13,20 +7,29 @@ export async function getProgressoResumo() {
 }
 
 // Mock service to get evolução por categoria
-export async function getEvolucaoPorCategoria() {
-  const response = await api.get('/progresso/evolucao-categoria')
+export async function getEvolucaoPorCategoria(filtros?: ProgressoFilters) {
+  const response = await api.get('/progresso/evolucao-categoria', {
+    params: filtros,
+  })
+
   return response.data
 }
 
 // Mock service to get distribuição por categoria
-export async function getDistribuicaoPorCategoria() {
-  const response = await api.get('/progresso/distribuicao-categoria')
+export async function getDistribuicaoPorCategoria(filtros?: ProgressoFilters) {
+  const response = await api.get('/progresso/distribuicao-categoria', {
+    params: filtros,
+  })
+
   return response.data
 }
 
 // Mock service to get progresso por criança
-export async function getProgressoPorCrianca() {
-  const response = await api.get('/progresso/crianca')
+export async function getProgressoPorCrianca(filtros?: ProgressoFilters) {
+  const response = await api.get('/progresso/crianca', {
+    params: filtros,
+  })
+
   return response.data
 }
 
