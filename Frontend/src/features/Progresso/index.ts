@@ -4,8 +4,8 @@ export * from './components'
 // Exporta os tipos
 export * from './types'
 
-// Exporta os dados mock
-export * from './data/mockData'
+// Exporta as constantes definidas
+export * from './constants'
 
 // Exporta o contexto de filtros de progresso
 export * from './context/provider'

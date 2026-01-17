@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 import type { DistribuicaoPorCategoriaData } from '../types'
 import { CategoriaMeta } from '~/features/Metas/types'
-import { categoriaColors } from '../data/mockData'
+import { categoriaColors } from '../constants'
 
 interface DistribuicaoPorCategoriaProps {
   data: DistribuicaoPorCategoriaData
