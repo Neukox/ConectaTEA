@@ -23,51 +23,58 @@ import { format, formatDistance } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import NotFoundData from '~/components/common/NotFoundData'
 import VerDetalhesMetaSkeleton from './VerDetalhesMetaSkeleton'
-import VerDetalhesMetaError from './VerDetalhesMetaError'
 import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
+import { useNotificacoesContext } from '~/api/barraNotificacao'
+import { useEffect } from 'react'
 
 export default function VerDetalhesMeta() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const {
-    data: meta,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isRefetching,
-  } = useDetalhesMeta(Number(id))
+  const { notificarErro } = useNotificacoesContext()
+
+  const metaId = Number(id)
+  const isValidId = !isNaN(metaId) && metaId > 0
+
+  const { data: meta, isLoading, isError, error } = useDetalhesMeta(metaId)
 
   const { openAtualizarProgressoModal } = useMetasModal()
+
+  useEffect(() => {
+    if (!isValidId) {
+      notificarErro(
+        'ID de meta inválido',
+        'O ID fornecido para a meta é inválido.',
+        { duration: 3000 },
+      )
+    }
+
+    if (isError) {
+      const errorMessage = 'Erro ao carregar dados da meta'
+
+      const errorDescription =
+        error?.response?.data?.message ||
+        'Não foi possível carregar os detalhes da meta'
+
+      notificarErro(errorMessage, errorDescription, { duration: 3000})
+    }
+
+    const timer = setTimeout(() => {
+      navigate('/profissional/metas')
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [isError, isValidId]);
 
   // Estado de carregamento
   if (isLoading) {
     return <VerDetalhesMetaSkeleton />
   }
 
-  // Estado de erro
   if (isError) {
-    // Tenta extrair mensagem de erro do backend
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : 'Erro ao carregar detalhes da meta'
-
-    const errorDescription =
-      error?.response?.data?.message ||
-      'Não foi possível carregar os detalhes da meta. Por favor, tente novamente.'
-
-    return (
-      <VerDetalhesMetaError
-        errorMessage={errorMessage}
-        errorDescription={errorDescription}
-        onRetry={() => refetch()}
-        isRetrying={isRefetching}
-      />
-    )
+    return <VerDetalhesMetaSkeleton />
   }
 
-  // Caso a meta não seja encontrada
+  // Caso a meta não seja encontrada ou ID seja inválido
   if (!meta) {
     return (
       <NotFoundData
