@@ -1,6 +1,9 @@
 //Algoritmo que faz ligação do frontend e backend do cadastro de criança.
 
-import type { StatusVinculoResponsavelCrianca } from '~/features/Criancas/types'
+import type {
+  StatusVinculoProfissionalCrianca,
+  StatusVinculoResponsavelCrianca,
+} from '~/features/Criancas/types'
 import { api } from '../apiClient' // NOVO ARQUIVO PARA QUEBRAR CACHE
 
 // Interface para tipagem dos dados de cadastro de criança baseada no layout do frontend
@@ -79,6 +82,7 @@ export interface CriancaListagem {
   parentesco: string // Adicionado
   responsavelId?: number // Tornando opcional
   status_vinculo_responsavel: StatusVinculoResponsavelCrianca // Adicionado status do vínculo
+  status_vinculo_profissional: StatusVinculoProfissionalCrianca
   responsavel: {
     id: number // Adicionado
     nome: string // Backend retorna 'name' mas mapeia para 'nome'
@@ -187,6 +191,7 @@ interface CriancaBackendResponse {
   observacoes?: string
   parentesco: string
   status_vinculo_responsavel: StatusVinculoResponsavelCrianca
+  status_vinculo_profissional: StatusVinculoProfissionalCrianca
   responsavel: {
     id: number
     nome: string
@@ -218,6 +223,7 @@ export const buscarCriancaPorId = async (
       observacoes: criancaData.observacoes,
       parentesco: criancaData.parentesco,
       status_vinculo_responsavel: criancaData.status_vinculo_responsavel, // Usar status do vínculo do responsável
+      status_vinculo_profissional: criancaData.status_vinculo_profissional, // Preservar status do vínculo do profissional
       responsavel: {
         id: criancaData.responsavel.id,
         nome: criancaData.responsavel.nome,

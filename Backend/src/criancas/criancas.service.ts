@@ -4,14 +4,13 @@ import { CreateCriancaDto } from "./dto/create-crianca.dto";
 import { UpdateCriancaDto } from "./dto/update-crianca.dto";
 import DateUtils from "../common/utils/date.utils";
 import { TokenVinculoService } from "../token-vinculo/token-vinculo.service";
-import { VinculacaoService } from "../vinculacao/vinculacao.service";
 import bcrypt from "bcrypt";
 
 @Injectable()
 export class CriancasService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly tokenVinculoService: TokenVinculoService
+    private readonly tokenVinculoService: TokenVinculoService,
   ) {}
 
   async create(createCriancaDto: CreateCriancaDto, profissionalId?: number) {
@@ -143,6 +142,11 @@ export class CriancasService {
             endereco: true,
           },
         },
+        prof_crianca: {
+          select: {
+            status_vinculo: true,
+          },
+        },
       },
       orderBy: {
         id: "desc",
@@ -150,27 +154,32 @@ export class CriancasService {
     });
 
     // Mapear dados para o formato esperado pelo frontend
-    const criancas = criancasRaw.map((crianca) => ({
-      id: crianca.id,
-      nome: crianca.nome,
-      idade: Math.floor(
-        (new Date().getTime() - new Date(crianca.data_nascimento).getTime()) /
-          (1000 * 60 * 60 * 24 * 365)
-      ),
-      dataNascimento: crianca.data_nascimento.toISOString().split("T")[0], // YYYY-MM-DD
-      genero: crianca.genero,
-      diagnostico: crianca.diagnostico,
-      parentesco: crianca.parentesco,
-      observacoes: crianca.observacoes,
-      status_vinculo_responsavel: crianca.status_vinculo_responsavel,
-      responsavel: {
-        id: crianca.responsavel.id,
-        nome: crianca.responsavel.name, // Mapear name para nome
-        email: crianca.responsavel.email,
-        telefone: crianca.responsavel.telefone,
-        endereco: crianca.responsavel.endereco,
-      },
-    }));
+    const criancas = criancasRaw.map((crianca) => {
+      const vinculoProfissional = crianca.prof_crianca[0].status_vinculo;
+
+      return {
+        id: crianca.id,
+        nome: crianca.nome,
+        idade: Math.floor(
+          (new Date().getTime() - new Date(crianca.data_nascimento).getTime()) /
+            (1000 * 60 * 60 * 24 * 365),
+        ),
+        dataNascimento: crianca.data_nascimento.toISOString().split("T")[0], // YYYY-MM-DD
+        genero: crianca.genero,
+        diagnostico: crianca.diagnostico,
+        parentesco: crianca.parentesco,
+        observacoes: crianca.observacoes,
+        status_vinculo_responsavel: crianca.status_vinculo_responsavel,
+        status_vinculo_profissional: vinculoProfissional,
+        responsavel: {
+          id: crianca.responsavel.id,
+          nome: crianca.responsavel.name, // Mapear name para nome
+          email: crianca.responsavel.email,
+          telefone: crianca.responsavel.telefone,
+          endereco: crianca.responsavel.endereco,
+        },
+      };
+    });
 
     return {
       message: "Crianças listadas com sucesso!",
@@ -265,7 +274,7 @@ export class CriancasService {
         dadosAtualizarCrianca.nome = updateCriancaDto.nome;
       if (updateCriancaDto.dataNascimento) {
         dadosAtualizarCrianca.data_nascimento = new Date(
-          updateCriancaDto.dataNascimento
+          updateCriancaDto.dataNascimento,
         );
       }
       if (updateCriancaDto.genero)
@@ -411,7 +420,7 @@ export class CriancasService {
     } catch (error) {
       console.error("Erro ao deletar criança:", error);
       throw new BadRequestException(
-        "Erro ao deletar criança. Verifique se há dependências."
+        "Erro ao deletar criança. Verifique se há dependências.",
       );
     }
 
@@ -431,7 +440,7 @@ export class CriancasService {
 
     if (!token) {
       throw new BadRequestException(
-        "Código de vínculo não encontrado ou já foi utilizado."
+        "Código de vínculo não encontrado ou já foi utilizado.",
       );
     }
 

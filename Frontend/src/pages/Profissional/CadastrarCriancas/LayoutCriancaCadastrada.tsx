@@ -4,7 +4,9 @@ import type { CriancaListagem } from '../../../api/protected/axiosCadastroCrianc
 import { useConfirmacao } from '../../../hooks/useConfirmacao'
 import BarraConfirmacao from '../../../components/features/ModalConfirmacao'
 import ModalVerDetalhesCriancaCadastrada from './ModalVerDetalhesCriancaCadastrada'
-import type { StatusVinculoProfissionalCrianca } from '~/features/Criancas/types'
+import { StatusVinculoProfissionalCrianca } from '~/features/Criancas/types'
+import { Badge } from '~/components/ui/badge'
+import { cn } from '~/lib/utils'
 
 // Interface para o profissional
 interface ProfissionalInfo {
@@ -62,24 +64,41 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
   }
 
   return (
-    <div className='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
-      <div className='flex items-start justify-between'>
-        <div className='grid flex-1 grid-cols-1 gap-4 md:grid-cols-4'>
-          {/* Nome da criança */}
-          <div>
-            <div className='mb-2 flex items-center gap-2'>
-              <h3 className='text-lg font-semibold text-gray-900'>
-                {crianca.nome}
-              </h3>
-              <span className='rounded-full bg-green-100 px-2 py-1 text-xs text-green-800'>
-                Ativo
-              </span>
-            </div>
-            <p className='text-sm text-gray-600'>
-              <span className='font-medium'>Idade:</span> {crianca.idade} anos
-            </p>
-          </div>
-
+    <div className='@container rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+      <div className='grid grid-cols-1 gap-x-4 gap-y-6'>
+        {/* Nome da criança */}
+        <div className='flex items-center gap-2'>
+          <h3 className='text-lg font-semibold text-gray-900'>
+            {crianca.nome}
+          </h3>
+          <Badge
+            className={cn(
+              crianca.status_vinculo_profissional === 'VINCULADO'
+                ? 'border-green-200 bg-green-100 text-green-800 hover:bg-green-200/80'
+                : '',
+              crianca.status_vinculo_profissional === 'AGUARDANDO'
+                ? 'border-gray-200 bg-gray-100 text-gray-800 hover:bg-gray-200/80'
+                : '',
+              crianca.status_vinculo_profissional === 'DESVINCULADO'
+                ? 'border-red-200 bg-red-100 text-red-800 hover:bg-red-200/80'
+                : '',
+              crianca.status_vinculo_profissional === 'SUSPENSO'
+                ? 'border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-200/80'
+                : '',
+            )}
+          >
+            {
+              StatusVinculoProfissionalCrianca[
+                crianca.status_vinculo_profissional
+              ]
+            }
+          </Badge>
+        </div>
+        <div className='flex flex-col items-start justify-between gap-4 @lg:col-span-2 @lg:col-end-2 @lg:flex-row'>
+          {/* Idade */}
+          <p className='text-sm text-gray-600'>
+            <span className='font-medium'>Idade:</span> {crianca.idade} anos
+          </p>
           {/* Diagnóstico */}
           <div>
             <p className='text-sm text-gray-600'>
@@ -87,7 +106,6 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
               {crianca.diagnostico}
             </p>
           </div>
-
           {/* Responsável */}
           <div>
             <p className='text-sm text-gray-600'>
@@ -99,7 +117,6 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
               {profissional.nome}
             </p>
           </div>
-
           {/* Última sessão */}
           <div>
             <p className='text-sm text-gray-600'>
@@ -108,18 +125,17 @@ const LayoutCriancaCadastrada: React.FC<LayoutCriancaCadastradaProps> = ({
             </p>
           </div>
         </div>
-
         {/* Botões de ação */}
-        <div className='ml-4 flex gap-2'>
+        <div className='flex flex-col justify-end gap-2 @lg:col-start-1 @lg:row-end-1 @lg:flex-row @lg:flex-wrap'>
           {/* Botão para visualizar código de vínculo (quando ainda aguardando) */}
           {crianca.status_vinculo_responsavel === 'AGUARDANDO_VINCULO' && (
             <button
               onClick={() => onVisualizarCodigo?.(crianca.id)}
-              className='flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-50'
+              className='flex items-center justify-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-center text-sm text-blue-600 transition-colors hover:bg-blue-50'
               title='Visualizar código de vínculo'
             >
               <QrCode className='h-4 w-4' />
-              <span className='hidden sm:inline'>Código</span>
+              <span>Código</span>
             </button>
           )}
           <button

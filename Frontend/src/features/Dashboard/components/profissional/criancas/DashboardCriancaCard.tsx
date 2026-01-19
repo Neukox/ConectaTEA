@@ -1,6 +1,6 @@
 import { cn } from '~/lib/utils'
 import type { DadosCriancasDashboard } from '~/features/Dashboard/types'
-import { StatusVinculoProfissionalCriancaMap } from '~/features/Criancas/types'
+import { StatusVinculoProfissionalCrianca } from '~/features/Criancas/types'
 import { HiOutlineDotsHorizontal } from 'react-icons/hi'
 
 interface DashboardCriancaCardProps {
@@ -47,7 +47,7 @@ export default function DashboardCriancaCard({
               crianca.status === 'DESVINCULADO' && 'bg-red-100 text-red-600',
             )}
           >
-            {StatusVinculoProfissionalCriancaMap[crianca.status]}
+            {StatusVinculoProfissionalCrianca[crianca.status]}
           </span>
           <button className='absolute top-2 right-2 rounded p-1 hover:bg-gray-200 @sm:relative @sm:top-0 @sm:right-0'>
             <HiOutlineDotsHorizontal className='h-5 w-5 text-gray-600' />

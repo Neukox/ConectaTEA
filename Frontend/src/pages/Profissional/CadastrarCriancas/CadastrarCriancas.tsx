@@ -142,16 +142,6 @@ export default function CadastrarCriancas() {
     fetchCriancas()
   }, [])
 
-  // Adicionar listener para recarregar quando voltar para a página
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchCriancas()
-    }
-
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [])
-
   // Excluir criança
   const handleExcluirCrianca = async (criancaId: number) => {
     const crianca = criancas.find((c) => c.id === criancaId)

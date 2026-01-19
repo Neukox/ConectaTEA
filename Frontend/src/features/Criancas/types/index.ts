@@ -48,7 +48,7 @@ export const Parentesco = {
   OUTRO: 'Outro',
 } satisfies Record<Parentesco, string>
 
-export const StatusVinculoProfissionalCriancaMap = {
+export const StatusVinculoProfissionalCrianca = {
   AGUARDANDO: 'Aguardando',
   VINCULADO: 'Vinculado',
   DESVINCULADO: 'Desvinculado',
