@@ -12,13 +12,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import SummaryCard from './components/SummaryCard'
-import SessionItem from './components/SessionItem'
-import NextSessions from './components/NextSessions'
-import QuickActions from './components/QuickActions'
-import ModalAgendarSessao from './components/ModalAgendarSessao'
-import ModalCalendarioCompleto from './components/ModalCalendarioCompleto'
-import ModalEditarSessao from './components/ModalEditarSessao'
+import SummaryCard from '~/features/Sessoes'
+import SessionItem from '../../../features/Sessoes/components/SessionItem'
+import NextSessions from '../../../features/Sessoes/components/NextSessions'
+import QuickActions from '../../../features/Sessoes/components/QuickActions'
+import ModalAgendarSessao from '../../../features/Sessoes/components/ModalAgendarSessao'
+import ModalCalendarioCompleto from '../../../features/Sessoes/components/ModalCalendarioCompleto'
+import ModalEditarSessao from '../../../features/Sessoes/components/ModalEditarSessao'
 import { PageLayout } from '~/components/layout/PageLayout'
 import Header from '~/components/layout/Header'
 
