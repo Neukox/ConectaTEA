@@ -114,6 +114,14 @@ export class SessoesService {
       (sessao) => sessao.status === "PENDENTE"
     ).length;
 
+    const sessoesHoje = sessoes.filter((sessao) => {
+      const { startDate, endDate } = DateUtils.periodToDateRange("HOJE");
+
+      const sessaoDate = new Date(sessao.data);
+
+      return sessaoDate >= startDate && sessaoDate <= endDate;
+    }).length;
+
     const sessoesEstaSemana = sessoes.filter((sessao) => {
       const { startDate, endDate } = DateUtils.periodToDateRange("SEMANAL");
 
@@ -125,10 +133,10 @@ export class SessoesService {
     this.logger.log("Resumo calculado com sucesso");
 
     return {
-      totalSessoesCount,
-      sessoesConcluidas,
-      sessoesEstaSemana,
-      sessoesPendentes,
+      sessoes_hoje: sessoesHoje,
+      sessoes_concluidas: sessoesConcluidas,
+      sessoes_esta_semana: sessoesEstaSemana,
+      sessoes_pendentes: sessoesPendentes,
     };
   }
 

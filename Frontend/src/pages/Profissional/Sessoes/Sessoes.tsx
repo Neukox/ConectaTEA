@@ -3,16 +3,13 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   Calendar as CalendarIcon,
-  Clock,
-  User,
-  FileText,
   Plus,
   Search,
   Filter,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import SummaryCard from '~/features/Sessoes'
+import { ResumoSessoes } from '~/features/Sessoes'
 import SessionItem from '../../../features/Sessoes/components/SessionItem'
 import NextSessions from '../../../features/Sessoes/components/NextSessions'
 import QuickActions from '../../../features/Sessoes/components/QuickActions'
@@ -27,38 +24,6 @@ const Sessoes: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
   const [editingSession, setEditingSession] = useState<any>(null)
-
-  // Mock data
-  const summaryData = [
-    {
-      icon: CalendarIcon,
-      count: 12,
-      label: 'Hoje',
-      color: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-    },
-    {
-      icon: Clock,
-      count: 8,
-      label: 'Concluídas',
-      color: 'bg-green-100',
-      iconColor: 'text-green-600',
-    },
-    {
-      icon: User,
-      count: 18,
-      label: 'Esta Semana',
-      color: 'bg-orange-100',
-      iconColor: 'text-orange-600',
-    },
-    {
-      icon: FileText,
-      count: 2,
-      label: 'Pendentes',
-      color: 'bg-purple-100',
-      iconColor: 'text-purple-600',
-    },
-  ]
 
   const sessions = [
     {
@@ -164,14 +129,7 @@ const Sessoes: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className='mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
-        {summaryData.map((data, index) => (
-          <SummaryCard
-            key={index}
-            {...data}
-          />
-        ))}
-      </div>
+      <ResumoSessoes />
 
       <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
         {/* Main Content - Session List */}
