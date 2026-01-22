@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom'
 import { CadastrarMetaDialog } from '~/features/Metas'
 import { AtualizarMetaDialog } from '~/features/Metas'
 import { AtualizarProgressoDialog } from '~/features/Metas'
+import ModalAgendarSessao from '~/features/Sessoes/components/ModalAgendarSessao'
 
 export const ModalContext = createContext<ModalContextType | undefined>(
   undefined,
@@ -60,6 +61,13 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
             open={true}
             onOpenChange={closeModal}
             meta={activeModal.data as ModalData['ATUALIZAR_PROGRESSO']}
+          />
+        )
+      case 'AGENDAR_SESSAO':
+        return (
+          <ModalAgendarSessao
+            isOpen={true}
+            onClose={closeModal}
           />
         )
       default:

@@ -4,11 +4,13 @@ export type ModalType =
   | 'CADASTRAR_META'
   | 'ATUALIZAR_META'
   | 'ATUALIZAR_PROGRESSO'
+  | 'AGENDAR_SESSAO'
 
 export type ModalData = {
   CADASTRAR_META: undefined
   ATUALIZAR_META: MetaToEdit
   ATUALIZAR_PROGRESSO: MetaToUpdateProgress
+  AGENDAR_SESSAO: undefined
 }
 
 export interface ModalState<T extends ModalType = ModalType> {

@@ -13,17 +13,18 @@ import { ResumoSessoes } from '~/features/Sessoes'
 import SessionItem from '../../../features/Sessoes/components/SessionItem'
 import NextSessions from '../../../features/Sessoes/components/NextSessions'
 import QuickActions from '../../../features/Sessoes/components/QuickActions'
-import ModalAgendarSessao from '../../../features/Sessoes/components/ModalAgendarSessao'
 import ModalCalendarioCompleto from '../../../features/Sessoes/components/ModalCalendarioCompleto'
 import ModalEditarSessao from '../../../features/Sessoes/components/ModalEditarSessao'
 import { PageLayout } from '~/components/layout/PageLayout'
 import Header from '~/components/layout/Header'
+import useSessoesModal from '~/features/Sessoes/hooks/useSessoesModal'
 
 const Sessoes: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date(2024, 0, 14))
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
   const [editingSession, setEditingSession] = useState<any>(null)
+
+  const { openAgendarSessaoModal } = useSessoesModal()
 
   const sessions = [
     {
@@ -78,12 +79,6 @@ const Sessoes: React.FC = () => {
     },
   ]
 
-  const handleSchedule = (data: any) => {
-    console.log('Sessão agendada:', data)
-    // Here we would call the API to schedule the session
-    setIsModalOpen(false)
-  }
-
   const handleEditSession = (data: any) => {
     console.log('Sessão editada:', data)
     // API call to update session
@@ -97,7 +92,7 @@ const Sessoes: React.FC = () => {
         description='Gerencie agendamentos e sessões terapêuticas'
       >
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => openAgendarSessaoModal()}
           className='flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'
         >
           <Plus className='h-5 w-5' />
@@ -170,17 +165,11 @@ const Sessoes: React.FC = () => {
         <div className='space-y-8'>
           <NextSessions sessions={nextSessions} />
           <QuickActions
-            onScheduleClick={() => setIsModalOpen(true)}
+            onScheduleClick={() => openAgendarSessaoModal()}
             onCalendarClick={() => setIsCalendarModalOpen(true)}
           />
         </div>
       </div>
-
-      <ModalAgendarSessao
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSchedule={handleSchedule}
-      />
 
       <ModalCalendarioCompleto
         isOpen={isCalendarModalOpen}
