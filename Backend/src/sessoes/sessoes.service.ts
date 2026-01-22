@@ -54,6 +54,9 @@ export class SessoesService {
           lte: endDate,
         },
       }),
+      ...(filters.search && {
+        descricao: { contains: filters.search, mode: "insensitive" },
+      }),
     };
 
     const sessoes = await this.prisma.sessoes.findMany({
@@ -107,11 +110,11 @@ export class SessoesService {
     const totalSessoesCount = sessoes.length;
 
     const sessoesConcluidas = sessoes.filter(
-      (sessao) => sessao.status === "CONCLUIDA"
+      (sessao) => sessao.status === "CONCLUIDA",
     ).length;
 
     const sessoesPendentes = sessoes.filter(
-      (sessao) => sessao.status === "PENDENTE"
+      (sessao) => sessao.status === "PENDENTE",
     ).length;
 
     const sessoesHoje = sessoes.filter((sessao) => {
@@ -177,13 +180,13 @@ export class SessoesService {
 
   async updateStatus(id: number, updateStatusSessaoDto: UpdateStatusSessaoDto) {
     this.logger.log(
-      `Atualizando status da sessão com ID: ${id} para ${updateStatusSessaoDto.status}`
+      `Atualizando status da sessão com ID: ${id} para ${updateStatusSessaoDto.status}`,
     );
     const sessao = await this.findOne(id);
 
     if (!sessao) {
       this.logger.warn(
-        `Sessão com ID: ${id} não encontrada para atualização de status`
+        `Sessão com ID: ${id} não encontrada para atualização de status`,
       );
       throw new NotFoundException(`Sessão não encontrada`);
     }
@@ -196,7 +199,7 @@ export class SessoesService {
     });
 
     this.logger.log(
-      `Status da sessão com ID: ${id} atualizado para ${updateStatusSessaoDto.status} com sucesso`
+      `Status da sessão com ID: ${id} atualizado para ${updateStatusSessaoDto.status} com sucesso`,
     );
 
     return { message: "Status da sessão atualizado com sucesso" };

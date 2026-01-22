@@ -1,7 +1,7 @@
 import { StatusSessao, TipoSessao } from "@prisma/client";
 import { Periodos, PeriodoType } from "../../common/constants/periodo.constant";
 import { Transform, Type } from "class-transformer";
-import { IsEnum, IsInt, IsOptional, Min } from "class-validator";
+import { IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class FilterSessoesDto {
@@ -45,4 +45,13 @@ export class FilterSessoesDto {
   @IsEnum(Periodos)
   @Transform(({ value }) => value.toUpperCase())
   periodo?: PeriodoType;
+
+  @ApiProperty({
+    example: "Avaliacao de rotina",
+    description: "Termo de busca para filtrar sessões",
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

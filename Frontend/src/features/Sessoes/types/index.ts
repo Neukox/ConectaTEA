@@ -1,10 +1,12 @@
-type TipoSessao =
+import { Periodo } from "~/api/types"
+
+export type TipoSessao =
   | 'TERAPIA_INDIVIDUAL'
   | 'TERAPIA_OCUPACIONAL'
   | 'FONOAUDIOLOGIA'
   | 'AVALIACAO'
 
-type StatusSessao =
+export type StatusSessao =
   | 'AGENDADA'
   | 'CONCLUIDA'
   | 'EM_ANDAMENTO'
@@ -16,6 +18,14 @@ export interface SessoesSummary {
   sessoes_concluidas: number
   sessoes_esta_semana: number
   sessoes_pendentes: number
+}
+
+export interface SessoesFilters {
+  criancaId?: number
+  status?: StatusSessao
+  tipo?: TipoSessao
+  periodo?: Periodo
+  search?: string
 }
 
 export const TipoSessao = {
