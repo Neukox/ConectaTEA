@@ -1,94 +1,58 @@
 import React from 'react'
+import { StatusSessao, TipoSessao, type Sessao } from '../types'
+import { format } from 'date-fns'
+import { Badge } from '~/components/ui/badge'
+import { STATUS_SESSAO_BADGE, TIPO_SESSAO_BADGE } from '../constants'
+import { cn } from '~/lib/utils'
 
 interface SessionItemProps {
-  time: string
-  duration?: string
-  patientName: string
-  status: 'Agendada' | 'Concluída' | 'Em Andamento' | 'Cancelada'
-  type: string
-  description?: string
-  observation?: string
-  professionalName: string
-  date?: string // For next sessions list if needed, though main list is usually by day
+  sessao: Sessao
   onEdit?: () => void
 }
 
-const SessionItem: React.FC<SessionItemProps> = ({
-  time,
-  duration,
-  patientName,
-  status,
-  type,
-  description,
-  observation,
-  professionalName,
-  onEdit,
-}) => {
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'Agendada':
-        return 'bg-blue-100 text-blue-700'
-      case 'Concluída':
-        return 'bg-green-100 text-green-700'
-      case 'Em Andamento':
-        return 'bg-yellow-100 text-yellow-700'
-      case 'Cancelada':
-        return 'bg-red-100 text-red-700'
-      default:
-        return 'bg-gray-100 text-gray-700'
-    }
-  }
+const SessionItem: React.FC<SessionItemProps> = ({ sessao, onEdit }) => {
+  // Badges
+  const bagdeTipo = TIPO_SESSAO_BADGE[sessao.tipo]
+  const bagdeStatus = STATUS_SESSAO_BADGE[sessao.status]
 
-  const getTypeStyle = (type: string) => {
-    switch (type) {
-      case 'Terapia Individual':
-        return 'bg-indigo-100 text-indigo-700'
-      case 'Fonoaudiologia':
-        return 'bg-purple-100 text-purple-700'
-      case 'Terapia Ocupacional':
-        return 'bg-orange-100 text-orange-700'
-      default:
-        return 'bg-gray-100 text-gray-700'
-    }
-  }
+  // Status and Type string values
+  const status = StatusSessao[sessao.status]
+  const tipo = TipoSessao[sessao.tipo]
 
   return (
     <div className='mb-4 rounded-xl border bg-white p-6 shadow-sm'>
       <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
         <div className='flex gap-6'>
           <div className='flex flex-col items-center'>
-            <span className='text-lg font-bold text-gray-800'>{time}</span>
-            {duration && (
-              <span className='text-xs text-gray-500'>{duration}</span>
+            <span className='text-lg font-bold text-gray-800'>
+              {format(new Date(sessao.data), 'HH:mm')}
+            </span>
+            {sessao.duracao && (
+              <span className='text-xs text-gray-500'>
+                {sessao.duracao} min
+              </span>
             )}
           </div>
 
           <div className='space-y-2'>
             <div className='flex flex-wrap items-center gap-3'>
-              <h3 className='text-lg font-bold text-gray-800'>{patientName}</h3>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(status)}`}
-              >
-                {status}
-              </span>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${getTypeStyle(type)}`}
-              >
-                {type}
-              </span>
+              <h3 className='text-lg font-bold text-gray-800'>
+                {sessao.crianca.nome}
+              </h3>
+              <Badge className={cn('font-medium', bagdeStatus)}>{status}</Badge>
+              <Badge className={cn('font-medium', bagdeTipo)}>{tipo}</Badge>
             </div>
+            <p className='text-gray-600'>{sessao.descricao}</p>
 
-            {description && <p className='text-gray-600'>{description}</p>}
-
-            {observation && (
+            {sessao.observacoes && (
               <div className='mt-2 rounded-lg bg-blue-50 p-3 text-sm text-gray-700'>
                 <span className='font-semibold'>Observações: </span>
-                {observation}
+                {sessao.observacoes}
               </div>
             )}
 
             <div className='flex items-center gap-2 text-sm text-gray-500'>
-              <span>Profissional: {professionalName}</span>
+              <span>Profissional: {sessao.profissional.nome}</span>
             </div>
           </div>
         </div>
@@ -100,7 +64,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
           >
             Editar
           </button>
-          {status === 'Agendada' && (
+          {sessao.status === 'AGENDADA' && (
             <button className='rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'>
               Iniciar
             </button>

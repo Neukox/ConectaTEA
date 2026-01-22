@@ -16,6 +16,7 @@ import ModalEditarSessao from '../../../features/Sessoes/components/ModalEditarS
 import { PageLayout } from '~/components/layout/PageLayout'
 import Header from '~/components/layout/Header'
 import useSessoesModal from '~/features/Sessoes/hooks/useSessoesModal'
+import { nextSessions, sessions } from '~/features/Sessoes/mock'
 
 const Sessoes: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date(2024, 0, 14))
@@ -23,59 +24,6 @@ const Sessoes: React.FC = () => {
   const [editingSession, setEditingSession] = useState<any>(null)
 
   const { openAgendarSessaoModal } = useSessoesModal()
-
-  const sessions = [
-    {
-      id: '1',
-      time: '09:00',
-      duration: '60min',
-      patientName: 'Ana Silva',
-      status: 'Agendada' as const,
-      type: 'Terapia Individual',
-      description: 'Sessão focada em comunicação verbal e interação social',
-      professionalName: 'Dr. João Santos',
-    },
-    {
-      id: '2',
-      time: '10:30',
-      duration: '45min',
-      patientName: 'Pedro Costa',
-      status: 'Concluída' as const,
-      type: 'Fonoaudiologia',
-      description: 'Exercícios de articulação e desenvolvimento da fala',
-      observation: 'Boa evolução na pronúncia de fonemas complexos',
-      professionalName: 'Dra. Ana Lima',
-    },
-    {
-      id: '3',
-      time: '14:00',
-      duration: '60min',
-      patientName: 'Sofia Oliveira',
-      status: 'Em Andamento' as const,
-      type: 'Terapia Ocupacional',
-      description: 'Atividades de coordenação motora fina',
-      professionalName: 'Dr. Roberto Silva',
-    },
-  ]
-
-  const nextSessions = [
-    {
-      id: '1',
-      time: '09:30',
-      date: '15/01',
-      patientName: 'Ana Silva',
-      professionalName: 'Dr. João Santos',
-      type: 'Terapia Individual',
-    },
-    {
-      id: '2',
-      time: '11:00',
-      date: '15/01',
-      patientName: 'Carlos Mendes',
-      professionalName: 'Dra. Ana Lima',
-      type: 'Avaliação',
-    },
-  ]
 
   const handleEditSession = (data: any) => {
     console.log('Sessão editada:', data)
@@ -132,7 +80,7 @@ const Sessoes: React.FC = () => {
             {sessions.map((session) => (
               <SessionItem
                 key={session.id}
-                {...session}
+                sessao={session}
                 onEdit={() => setEditingSession(session)}
               />
             ))}

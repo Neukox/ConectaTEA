@@ -1,4 +1,4 @@
-import { Periodo } from "~/api/types"
+import { Periodo } from '~/api/types'
 
 export type TipoSessao =
   | 'TERAPIA_INDIVIDUAL'
@@ -26,6 +26,25 @@ export interface SessoesFilters {
   tipo?: TipoSessao
   periodo?: Periodo
   search?: string
+}
+
+export interface Sessao {
+  id: number
+  descricao: string
+  data: string
+  duracao: number
+  tipo: TipoSessao
+  status: StatusSessao
+  observacoes: string | null
+  crianca: {
+    id: number
+    nome: string
+  }
+  profissional_id: number
+  profissional: {
+    id: number
+    nome: string
+  }
 }
 
 export const TipoSessao = {

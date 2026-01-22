@@ -8,11 +8,12 @@ import {
 } from '~/components/ui'
 import type { CalendarEvent } from './FullCalendar'
 import FullCalendar from './FullCalendar'
+import { TipoSessao, type Sessao } from '../types'
 
 interface ModalCalendarioCompletoProps {
   isOpen: boolean
   onClose: () => void
-  sessions: any[] // Pass full sessions
+  sessions: Sessao[]
   onSelectSession?: (session: any) => void
 }
 
@@ -30,26 +31,29 @@ const ModalCalendarioCompleto: React.FC<ModalCalendarioCompletoProps> = ({
     // Logic to construct date/time
     // Fallback date logic since mock data in Sessoes.tsx doesn't have full date strings yet for all items
     // In a real app, session.date would be a full ISO string or Date object.
-    const eventDate = session.dateObj ? session.dateObj : new Date(2024, 0, 14)
-    const [hours, minutes] = session.time.split(':').map(Number)
+    const eventDate = session.data ? session.data : new Date(2024, 0, 14)
+    const [hours, minutes] = session.data.split('T')[1].split(':').map(Number)
     const startDate = new Date(eventDate)
     startDate.setHours(hours, minutes)
 
     // quick parse duration "60min" -> 60
-    const duration = parseInt(session.duration.replace('min', '')) || 60
+    const duration = session.duracao
     const endDate = new Date(startDate)
     endDate.setMinutes(minutes + duration)
 
+    const tipo = TipoSessao[session.tipo]
+
     // Color logic
     let color = 'bg-green-100 text-green-700'
-    if (session.status === 'Concluída') color = 'bg-blue-100 text-blue-700'
-    if (session.status === 'Pendente') color = 'bg-purple-100 text-purple-700'
-    if (session.status === 'Em Andamento')
-      color = 'bg-orange-100 text-orange-700'
+    if (session.status === 'CONCLUIDA') color = 'bg-blue-100 text-blue-700'
+    if (session.status === 'PENDENTE') color = 'bg-purple-100 text-purple-700'
+    if (session.status === 'EM_ANDAMENTO')
+      color = 'bg-yellow-100 text-yellow-700'
+    if (session.status === 'CANCELADA') color = 'bg-orange-100 text-orange-700'
 
     return {
-      id: session.id,
-      title: `${session.patientName} - ${session.type}`,
+      id: String(session.id),
+      title: `${session.crianca.nome} - ${tipo}`,
       start: startDate,
       end: endDate,
       color,
@@ -62,7 +66,7 @@ const ModalCalendarioCompleto: React.FC<ModalCalendarioCompletoProps> = ({
       open={isOpen}
       onOpenChange={onClose}
     >
-      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden sm:max-w-[1000px]'>
+      <DialogContent className='flex max-h-[80vh] w-[90vw] max-w-5xl flex-col overflow-hidden'>
         <DialogHeader>
           <DialogTitle>Calendário Completo</DialogTitle>
         </DialogHeader>

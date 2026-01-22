@@ -1,16 +1,9 @@
 import React from 'react'
-
-interface NextSession {
-  id: string
-  time: string
-  date: string
-  patientName: string
-  professionalName: string
-  type: string
-}
+import { TipoSessao, type Sessao } from '../types'
+import { format } from 'date-fns'
 
 interface NextSessionsProps {
-  sessions: NextSession[]
+  sessions: Sessao[]
 }
 
 const NextSessions: React.FC<NextSessionsProps> = ({ sessions }) => {
@@ -25,17 +18,21 @@ const NextSessions: React.FC<NextSessionsProps> = ({ sessions }) => {
           >
             <div className='flex flex-col items-center justify-center rounded-lg bg-gray-50 px-3 py-2 text-center'>
               <span className='text-sm font-bold text-gray-800'>
-                {session.time}
+                {format(new Date(session.data), 'HH:mm')}
               </span>
-              <span className='text-xs text-gray-500'>{session.date}</span>
+              <span className='text-xs text-gray-500'>
+                {format(new Date(session.data), 'dd/MM')}
+              </span>
             </div>
             <div>
-              <h4 className='font-bold text-gray-800'>{session.patientName}</h4>
+              <h4 className='font-bold text-gray-800'>
+                {session.crianca.nome}
+              </h4>
               <p className='text-xs text-gray-500'>
-                {session.professionalName}
+                {session.profissional.nome}
               </p>
               <span className='mt-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
-                {session.type}
+                {TipoSessao[session.tipo]}
               </span>
             </div>
           </div>
