@@ -1,7 +1,5 @@
-import {
-  Filter,
-} from 'lucide-react'
-import { useState } from 'react'
+import { Filter } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import Header from '../../../components/layout/Header'
 import { PageLayout } from '~/components/layout/PageLayout'
 import {
@@ -18,23 +16,15 @@ export default function MetasPage() {
   const [filtros, setFiltros] = useState<MetasFilters>({})
   const [searchTerm, setSearchTerm] = useState('')
 
-  const atualizarFiltrosDebounced = useDebounce(
-    (novosFiltros: MetasFilters) => {
-      setFiltros(novosFiltros)
-    },
-    500,
-  )
+  const searchDebouncedValue = useDebounce(searchTerm, 500)
 
   const handleAplicarFiltros = (novosFiltros: MetasFilters) => {
     setFiltros(novosFiltros)
   }
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchTerm(value)
-
-    atualizarFiltrosDebounced({ ...filtros, search: value })
-  }
+  useEffect(() => {
+    setFiltros((prev) => ({ ...prev, search: searchDebouncedValue }))
+  }, [searchDebouncedValue])
 
   return (
     <PageLayout>
@@ -65,7 +55,7 @@ export default function MetasPage() {
                 type='text'
                 placeholder='Buscar metas por nome da criança ou título...'
                 value={searchTerm}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className='w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100'
               />
             </div>
