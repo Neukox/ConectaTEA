@@ -1,33 +1,45 @@
-import { sessoesSummary, sessions, nextSessions } from '../mock'
-import type { SessaoToEdit, SessoesFilters } from '../types'
+import { api } from '~/api/httpClient'
+import type {
+  SessoesSummary,
+  SessaoToEdit,
+  SessoesFilters,
+  Sessao,
+} from '../types'
 
 export interface CreateSessaoRequest {
   descricao: string
   tipoSessao: string
   criancaId: number
   data: Date
-  horario: string
   duracao: number
   observacoes?: string
 }
 
 // Função para obter o resumo das sessões (Mock)
 export async function getSessoesSummary() {
-  await new Promise((resolve) => setTimeout(resolve, 1000)) // Simula atraso de rede
-  return Promise.resolve(sessoesSummary)
+  const response = await api.get<SessoesSummary>('/sessoes/resumo')
+  return response.data
 }
 
 export async function createSessao(data: CreateSessaoRequest) {
-  await new Promise((resolve) => setTimeout(resolve, 1000)) // Simula atraso de rede
-  return Promise.resolve()
+  const response = await api.post('/sessoes', data)
+  return response.data
 }
 
 export async function getSessoes(filters: SessoesFilters) {
-  await new Promise((resolve) => setTimeout(resolve, 1000)) // Simula atraso de rede
-  return Promise.resolve(sessions.concat(nextSessions))
+  const response = await api.get<Sessao[]>('/sessoes', { params: filters })
+  return response.data
 }
 
-export async function updateSessao(data: SessaoToEdit) {
-  await new Promise((resolve) => setTimeout(resolve, 1000)) // Simula atraso de rede
-  return Promise.resolve()
+export interface UpdateSessaoRequest {
+  descricao?: string
+  tipoSessao?: string
+  data?: Date
+  duracao?: number
+  observacoes?: string | null
+} 
+
+export async function updateSessao(id: number, data: UpdateSessaoRequest) {
+  const response = await api.put(`/sessoes/${id}`, data)
+  return response.data
 }
