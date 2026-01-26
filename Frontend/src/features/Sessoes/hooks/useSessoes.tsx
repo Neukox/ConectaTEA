@@ -1,4 +1,3 @@
-import { useCallback, useState } from 'react'
 import type { Sessao, SessoesFilters } from '../types'
 import { useQuery } from '@tanstack/react-query'
 import { QUERY_KEYS } from '~/api/query-client'
