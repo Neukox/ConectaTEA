@@ -9,6 +9,7 @@ import {
   Views,
 } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
+import type { Sessao } from '../types'
 
 // Setup localizer
 const locales = {
@@ -28,7 +29,7 @@ export interface CalendarEvent {
   title: string
   start: Date
   end: Date
-  resource?: any
+  resource?: Sessao
 }
 
 interface FullCalendarProps {
@@ -150,9 +151,9 @@ const FullCalendar: React.FC<FullCalendarProps> = ({
         eventPropGetter={(event) => {
           let className =
             'bg-green-100 text-green-700 border-l-4 border-green-500'
-          if (event.resource?.status === 'Concluída') {
+          if (event.resource?.status === 'CONCLUIDA') {
             className = 'bg-blue-100 text-blue-700 border-l-4 border-blue-500'
-          } else if (event.resource?.status === 'Pendente') {
+          } else if (event.resource?.status === 'PENDENTE') {
             className =
               'bg-yellow-100 text-yellow-700 border-l-4 border-yellow-500'
           }

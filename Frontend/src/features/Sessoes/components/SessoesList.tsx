@@ -6,19 +6,19 @@ import { format } from 'date-fns'
 import { Button } from '~/components/ui'
 import NotFoundData from '~/components/common/NotFoundData'
 import type { Sessao } from '../types'
+import { parseSessionDateString } from '../utils'
 
 interface SessoesListProps {
   sessoes: Sessao[]
-  setEditingSession: (session: any) => void
 }
 
-export function SessoesList({ sessoes, setEditingSession }: SessoesListProps) {
+export function SessoesList({ sessoes }: SessoesListProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
   useEffect(() => {
     const possibleDates = sessoes
       .map((s) => {
-        const date = new Date(s.data)
+        const date = parseSessionDateString(s.data)
         return new Date(date.getFullYear(), date.getMonth(), date.getDate())
       })
       .sort((a, b) => a.getTime() - b.getTime())
@@ -45,7 +45,7 @@ export function SessoesList({ sessoes, setEditingSession }: SessoesListProps) {
     if (!selectedDate) return []
 
     return sessoes.filter((s) => {
-      const sessionDate = new Date(s.data)
+      const sessionDate = parseSessionDateString(s.data)
       const sessionDateOnly = new Date(
         sessionDate.getFullYear(),
         sessionDate.getMonth(),
@@ -74,8 +74,7 @@ export function SessoesList({ sessoes, setEditingSession }: SessoesListProps) {
         <div className='flex items-center gap-2'>
           <CalendarIcon className='h-5 w-5 text-gray-600' />
           <span className='font-bold text-gray-800'>
-            Sessões de{' '}
-            {format(selectedDate as Date, 'dd/MM/yyyy', { locale: ptBR })}
+            Sessões de {format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })}
           </span>
         </div>
         <div className='flex gap-2'>
@@ -109,7 +108,6 @@ export function SessoesList({ sessoes, setEditingSession }: SessoesListProps) {
             <SessionItem
               key={session.id}
               sessao={session}
-              onEdit={() => setEditingSession(session)}
             />
           ))}
         {filteredSessoes.length === 0 && (

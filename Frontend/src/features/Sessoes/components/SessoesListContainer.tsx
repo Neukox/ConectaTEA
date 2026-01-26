@@ -6,13 +6,9 @@ import type { SessoesFilters } from '../types'
 
 interface SessoesListContainerProps {
   filters: SessoesFilters
-  setEditingSession: (session: any) => void
 }
 
-export function SessoesListContainer({
-  setEditingSession,
-  filters,
-}: SessoesListContainerProps) {
+export function SessoesListContainer({ filters }: SessoesListContainerProps) {
   const { data, isLoading, isFetching, isError, error, refetch } =
     useSessoes(filters)
 
@@ -41,10 +37,7 @@ export function SessoesListContainer({
 
   return (
     <>
-      <SessoesList
-        sessoes={data || []}
-        setEditingSession={setEditingSession}
-      />
+      <SessoesList sessoes={data || []} />
     </>
   )
 }

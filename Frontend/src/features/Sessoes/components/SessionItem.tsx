@@ -6,6 +6,7 @@ import { STATUS_SESSAO_BADGE, TIPO_SESSAO_BADGE } from '../constants'
 import { cn } from '~/lib/utils'
 import useSessoesModal from '../hooks/useSessoesModal'
 import { ptBR } from 'date-fns/locale'
+import { parseSessionDateString } from '../utils'
 
 interface SessionItemProps {
   sessao: Sessao
@@ -21,11 +22,14 @@ const SessionItem: React.FC<SessionItemProps> = ({ sessao }) => {
   const status = StatusSessao[sessao.status]
   const tipo = TipoSessao[sessao.tipo]
 
+  // Date parsing
+  const parsedDate = parseSessionDateString(sessao.data);
+
   const handleEditClick = () => {
     openEditarSessaoModal({
       id: sessao.id,
-      data: format(sessao.data, 'yyyy-MM-dd', { locale: ptBR }),
-      horario: format(sessao.data, 'HH:mm', { locale: ptBR }),
+      data: format(parsedDate, 'yyyy-MM-dd', { locale: ptBR }),
+      horario: format(parsedDate, 'HH:mm', { locale: ptBR }),
       descricao: sessao.descricao,
       duracao: sessao.duracao,
       observacoes: sessao.observacoes,
@@ -39,7 +43,7 @@ const SessionItem: React.FC<SessionItemProps> = ({ sessao }) => {
         <div className='flex gap-6'>
           <div className='flex flex-col items-center'>
             <span className='text-lg font-bold text-gray-800'>
-              {format(new Date(sessao.data), 'HH:mm')}
+              {format(parsedDate, 'HH:mm', { locale: ptBR })}
             </span>
             {sessao.duracao && (
               <span className='text-xs text-gray-500'>

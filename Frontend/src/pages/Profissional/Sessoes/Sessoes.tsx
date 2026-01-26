@@ -4,7 +4,6 @@ import { ResumoSessoes, SessoesFilters } from '~/features/Sessoes'
 import NextSessions from '../../../features/Sessoes/components/NextSessions'
 import QuickActions from '../../../features/Sessoes/components/QuickActions'
 import ModalCalendarioCompleto from '../../../features/Sessoes/components/ModalCalendarioCompleto'
-import ModalEditarSessao from '../../../features/Sessoes/components/ModalEditarSessao'
 import { PageLayout } from '~/components/layout/PageLayout'
 import Header from '~/components/layout/Header'
 import useSessoesModal from '~/features/Sessoes/hooks/useSessoesModal'
@@ -14,17 +13,10 @@ import useSessoesFilters from '~/features/Sessoes/hooks/useSessoesFilters'
 
 const Sessoes: React.FC = () => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
-  const [editingSession, setEditingSession] = useState<any>(null)
 
   const { openAgendarSessaoModal } = useSessoesModal()
 
   const { filters, aplicarFiltros, limparFiltros } = useSessoesFilters()
-
-  const handleEditSession = (data: any) => {
-    console.log('Sessão editada:', data)
-    // API call to update session
-    setEditingSession(null)
-  }
 
   return (
     <PageLayout>
@@ -53,7 +45,7 @@ const Sessoes: React.FC = () => {
 
       <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
         {/* Main Content - Session List */}
-        <SessoesListContainer setEditingSession={setEditingSession} filters={filters} />
+        <SessoesListContainer filters={filters} />
 
         {/* Sidebar Content */}
         <div className='space-y-8'>
@@ -69,24 +61,7 @@ const Sessoes: React.FC = () => {
         isOpen={isCalendarModalOpen}
         onClose={() => setIsCalendarModalOpen(false)}
         sessions={sessions} // Pass the list of sessions
-        onSelectSession={(session) => {
-          // Optional: Handle selection, e.g., jump to that date in the main view
-          if (session) {
-            setEditingSession(session)
-            // Optional: Close calendar if desired, or keep open
-            // setIsCalendarModalOpen(false)
-          }
-        }}
       />
-
-      {editingSession && (
-        <ModalEditarSessao
-          isOpen={!!editingSession}
-          onClose={() => setEditingSession(null)}
-          session={editingSession}
-          onSave={handleEditSession}
-        />
-      )}
     </PageLayout>
   )
 }

@@ -10,7 +10,7 @@ export const sessoesSummary: SessoesSummary = {
 export const sessions: Sessao[] = [
   {
     id: 1,
-    data: '2024-01-15T09:00:00Z',
+    data: '15/01/2024, 09:00:00',
     duracao: 60,
     descricao: 'Sessão focada em comunicação verbal e interação social',
     tipo: 'TERAPIA_INDIVIDUAL',
@@ -28,7 +28,7 @@ export const sessions: Sessao[] = [
   },
   {
     id: 2,
-    data: '2024-01-15T10:30:00Z',
+    data: '15/01/2024, 10:30:00',
     duracao: 45,
     descricao: 'Exercícios de articulação e desenvolvimento da fala',
     tipo: 'FONOAUDIOLOGIA',
@@ -46,7 +46,7 @@ export const sessions: Sessao[] = [
   },
   {
     id: 3,
-    data: '2024-01-15T14:00:00Z',
+    data: '15/01/2024, 14:00:00',
     duracao: 60,
     descricao: 'Atividades de coordenação motora fina',
     tipo: 'TERAPIA_OCUPACIONAL',
@@ -67,7 +67,7 @@ export const sessions: Sessao[] = [
 export const nextSessions: Sessao[] = [
   {
     id: 4,
-    data: '2024-01-16T09:30:00Z',
+    data: '16/01/2024, 09:30:00',
     duracao: 60,
     descricao: 'Sessão focada em habilidades sociais',
     tipo: 'TERAPIA_INDIVIDUAL',
@@ -85,7 +85,7 @@ export const nextSessions: Sessao[] = [
   },
   {
     id: 5,
-    data: '2024-01-17T11:00:00Z',
+    data: '17/01/2024, 11:00:00',
     duracao: 60,
     descricao: 'Avaliação inicial para diagnóstico',
     tipo: 'AVALIACAO',
