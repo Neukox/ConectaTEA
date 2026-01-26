@@ -20,8 +20,8 @@ const SessionItem: React.FC<SessionItemProps> = ({ sessao, onEdit }) => {
   const tipo = TipoSessao[sessao.tipo]
 
   return (
-    <div className='mb-4 rounded-xl border bg-white p-6 shadow-sm'>
-      <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
+    <div className='@container mb-4 rounded-xl border bg-white p-6 shadow-sm'>
+      <div className='flex flex-col gap-4 @xs:flex-row @xs:items-start @xs:justify-between'>
         <div className='flex gap-6'>
           <div className='flex flex-col items-center'>
             <span className='text-lg font-bold text-gray-800'>
@@ -57,7 +57,7 @@ const SessionItem: React.FC<SessionItemProps> = ({ sessao, onEdit }) => {
           </div>
         </div>
 
-        <div className='flex gap-2'>
+        <div className='flex justify-end gap-2 @xs:flex-col @md:flex-row'>
           <button
             onClick={onEdit}
             className='rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'

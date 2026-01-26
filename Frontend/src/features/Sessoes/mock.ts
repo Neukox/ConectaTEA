@@ -64,12 +64,12 @@ export const sessions: Sessao[] = [
   },
 ]
 
-export const nextSessions : Sessao[] = [
+export const nextSessions: Sessao[] = [
   {
-    id: 1,
-    data: '2024-01-15T09:30:00Z',
+    id: 4,
+    data: '2024-01-16T09:30:00Z',
     duracao: 60,
-    descricao: '',
+    descricao: 'Sessão focada em habilidades sociais',
     tipo: 'TERAPIA_INDIVIDUAL',
     status: 'AGENDADA',
     observacoes: null,
@@ -84,13 +84,13 @@ export const nextSessions : Sessao[] = [
     },
   },
   {
-    id: 2,
-    data: '2024-01-15T11:00:00Z',
+    id: 5,
+    data: '2024-01-17T11:00:00Z',
     duracao: 60,
-    descricao: '',
+    descricao: 'Avaliação inicial para diagnóstico',
     tipo: 'AVALIACAO',
     status: 'AGENDADA',
-    observacoes: null,
+    observacoes: 'Levar relatórios escolares e médicos',
     crianca: {
       id: 4,
       nome: 'Carlos Mendes',

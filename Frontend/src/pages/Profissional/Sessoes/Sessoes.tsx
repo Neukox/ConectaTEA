@@ -1,14 +1,6 @@
 import React, { useState } from 'react'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import {
-  Calendar as CalendarIcon,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { ResumoSessoes, SessoesFilters } from '~/features/Sessoes'
-import SessionItem from '../../../features/Sessoes/components/SessionItem'
 import NextSessions from '../../../features/Sessoes/components/NextSessions'
 import QuickActions from '../../../features/Sessoes/components/QuickActions'
 import ModalCalendarioCompleto from '../../../features/Sessoes/components/ModalCalendarioCompleto'
@@ -17,13 +9,16 @@ import { PageLayout } from '~/components/layout/PageLayout'
 import Header from '~/components/layout/Header'
 import useSessoesModal from '~/features/Sessoes/hooks/useSessoesModal'
 import { nextSessions, sessions } from '~/features/Sessoes/mock'
+import { SessoesListContainer } from '~/features/Sessoes/components/SessoesListContainer'
+import useSessoesFilters from '~/features/Sessoes/hooks/useSessoesFilters'
 
 const Sessoes: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2024, 0, 14))
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
   const [editingSession, setEditingSession] = useState<any>(null)
 
   const { openAgendarSessaoModal } = useSessoesModal()
+
+  const { filters, aplicarFiltros, limparFiltros } = useSessoesFilters()
 
   const handleEditSession = (data: any) => {
     console.log('Sessão editada:', data)
@@ -47,45 +42,18 @@ const Sessoes: React.FC = () => {
       </Header>
 
       {/* Search and Filters */}
-      <SessoesFilters />
+      <SessoesFilters
+        filters={filters}
+        onAplicarFiltros={aplicarFiltros}
+        onLimparFiltros={limparFiltros}
+      />
 
       {/* Summary Cards */}
       <ResumoSessoes />
 
       <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
         {/* Main Content - Session List */}
-        <div className='lg:col-span-2'>
-          <div className='mb-6 flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm'>
-            <div className='flex items-center gap-2'>
-              <CalendarIcon className='h-5 w-5 text-gray-600' />
-              <span className='font-bold text-gray-800'>
-                Sessões de{' '}
-                {format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })}
-              </span>
-            </div>
-            <div className='flex gap-2'>
-              <button className='rounded-lg border border-gray-200 p-1 hover:bg-gray-50'>
-                <ChevronLeft className='h-5 w-5 text-gray-600' />
-              </button>
-              <button className='rounded-lg border border-gray-200 px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-50'>
-                Hoje
-              </button>
-              <button className='rounded-lg border border-gray-200 p-1 hover:bg-gray-50'>
-                <ChevronRight className='h-5 w-5 text-gray-600' />
-              </button>
-            </div>
-          </div>
-
-          <div className='space-y-4'>
-            {sessions.map((session) => (
-              <SessionItem
-                key={session.id}
-                sessao={session}
-                onEdit={() => setEditingSession(session)}
-              />
-            ))}
-          </div>
-        </div>
+        <SessoesListContainer setEditingSession={setEditingSession} filters={filters} />
 
         {/* Sidebar Content */}
         <div className='space-y-8'>

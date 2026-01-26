@@ -1,5 +1,4 @@
 import { Search, Filter } from 'lucide-react'
-import useSessoes from '../hooks/useSessoes'
 import { Periodo } from '~/api/types'
 import useDebounce from '~/hooks/useDebounce'
 import { StatusSessao, TipoSessao } from '../types'
@@ -19,24 +18,28 @@ const criancas = [
   { id: '3', name: 'Sofia Oliveira' },
 ]
 
-export function SessoesFilters() {
-  const { filters, aplicarFiltros, limparFiltros } = useSessoes()
+export interface SessoesFiltersProps {
+  filters: SessoesFilters
+  onAplicarFiltros: (novosFiltros: SessoesFilters) => void
+  onLimparFiltros: () => void
+}
+
+export function SessoesFilters({
+  filters,
+  onAplicarFiltros,
+  onLimparFiltros,
+}: SessoesFiltersProps) {
   const [search, setSearch] = useState(filters.search || '')
   const [openPopover, setOpenPopover] = useState(false)
 
   const debouncedSearch = useDebounce(search, 500)
 
   useEffect(() => {
-    aplicarFiltros({ ...filters, search: debouncedSearch })
-  }, [debouncedSearch, aplicarFiltros])
-
-  const handleAplicar = () => {
-    aplicarFiltros({ ...filters })
-    setOpenPopover(false)
-  }
+    onAplicarFiltros({ ...filters, search: debouncedSearch })
+  }, [debouncedSearch, onAplicarFiltros])
 
   const handleLimpar = () => {
-    limparFiltros()
+    onLimparFiltros()
     setOpenPopover(false)
   }
 
@@ -57,7 +60,7 @@ export function SessoesFilters() {
           <select
             className='flex-1 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 focus:border-green-500 focus:outline-none'
             onChange={(e) =>
-              aplicarFiltros({ periodo: e.target.value as Periodo })
+              onAplicarFiltros({ periodo: e.target.value as Periodo })
             }
             value={filters.periodo}
           >
@@ -93,7 +96,7 @@ export function SessoesFilters() {
                   <select
                     value={filters.criancaId || ''}
                     onChange={(e) =>
-                      aplicarFiltros({ criancaId: Number(e.target.value) })
+                      onAplicarFiltros({ criancaId: Number(e.target.value) })
                     }
                     className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100 focus:outline-none'
                   >
@@ -117,7 +120,7 @@ export function SessoesFilters() {
                   <select
                     value={filters.tipo || ''}
                     onChange={(e) =>
-                      aplicarFiltros({ tipo: e.target.value as TipoSessao })
+                      onAplicarFiltros({ tipo: e.target.value as TipoSessao })
                     }
                     className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100 focus:outline-none'
                   >
@@ -141,7 +144,7 @@ export function SessoesFilters() {
                   <select
                     value={filters.status || ''}
                     onChange={(e) =>
-                      aplicarFiltros({
+                      onAplicarFiltros({
                         status: e.target.value as StatusSessao,
                       })
                     }
@@ -168,13 +171,6 @@ export function SessoesFilters() {
                     size='sm'
                   >
                     Limpar
-                  </Button>
-                  <Button
-                    onClick={handleAplicar}
-                    className='flex-1 bg-green-600 text-xs text-white hover:bg-green-700'
-                    size='sm'
-                  >
-                    Aplicar
                   </Button>
                 </div>
               </div>
