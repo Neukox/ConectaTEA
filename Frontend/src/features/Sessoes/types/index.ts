@@ -1,4 +1,5 @@
 import { Periodo } from '~/api/types'
+import type { UpdateSessaoData } from '../schemas/update-sessao.schema'
 
 export type TipoSessao =
   | 'TERAPIA_INDIVIDUAL'
@@ -45,6 +46,10 @@ export interface Sessao {
     id: number
     nome: string
   }
+}
+
+export type SessaoToEdit = UpdateSessaoData & {
+  id: number
 }
 
 export const TipoSessao = {

@@ -10,6 +10,7 @@ import { CadastrarMetaDialog } from '~/features/Metas'
 import { AtualizarMetaDialog } from '~/features/Metas'
 import { AtualizarProgressoDialog } from '~/features/Metas'
 import ModalAgendarSessao from '~/features/Sessoes/components/ModalAgendarSessao'
+import ModalEditarSessao from '~/features/Sessoes/components/ModalEditarSessao'
 
 export const ModalContext = createContext<ModalContextType | undefined>(
   undefined,
@@ -68,6 +69,14 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
           <ModalAgendarSessao
             isOpen={true}
             onClose={closeModal}
+          />
+        )
+      case 'EDITAR_SESSAO':
+        return (
+          <ModalEditarSessao
+            isOpen={true}
+            onClose={closeModal}
+            session={activeModal.data as ModalData['EDITAR_SESSAO']}
           />
         )
       default:

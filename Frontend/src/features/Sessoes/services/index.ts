@@ -1,5 +1,5 @@
 import { sessoesSummary, sessions, nextSessions } from '../mock'
-import type { SessoesFilters } from '../types'
+import type { SessaoToEdit, SessoesFilters } from '../types'
 
 export interface CreateSessaoRequest {
   descricao: string
@@ -25,4 +25,9 @@ export async function createSessao(data: CreateSessaoRequest) {
 export async function getSessoes(filters: SessoesFilters) {
   await new Promise((resolve) => setTimeout(resolve, 1000)) // Simula atraso de rede
   return Promise.resolve(sessions.concat(nextSessions))
+}
+
+export async function updateSessao(data: SessaoToEdit) {
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // Simula atraso de rede
+  return Promise.resolve()
 }
