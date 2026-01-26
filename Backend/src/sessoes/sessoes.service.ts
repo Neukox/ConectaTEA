@@ -41,23 +41,32 @@ export class SessoesService {
   async findAll(profissionalId: number, filters: FilterSessoesDto) {
     this.logger.log("Recuperando todas as sessões");
 
-    const { startDate, endDate } = DateUtils.periodToDateRange(filters.periodo);
+    let start: Date, end: Date;
+
+    if (filters.periodo) {
+      const { startDate, endDate } = DateUtils.periodToDateRange(
+        filters.periodo,
+      );
+      start = startDate;
+      end = endDate;
+    }
 
     const where: Prisma.SessoesWhereInput = {
       profissional_id: profissionalId,
       ...(filters.criancaId && { crianca_id: filters.criancaId }),
       ...(filters.status && { status: filters.status }),
       ...(filters.tipo && { tipo: filters.tipo }),
-      ...(filters.periodo && {
-        data: {
-          gte: startDate,
-          lte: endDate,
-        },
-      }),
       ...(filters.search && {
         descricao: { contains: filters.search, mode: "insensitive" },
       }),
     };
+
+    if (start && end) {
+      where.data = {
+        gte: start,
+        lte: end,
+      };
+    }
 
     const sessoes = await this.prisma.sessoes.findMany({
       where,
