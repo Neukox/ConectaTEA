@@ -50,8 +50,6 @@ const ModalEditarSessao: React.FC<ModalEditarSessaoProps> = ({
     resolver: zodResolver(UpdateSessaoSchema),
     defaultValues: {
       ...session,
-      data: format(new Date(session?.data || ''), 'yyyy-MM-dd'),
-      horario: format(new Date(session?.data || ''), 'HH:mm'),
     },
   })
 
