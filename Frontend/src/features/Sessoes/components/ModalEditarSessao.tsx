@@ -1,5 +1,5 @@
 import React from 'react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { cn } from '~/lib/utils'
@@ -26,6 +26,7 @@ import { Controller, useForm } from 'react-hook-form'
 import useEditarSessao from '../hooks/useEditarSessao'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
 import ErrorField from '~/components/common/ErrorField'
+import type { UpdateSessaoRequest } from '../services'
 
 interface ModalEditarSessaoProps {
   isOpen: boolean
@@ -74,17 +75,18 @@ const ModalEditarSessao: React.FC<ModalEditarSessaoProps> = ({
 
   const submitForm = (data: UpdateSessaoData) => {
     const [hours, minutes] = data.horario.split(':').map(Number)
-    const sessionDate = new Date(data.data)
+    const sessionDate = parseISO(data.data)
     sessionDate.setHours(hours, minutes, 0, 0)
 
-    const formattedData: SessaoToEdit = {
-      ...data,
-      id: session?.id || 0,
-      data: sessionDate.toISOString(),
+    const formattedData: UpdateSessaoRequest = {
+      descricao: data.descricao,
+      tipoSessao: data.tipoSessao,
+      duracao: data.duracao,
+      observacoes: data.observacoes,
+      data: sessionDate,
     }
 
-    console.log('Form Data:', formattedData)
-    mutation.mutate(formattedData)
+    mutation.mutate({ id: session?.id || 0, ...formattedData })
   }
 
   return (
@@ -136,7 +138,7 @@ const ModalEditarSessao: React.FC<ModalEditarSessaoProps> = ({
                     >
                       <CalendarIcon className='size-4' />
                       {field.value ? (
-                        format(field.value, 'PPP', { locale: ptBR })
+                        format(parseISO(field.value), 'PPP', { locale: ptBR })
                       ) : (
                         <span>Selecione a data</span>
                       )}
@@ -149,7 +151,7 @@ const ModalEditarSessao: React.FC<ModalEditarSessaoProps> = ({
                       }}
                       required
                       mode='single'
-                      selected={new Date(field.value)}
+                      selected={parseISO(field.value || '')}
                       onSelect={(date) => {
                         if (date) {
                           field.onChange(format(date, 'yyyy-MM-dd'))

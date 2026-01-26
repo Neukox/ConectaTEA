@@ -20,10 +20,7 @@ const NextSessions: React.FC<NextSessionsProps> = () => {
       .filter((session) => {
         const parsedDate = parseSessionDateString(session.data)
 
-        return (
-          session.status === 'AGENDADA' &&
-          parsedDate >= new Date('2024-01-15T00:00:00')
-        )
+        return session.status === 'AGENDADA' && parsedDate >= new Date()
       })
       .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
       .slice(0, 3)

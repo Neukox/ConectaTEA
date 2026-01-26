@@ -1,5 +1,5 @@
 import React from 'react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { cn } from '~/lib/utils'
@@ -26,6 +26,8 @@ import ErrorField from '~/components/common/ErrorField'
 import { TipoSessao } from '../types'
 import useAgendarSessao from '../hooks/useAgendarSessao'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
+import useCriancas from '~/features/Criancas/hooks/useCriancas'
+import type { CreateSessaoRequest } from '../services'
 
 interface ModalAgendarSessaoProps {
   isOpen: boolean
@@ -38,6 +40,8 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
 }) => {
   const { notificarErro, notificarSucesso } = useNotificacoesContext()
 
+  const { data: dataCriancas } = useCriancas()
+
   const {
     register,
     handleSubmit,
@@ -48,7 +52,7 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
     resolver: zodResolver(CreateSessaoSchema),
     defaultValues: {
       tipoSessao: 'TERAPIA_INDIVIDUAL',
-      data: format(new Date().setDate(new Date().getDate() + 1), 'yyyy-MM-dd'),
+      data: format(parseISO(new Date().toISOString()), 'yyyy-MM-dd'),
       duracao: 30,
     },
   })
@@ -72,24 +76,20 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
     },
   })
 
-  // Mock data for children
-  const children = [
-    { id: '1', name: 'Ana Silva' },
-    { id: '2', name: 'Pedro Costa' },
-    { id: '3', name: 'Sofia Oliveira' },
-  ]
-
   const submitForm = (data: CreateSessaoData) => {
     const [hours, minutes] = data.horario.split(':').map(Number)
-    const sessionDate = new Date(data.data)
+    const sessionDate = parseISO(data.data)
     sessionDate.setHours(hours, minutes, 0, 0)
 
-    const formattedData = {
-      ...data,
+    const formattedData: CreateSessaoRequest = {
+      descricao: data.descricao,
+      tipoSessao: data.tipoSessao,
+      criancaId: data.criancaId,
       data: sessionDate,
+      duracao: data.duracao,
+      observacoes: data.observacoes,
     }
 
-    console.log('Form Data:', formattedData)
     mutation.mutate(formattedData)
   }
 
@@ -138,12 +138,12 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
               required
             >
               <option value=''>Selecione uma criança</option>
-              {children.map((child) => (
+              {dataCriancas?.criancas.map((child) => (
                 <option
                   key={child.id}
                   value={child.id}
                 >
-                  {child.name}
+                  {child.nome}
                 </option>
               ))}
             </select>
@@ -174,7 +174,7 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
                     >
                       <CalendarIcon className='size-4' />
                       {field.value ? (
-                        format(field.value, 'PPP', { locale: ptBR })
+                        format(parseISO(field.value), 'PPP', { locale: ptBR })
                       ) : (
                         <span>Selecione a data</span>
                       )}
