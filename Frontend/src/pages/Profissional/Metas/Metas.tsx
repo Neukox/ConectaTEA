@@ -31,10 +31,11 @@ export default function MetasPage() {
       <Header
         title='Metas'
         description='Gerencie as metas terapêuticas das crianças'
+        className='xs:flex-row flex-col xs:items-center justify-between gap-2'
       >
         <button
           onClick={() => openCadastrarMetaModal()}
-          className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
+          className='xs:flex-initial flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
         >
           <span className='text-lg'>+</span>
           Nova Meta

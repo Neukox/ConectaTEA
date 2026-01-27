@@ -16,8 +16,9 @@ const Configuracoes: React.FC = () => {
       <Header
         title='Configurações'
         description='Gerencie suas preferências e configurações da conta'
+        className='xs:flex-row xs:items-center flex-col justify-between gap-2'
       >
-        <button className='flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'>
+        <button className='xs:flex-initial flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'>
           <Save className='h-5 w-5' />
           Salvar Alterações
         </button>

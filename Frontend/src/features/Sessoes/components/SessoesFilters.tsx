@@ -44,7 +44,7 @@ export function SessoesFilters({
   }
 
   return (
-    <div className='@container mb-8'>
+    <div className='@container'>
       <div className='flex flex-col gap-4 @md:flex-row'>
         <div className='relative flex-1'>
           <Search className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />

@@ -284,12 +284,13 @@ export default function CadastrarCriancas() {
         <Header
           title='Crianças'
           description='Gerencie as crianças cadastradas no sistema'
+          className='xs:flex-row flex-col xs:items-center justify-between gap-2'
         >
           <div className='flex items-center gap-4'>
             {/* Botão Nova Criança */}
             <button
               onClick={abrirModalCadastro}
-              className='flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
+              className='xs:flex-initial flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700'
             >
               <span className='text-lg'>+</span>
               Nova Criança

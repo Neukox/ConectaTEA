@@ -23,37 +23,39 @@ const Sessoes: React.FC = () => {
       <Header
         title='Sessões'
         description='Gerencie agendamentos e sessões terapêuticas'
+        className='xs:flex-row flex-col xs:items-center justify-between gap-2'
       >
         <button
           onClick={() => openAgendarSessaoModal()}
-          className='flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'
+          className='xs:flex-initial flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-medium text-white hover:bg-green-600'
         >
           <Plus className='h-5 w-5' />
           Nova Sessão
         </button>
       </Header>
 
-      {/* Search and Filters */}
-      <SessoesFilters
-        filters={filters}
-        onAplicarFiltros={aplicarFiltros}
-        onLimparFiltros={limparFiltros}
-      />
+      <div className='flex flex-col gap-8'>
+        {/* Search and Filters */}
+        <SessoesFilters
+          filters={filters}
+          onAplicarFiltros={aplicarFiltros}
+          onLimparFiltros={limparFiltros}
+        />
+        {/* Summary Cards */}
+        <ResumoSessoes />
 
-      {/* Summary Cards */}
-      <ResumoSessoes />
+        <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
+          {/* Main Content - Session List */}
+          <SessoesListContainer filters={filters} />
 
-      <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
-        {/* Main Content - Session List */}
-        <SessoesListContainer filters={filters} />
-
-        {/* Sidebar Content */}
-        <div className='space-y-8'>
-          <NextSessions sessions={nextSessions} />
-          <QuickActions
-            onScheduleClick={() => openAgendarSessaoModal()}
-            onCalendarClick={() => setIsCalendarModalOpen(true)}
-          />
+          {/* Sidebar Content */}
+          <div className='space-y-8'>
+            <NextSessions sessions={nextSessions} />
+            <QuickActions
+              onScheduleClick={() => openAgendarSessaoModal()}
+              onCalendarClick={() => setIsCalendarModalOpen(true)}
+            />
+          </div>
         </div>
       </div>
 
