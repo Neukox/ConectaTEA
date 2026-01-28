@@ -6,6 +6,8 @@ import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { ProfissionalExistsGuard } from "../profissionais/guards/profissional-exists.guard";
 import { Profissional } from "../common/decorators/profissional.decorator";
+import VinculacaoResponsavelGuard from "../vinculacao/guards/vinculacao-responsavel.guard";
+import { Crianca } from "../common/decorators/crianca.decorator";
 
 @ApiTags("Dashboard")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -28,7 +30,23 @@ export class DashboardController {
     return this.dashboardService.obterEstatisticasProfissional(profissionalId);
   }
 
-  @ApiOperation({ summary: "Obter dados das crianças vinculadas ao profissional" })
+  @ApiOperation({ summary: "Obter dados do dashboard do responsável" })
+  @ApiResponse({
+    status: 200,
+    description: "Dados do dashboard obtidos com sucesso.",
+  })
+  @ApiResponse({ status: 401, description: "Não autorizado." })
+  @ApiResponse({ status: 403, description: "Acesso proibido." })
+  @Roles("RESPONSAVEL")
+  @UseGuards(VinculacaoResponsavelGuard)
+  @Get("responsavel")
+  getResponsavelDashboardData(@Crianca("id") criancaId: number) {
+    return this.dashboardService.obterEstatisticasCrianca(criancaId);
+  }
+
+  @ApiOperation({
+    summary: "Obter dados das crianças vinculadas ao profissional",
+  })
   @ApiResponse({
     status: 200,
     description: "Dados do dashboard obtidos com sucesso.",

@@ -131,16 +131,25 @@ export class MetasService {
     return metasComAtualizacoes;
   }
 
-  async getResumo(profissionalId: number) {
+  async getResumo(profissionalId?: number, criancaId?: number) {
     this.logger.debug(`Obtendo resumo das metas`);
 
     const totalMetas = await this.prisma.meta.count({
       where: {
-        profissional_id: profissionalId,
+        OR: [
+          { profissional_id: profissionalId },
+          { crianca_id: criancaId },
+        ],
       },
     });
 
     const metasPorStatus = await this.prisma.meta.groupBy({
+      where: {
+        OR: [
+          { profissional_id: profissionalId },
+          { crianca_id: criancaId },
+        ],
+      },
       by: ["status"],
       _count: {
         status: true,

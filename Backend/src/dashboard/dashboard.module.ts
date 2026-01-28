@@ -2,9 +2,11 @@ import { Module } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
 import { DashboardService } from "./dashboard.service";
 import { DashboardController } from "./dashboard.controller";
+import { MetasModule } from "../metas/metas.module";
+import { VinculacaoModule } from "../vinculacao/vinculacao.module";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, MetasModule, VinculacaoModule],
   controllers: [DashboardController],
   providers: [DashboardService],
 })

@@ -185,4 +185,15 @@ export class VinculacaoService {
 
     return vinculo;
   }
+
+  async listarVinculoResponsavelCrianca(responsavelId: number) {
+    const vinculos = await this.prismaService.crianca.findFirst({
+      where: {
+        responsavel_id: responsavelId,
+        status_vinculo_responsavel: "VINCULADO",
+      },
+    });
+
+    return vinculos;
+  }
 }

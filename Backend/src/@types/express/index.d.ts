@@ -13,6 +13,11 @@ declare global {
     interface Request {
       user?: User | undefined;
       profissional?: ProfissionalRequest | undefined;
+      crianca: {
+        id: number;
+        responsavel_id: number;
+        status_vinculo_responsavel: string;
+      }
     }
   }
 }

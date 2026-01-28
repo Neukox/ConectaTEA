@@ -2,10 +2,14 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { startOfMonth, startOfWeek } from "date-fns";
 import DateUtils from "../common/utils/date.utils";
+import { MetasService } from "../metas/metas.service";
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly metasService: MetasService,
+  ) {}
 
   async obterEstatisticasProfissional(profissionalId: number) {
     try {
@@ -154,7 +158,7 @@ export class DashboardService {
       } catch (error) {
         console.error(
           `Erro ao calcular idade para criança ${vinculo.crianca.id}:`,
-          error
+          error,
         );
         idade = 0;
       }
@@ -167,7 +171,7 @@ export class DashboardService {
         status: vinculo.status_vinculo,
         profissional: (vinculo.profissional.titulo || "").concat(
           " ",
-          vinculo.profissional.usuario?.name || ""
+          vinculo.profissional.usuario?.name || "",
         ),
       };
     });
@@ -205,5 +209,53 @@ export class DashboardService {
       console.error("Erro ao obter metas do profissional:", error);
       throw error;
     }
+  }
+
+  async obterEstatisticasCrianca(criancaId: number) {
+    // Proxima sessão agendada
+    const proximaSessao = await this.prisma.sessoes.findFirst({
+      where: {
+        crianca_id: criancaId,
+        data: { gte: new Date() },
+        status: "AGENDADA",
+      },
+      orderBy: { data: "asc" },
+      take: 1,
+      select: { data: true, tipo: true },
+    });
+
+    const resumoMetas = await this.metasService.getResumo(undefined, criancaId);
+
+    const progressoGeral = await this.prisma.meta.aggregate({
+      where: { crianca_id: criancaId },
+      _avg: { progresso: true },
+    });
+
+    const inicioMes = startOfMonth(new Date());
+
+    const progressoEsteMes = await this.prisma.meta.aggregate({
+      where: {
+        crianca_id: criancaId,
+        updated_at: { gte: inicioMes },
+      },
+      _avg: { progresso: true },
+    });
+
+    return {
+      proximaSessao: proximaSessao
+        ? {
+            data: DateUtils.localeDate(proximaSessao.data),
+            tipo: proximaSessao.tipo,
+          }
+        : null,
+      metas: {
+        ativas: resumoMetas.metasEmAndamento + resumoMetas.metasVencendo,
+        em_progresso: resumoMetas.metasEmAndamento,
+      },
+      progresso: {
+        geral: progressoGeral._avg.progresso || 0,
+        este_mes: progressoEsteMes._avg.progresso || 0,
+      },
+    };
   }
 }
