@@ -35,17 +35,28 @@ export default function VerDetalhesMeta() {
   const metaId = Number(id)
   const isValidId = !isNaN(metaId) && metaId > 0
 
+  console.log('metaId:', metaId)
+  console.log('metaId is not nan:', !isNaN(metaId))
+  console.log('metaId > 0 :', metaId > 0)
+  console.log('isValidId:', isValidId)
+
   const { data: meta, isLoading, isError, error } = useDetalhesMeta(metaId)
 
   const { openAtualizarProgressoModal } = useMetasModal()
 
   useEffect(() => {
-    if (!isValidId) {
+    let timer: NodeJS.Timeout
+
+    if (isValidId === false) {
       notificarErro(
         'ID de meta inválido',
         'O ID fornecido para a meta é inválido.',
         { duration: 3000 },
       )
+
+      timer = setTimeout(() => {
+        navigate('/profissional/metas')
+      }, 1000)
     }
 
     if (isError) {
@@ -55,15 +66,15 @@ export default function VerDetalhesMeta() {
         error?.response?.data?.message ||
         'Não foi possível carregar os detalhes da meta'
 
-      notificarErro(errorMessage, errorDescription, { duration: 3000})
+      notificarErro(errorMessage, errorDescription, { duration: 3000 })
+
+      timer = setTimeout(() => {
+        navigate('/profissional/metas')
+      }, 1000)
     }
 
-    const timer = setTimeout(() => {
-      navigate('/profissional/metas')
-    }, 1000)
-
     return () => clearTimeout(timer)
-  }, [isError, isValidId]);
+  }, [isError, isValidId])
 
   // Estado de carregamento
   if (isLoading) {
@@ -97,6 +108,7 @@ export default function VerDetalhesMeta() {
       <Header
         title='Detalhes da Meta'
         description={`Visualizando detalhes da meta #${meta.id}`}
+        className='items-center justify-between gap-4'
       >
         <button
           onClick={() => navigate('/profissional/metas')}
@@ -107,12 +119,12 @@ export default function VerDetalhesMeta() {
         </button>
       </Header>
 
-      <div className='mx-auto mt-8 max-w-5xl px-4 pb-12'>
+      <div className='@container my-8 w-full max-w-5xl mx-auto'>
         {/* Card Principal */}
-        <div className='rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8'>
-          <div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
+        <div className='flex flex-col gap-8 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm'>
+          <div className='flex flex-col gap-6 @md:flex-row @md:items-center @md:justify-between'>
             <div>
-              <div className='flex items-center gap-3'>
+              <div className='flex flex-wrap items-center gap-2'>
                 <Badge
                   variant='outline'
                   tone={prioridadeTone}
@@ -130,26 +142,25 @@ export default function VerDetalhesMeta() {
                 {meta.titulo}
               </h1>
             </div>
-            <div className='flex items-center gap-2'>
-              <button
-                className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700'
-                onClick={() =>
-                  openAtualizarProgressoModal({
-                    id: meta.id,
-                    titulo: meta.titulo,
-                    progresso: meta.progresso.atual,
-                  })
-                }
-              >
-                <TrendingUp className='h-4 w-4' />
-                Atualizar Progresso
-              </button>
-            </div>
+
+            <button
+              className='flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700'
+              onClick={() =>
+                openAtualizarProgressoModal({
+                  id: meta.id,
+                  titulo: meta.titulo,
+                  progresso: meta.progresso.atual,
+                })
+              }
+            >
+              <TrendingUp className='h-4 w-4' />
+              Atualizar Progresso
+            </button>
           </div>
 
-          <div className='mt-8 grid grid-cols-1 gap-8 md:grid-cols-3'>
+          <div className='grid grid-cols-1 gap-8 @md:grid-cols-[2fr_1fr]'>
             {/* Coluna Esquerda - Info Principal */}
-            <div className='col-span-2 space-y-8'>
+            <div className='space-y-8 @2xl:col-span-1'>
               <section>
                 <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900'>
                   <FileText className='h-5 w-5 text-green-600' />
