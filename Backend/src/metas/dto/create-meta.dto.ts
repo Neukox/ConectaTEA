@@ -51,7 +51,6 @@ export class CreateMetaDto {
     description: "Descrição da meta",
   })
   @IsString()
-  @MinLength(10)
   @MaxLength(500)
   @IsOptional()
   descricao: string;
