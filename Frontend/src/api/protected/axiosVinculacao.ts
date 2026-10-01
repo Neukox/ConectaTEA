@@ -1,25 +1,18 @@
 import { api } from '../apiClient'
 
 interface ValidarCodigoResponse {
-  crianca_id: number
+  id: number
   nome: string
-  data_nascimento: string
-  diagnostico: string
-  status: string
+  dataNascimento: string
+  genero?: string
 }
 
 interface ConfirmarVinculoRequest {
-  crianca_id: number
-  consentimento_aceito: boolean
+  codigo: string
+  consentimentoAceito: boolean
 }
 
-interface ConfirmarVinculoResponse {
-  id: number
-  crianca_id: number
-  responsavel_id: number
-  status: string
-  data_vinculo: string
-}
+type ConfirmarVinculoResponse = ValidarCodigoResponse
 
 export const vinculacaoAPI = {
   /**
@@ -29,7 +22,7 @@ export const vinculacaoAPI = {
    */
   async validarCodigo(codigo: string): Promise<ValidarCodigoResponse> {
     const response = await api.get<ValidarCodigoResponse>(
-      `/vinculacao/validar/${codigo}`,
+      `/vinculos/tokens/${encodeURIComponent(codigo)}/preview`,
     )
     return response.data
   },
@@ -43,7 +36,7 @@ export const vinculacaoAPI = {
     dados: ConfirmarVinculoRequest,
   ): Promise<ConfirmarVinculoResponse> {
     const response = await api.post<ConfirmarVinculoResponse>(
-      '/vinculacao/confirmar',
+      '/vinculos/confirmar',
       dados,
     )
     return response.data
@@ -54,7 +47,7 @@ export const vinculacaoAPI = {
    * @returns Lista de crianças vinculadas
    */
   async obterVinculos() {
-    const response = await api.get('/vinculacao/meus-vinculos')
+    const response = await api.get('/vinculos/me')
     return response.data
   },
 
@@ -63,7 +56,7 @@ export const vinculacaoAPI = {
    * @param crianca_id - ID da criança a desvincular
    */
   async desvincularCrianca(crianca_id: number) {
-    const response = await api.delete(`/vinculacao/crianca/${crianca_id}`)
+    const response = await api.delete(`/vinculos/criancas/${crianca_id}`)
     return response.data
   },
 }

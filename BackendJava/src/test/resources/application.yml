@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:conectatea;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+app:
+  jwt:
+    secret: test-only-secret-test-only-secret-test-only-secret-123456
+    expiration: PT1H
+  cors:
+    origins: http://localhost:5173
+  cookie:
+    secure: false
+    same-site: Lax
+

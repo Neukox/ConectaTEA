@@ -1,0 +1,1 @@
+package br.com.conectatea.vinculo.infrastructure; import br.com.conectatea.vinculo.domain.*; import org.springframework.data.jpa.repository.JpaRepository; public interface VinculoProfissionalRepository extends JpaRepository<VinculoProfissionalCrianca,Long>{boolean existsByProfissionalIdAndCriancaIdAndStatus(Long p,Long c,StatusVinculo s);}

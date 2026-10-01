@@ -1,0 +1,5 @@
+package br.com.conectatea.vinculo.api;
+import br.com.conectatea.profissional.infrastructure.ProfissionalRepository; import br.com.conectatea.security.*; import br.com.conectatea.vinculo.application.VinculoService; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.security.core.Authentication; import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/criancas") public class TokenCriancaController { private final VinculoService links; private final AuthorizationService authorization; private final ProfissionalRepository professionals; public TokenCriancaController(VinculoService l,AuthorizationService a,ProfissionalRepository p){links=l;authorization=a;professionals=p;}
+ @PostMapping("/{id}/tokens-vinculo") @PreAuthorize("hasRole('PROFISSIONAL')") public VinculoService.GeneratedToken generate(Authentication a,@PathVariable Long id){var user=(AuthenticatedUser)a.getPrincipal();authorization.requireCrianca(user,id);var p=professionals.findByUsuarioId(user.id()).orElseThrow();return links.generate(id,p.getId());}
+}

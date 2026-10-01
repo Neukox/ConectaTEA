@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../api/authApi";
 import { getDefaultRoute } from "../config/routes";
 import { useNotificacoesContext } from "../api/barraNotificacao";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -11,13 +12,14 @@ export default function Login() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const navigate = useNavigate();
   const { notificarSucesso, notificarErro } = useNotificacoesContext();
+  const { setUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const data = await login(email, senha);
-      localStorage.setItem("token", data.token); // salva o token
       localStorage.setItem("user", JSON.stringify(data.user)); // salva os dados do usuário
+      setUser(data.user as Parameters<typeof setUser>[0]);
       
       notificarSucesso(
         'Login realizado!',

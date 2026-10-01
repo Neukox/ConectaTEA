@@ -1,1 +1,0 @@
-//Algoritmo que cuidará do envio de solicitações 

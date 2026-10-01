@@ -6,8 +6,7 @@ export interface EvolucaoPorCategoriaData
   periodo: string
 }
 
-export interface DistribuicaoPorCategoriaData
-  extends Record<CategoriaMeta, number> {}
+export type DistribuicaoPorCategoriaData = Record<CategoriaMeta, number>
 
 export interface ProgressoCriancaData {
   nome: string
