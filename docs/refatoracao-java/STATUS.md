@@ -1,226 +1,53 @@
-# Status
+# Status da Fase 2 — backend Java
 
-## Fase 2.11 — dashboard
+Atualizado em 2026-10-01. Esta página é o estado consolidado mais recente; as notas de risco abaixo permanecem ativas mesmo com CI verde.
 
-### Implementado
-- Dashboard profissional retorna exatamente os oito indicadores usados pela UI.
-- “Profissionais ativos” significa conexões profissionais aceitas; a métrica não
-  inventa atividade clínica sem fonte.
-- Métricas mensais usam `createdAt` e não incluem o passado inteiro.
-- Endpoints auxiliares retornam DTOs, não entidades JPA.
-- Dashboard do responsável agrega apenas crianças vinculadas, suas metas e
-  sessões futuras autorizadas.
+## Snapshot verificável
 
-### Risco restante
-- As agregações ainda carregam coleções e devem migrar para SQL dedicado após a
-  estabilização contratual. Testes da controller permanecem pendentes.
+- Branch de trabalho: `refactor/backend-java`.
+- Branch de restauração: `backup/pre-refactor-java-20261001-1408`; `main` e backup permanecem no baseline `13df172543a633ea0e8c11b054533d0a0d71f4d7`.
+- Commit de código enviado antes desta consolidação documental: `dd718edfb094e3e0abf1495207051c4096c79327`.
+- GitHub Actions run `36918281401`: `frontend: success`, `backend-java: success`.
+- `./mvnw -B verify` terminou com `BUILD SUCCESS` localmente. Unitários e MockMvc executáveis passaram. Os testes PostgreSQL são ignorados localmente sem Docker; no job Linux do CI, Testcontainers executou com PostgreSQL e o job passou.
+- Causa corrigida: o cache de contexto Spring mantinha datasource/porta mapeada após o ciclo de vida do container da classe de teste. `@DirtiesContext(AFTER_CLASS)` fecha o contexto antes da classe de integração seguinte. A alteração está em `dd718ed`; não foi repetida nesta execução.
+- NestJS continua preservado. Nenhuma migração real do banco foi executada. Não houve alteração em `main` nem na branch de backup.
 
-## Fase 2.10 — conexões
+## Situação por subfase
 
-### Implementado
-- Envio canônico usa `POST /conexoes` com `{destinatarioId}` e `@Valid`.
-- Resposta usa `{status}` e rejeita `PENDENTE` como ação de resposta.
-- Listagem aceita `tipo=enviadas|recebidas` e filtro por status.
-- Destinatário inexistente retorna 404, autoconexão retorna 400 e duplicidade do
-  par canônico é traduzida para 409 pela constraint/handler global.
+| Subfase | Situação atual | Evidência e limite |
+|---|---|---|
+| 2.1 CI | testado | Workflow frontend e backend verdes no run acima. |
+| 2.2 PostgreSQL/Testcontainers | testado no CI | V1/Flyway, constraints e queries rodam contra PostgreSQL Testcontainers no runner; sem Docker, os cenários são ignorados localmente. |
+| 2.3 Auth/segurança | implementado e parcialmente testado | JWT recarrega usuário/role ativos; MockMvc cobre login, cookie, CSRF e 401. Rate limit e revisão de produção pendentes. |
+| 2.4 Usuários/profissionais | implementado parcialmente | Registro e rotas canônicas existem; integração frontend e recursos de perfil legado ainda pendentes. |
+| 2.5 Crianças | implementado parcialmente | DTOs, contato pendente, arquivo e autorização implementados; integração React/E2E pendente. |
+| 2.6 Vínculos/consentimento/QR | implementado; cenários PostgreSQL testados no CI | Token single-use, replay, concorrência, revinculação, expiração e QR; revogação de consentimento não implementada. Não é declaração de compliance jurídico. |
+| 2.7 Metas | implementado e regras de domínio testadas | Filtros/status e DTOs; regra temporal continua sujeita a validação clínica. |
+| 2.8 Progresso | implementado parcialmente | Usa histórico real; testes de controller/integração específicos e alinhamento frontend pendentes. |
+| 2.9 Sessões | implementado parcialmente | Contratos e escopo de responsável implementados; testes específicos e alinhamento React pendentes. |
+| 2.10 Conexões | implementado parcialmente | Rotas/DTOs canônicos implementados; MockMvc e corrida oposta AB/BA pendentes. |
+| 2.11 Dashboard | implementação concluída; não homologado | Métricas/DTOs profissionais e responsável implementados; teste dedicado e validação com UI pendentes. Agregações em memória são risco de evolução, não critério funcional já validado. |
+| 2.12 Auditoria/histórico | não iniciado | Schema não significa implementação de eventos; logs e serviços funcionais ainda faltam. |
+| 2.13 Frontend | pendente | Clientes React ainda divergem do contrato Java em rotas, campos e envelopes. Não houve migração nesta execução. |
+| 2.14 E2E/cobertura | pendente | Fluxo profissional-responsável completo ainda não foi validado de ponta a ponta. |
+| 2.15 Documentação final | parcial | Contrato canônico sendo consolidado nesta execução; plano de migração de dados e resultado final ainda faltam. |
 
-### Risco restante
-- O teste concorrente AB/BA no PostgreSQL e MockMvc da controller ainda estão
-  pendentes; não há homologação desta subfase.
+## Segurança e autorização
 
-## Fase 2.9 — sessões
+- JWT em cookie HttpOnly; CSRF em operações mutáveis (exceto login/registro); conta inexistente/inativa não autentica.
+- A identidade e role derivam do principal/banco; acesso clínico exige vínculo ativo e criança não arquivada.
+- O contrato detalhado de roles, erros e autorização está em [`12_API_CONTRACT_JAVA_CANONICO.md`](12_API_CONTRACT_JAVA_CANONICO.md).
+- Consentimento armazena ator, criança, profissional, data, IP, User-Agent, versão e finalidade configuradas. Revogação não está implementada; revisão jurídica segue pendente.
 
-### Implementado
-- Contrato canônico usa `tipo`, `dataHora`, `duracao` e `criancaId`.
-- Create/update têm DTOs próprios; update não recebe nem muda `criancaId`.
-- Resumo retorna `sessoesHoje`, `sessoesConcluidas`, `sessoesEstaSemana` e
-  `sessoesPendentes`.
-- Filtros por criança, status, tipo, período e busca são efetivos.
-- Responsável lista apenas sessões de crianças vinculadas e não é mais buscado
-  como profissional.
-- Escritas de profissional continuam condicionadas ao vínculo ativo.
+## Pendências para próximas etapas
 
-### Risco restante
-- MockMvc específico e alinhamento do cliente React permanecem pendentes; o
-  módulo está implementado, ainda não homologado.
+1. Migrar os clientes React para as rotas e schemas Java, incluindo profissionais, crianças/tokens, progresso, sessões, conexões e dashboard; unificar o cliente HTTP e corrigir mínimo de senha no frontend.
+2. Executar lint e build do frontend depois da migração e validar os consumidores reais contra os DTOs do contrato.
+3. Completar cobertura MockMvc/contrato para todos os controllers; cobrir IDOR e filtros por módulo. Fazer testes específicos de progresso, sessões, conexões e dashboard, e corrida concorrente AB/BA em PostgreSQL.
+4. Automatizar e validar o fluxo E2E completo profissional/responsável, incluindo consentimento, replay, acesso autorizado e negado.
+5. Implementar auditoria e histórico de vínculo sem armazenar senha, JWT ou payload clínico integral.
+6. Criar `11_PLANO_MIGRACAO_DADOS_PRISMA_PARA_JAVA.md` como plano somente documental; não executar migração real. Manter os conceitos `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` no NestJS até decisão e migração futuras.
+7. Atualizar matriz, plano de testes e security review com evidência por requisito; criar `13_RESULTADO_FASE_2.md` somente após comprovar os critérios finais.
+8. Revisar rate limit, secrets, threat model, pentest e consentimento com revisão jurídica antes de produção.
 
-## Fase 2.8 — progresso
-
-### Implementado
-- Controller usa `ProgressoRepository` como fonte do histórico; recentes não são
-  mais metas ordenadas por `updatedAt`.
-- Resumo usa camelCase e retorna média, metas ativas/concluídas e crianças ativas.
-- Evolução por categoria deriva dos registros históricos de progresso.
-- Períodos `SEMESTRAL` e `ANUAL` filtram pela data real do histórico.
-- Todas as consultas partem das metas autorizadas por criança/profissional;
-  responsável sem `criancaId` recebe 403.
-
-### Riscos restantes
-- O frontend ainda usa alguns campos snake_case e será alinhado na Fase 2.13.
-- Agregações maiores devem migrar para queries SQL específicas após medição; a
-  implementação atual prioriza correção funcional do histórico.
-
-## Fase 2.7 — metas
-
-### Implementado
-- DTOs separados para create, update, progresso e response; `criancaId` é
-  obrigatório apenas no create e não é alterável no update.
-- Update aceita `dataInicio` histórica e ainda valida a ordem das datas.
-- `GET /metas/resumo` retorna o shape canônico do frontend.
-- Filtros `categoria`, `prioridade`, `status`, `periodo`, `search` e `criancaId`
-  têm efeito; período desconhecido retorna 400 em vez de ser ignorado.
-- Status é recalculado na leitura: 100 concluída, 90–99 quase concluída e prazo
-  entre hoje e sete dias vencendo. Datas já passadas não entram em “vencendo”.
-
-### Testes e risco
-- Testes de domínio cobrem limites de progresso, prazo de sete dias e meta
-  atrasada fora da métrica “vencendo”.
-- A regra é operacional para o MVP e precisa de validação clínica futura antes
-  de ser tratada como regra clínica definitiva.
-
-## Fase 2.6 — vínculos/consentimento/QR
-
-### Implementado
-- Token continua aleatório, armazenado como SHA-256 e consumido sob
-  `PESSIMISTIC_WRITE`.
-- Revinculação reativa vínculo `DESVINCULADO`, atualiza a data e limpa a data de
-  desvinculação antes de consumir o token.
-- Replay retorna 410; token vencido muda para `EXPIRADO` sem rollback do estado.
-- Profissional pode cancelar token pendente pela rota
-  `DELETE /criancas/{childId}/tokens-vinculo/{tokenId}` com validação de posse.
-- Geração retorna QR Code PNG real, on-demand, em `qrCodeDataUrl`; base64 não é
-  persistido.
-- Versão e finalidade do consentimento saíram do código fixo e são configuráveis
-  por `CONSENT_TERM_VERSION` e `CONSENT_PURPOSE`.
-
-### Testes
-- Unitários cobrem revinculação, replay, consumo coerente e conteúdo PNG do QR.
-- Teste Testcontainers concorrente dispara duas confirmações simultâneas e exige
-  um vencedor, um 410, um token `USADO` e um único vínculo ativo.
-- `mvnw test`: 31 encontrados, 26 executados sem falha; 5 cenários PostgreSQL
-  ignorados localmente por Docker indisponível.
-
-### Limites e riscos
-- Revogação de consentimento não faz parte da Fase 2 e nenhuma alegação de
-  compliance jurídico automático é feita.
-- O teste concorrente precisa executar no CI com Docker antes de ser considerado
-  evidência homologada.
-
-## Fase 2.5 — crianças
-
-### Implementado
-- Create e update usam DTOs separados; datas externas seguem `YYYY-MM-DD`.
-- Create retorna `{message,crianca}` e listagem retorna `{items,total}`.
-- `responsavelPendente` é persistido em `contatos_responsaveis_pendentes`; não
-  é criada conta nem senha temporária.
-- Criança arquivada desaparece da listagem e é negada pela autorização central,
-  mesmo quando o ID e um vínculo antigo são conhecidos.
-- Decisão de acesso histórico registrada no ADR-007.
-
-### Testes
-- MockMvc cobre create, envelope, data ISO e DTO inválido.
-- Teste unitário cobre IDOR sem vínculo e bloqueio de criança arquivada.
-- Testes focados: 4 executados, sem falha.
-
-### Riscos restantes
-- Contrato React ainda será ajustado na Fase 2.13.
-- Integração PostgreSQL do fluxo completo depende do Docker/CI.
-
-## Fase 2.4 — usuários/profissionais
-
-### Implementado no backend
-- Registro retorna o envelope canônico `{message,user}` e mantém a criação
-  transacional do perfil quando o tipo é `PROFISSIONAL`.
-- Senha canônica permanece com mínimo de oito caracteres.
-- Perfis usam `GET /profissionais`, `GET/PUT /profissionais/me` e
-  `GET /profissionais/{id}`; contas desativadas não aparecem na listagem.
-- Busca textual foi implementada para nome, especialidade e título.
-
-### Testes
-- MockMvc cobre registro, validação de senha, conflito de e-mail, listagem,
-  busca, conta desativada e 404.
-- `mvnw test`: 23 encontrados, 19 executados sem falha, 4 containers ignorados.
-
-### Riscos restantes
-- O frontend ainda será migrado das rotas `/private/*` na Fase 2.13.
-- Locais, redes sociais e áreas de atuação permanecem no NestJS temporariamente,
-  registrados na matriz de paridade; portanto o módulo ainda está parcial.
-
-## Fase 2.3 — segurança/auth
-
-### Implementado e testado localmente
-- Autenticação por JWT agora recarrega o usuário pelo ID e só cria o contexto
-  quando a conta existe e continua ativa.
-- Role e identidade usadas na autorização vêm do banco, não de claims antigas.
-- Erros globais mapeiam validação, argumento inválido, ausência, credenciais,
-  acesso negado, integridade e concorrência para HTTP/JSON previsível.
-- Entry point 401 e access denied 403 também retornam JSON padronizado.
-- MockMvc cobre 401, DTO inválido, cookie JWT HttpOnly e CSRF com/sem header.
-
-### Validação
-- `BackendJava/mvnw.cmd -B -f BackendJava/pom.xml verify`: sucesso.
-- 17 testes encontrados; 13 executados sem falha e 4 Testcontainers ignorados
-  pela indisponibilidade local do Docker.
-
-### Riscos restantes
-- Autorização relacional e criança arquivada serão reforçadas junto aos módulos.
-- A execução PostgreSQL e o status remoto do CI continuam pendentes do runner.
-
-## Fase 2.2 — testes base / Testcontainers
-
-### Implementado
-- Perfil de teste deixou de configurar H2 e `ddl-auto=create-drop`.
-- Base de integração criada com PostgreSQL 16, Testcontainers, Flyway e
-  `ddl-auto=validate`.
-- Testes cobrem subida da V1 do zero, tabelas essenciais, unicidade de e-mail
-  sem distinção de caixa, constraint de tipo de usuário e query JPA real.
-
-### Validação local
-- `BackendJava/mvnw.cmd -B -f BackendJava/pom.xml verify`: sucesso.
-- Testes unitários executados: 8, sem falhas.
-- Testes PostgreSQL: 4 cenários preparados, mas ignorados localmente porque o
-  Docker Engine não está ativo. A execução real permanece pendente no CI.
-
-### Risco restante
-- A subfase só pode ser marcada como testada após o runner executar os quatro
-  testes contra o container PostgreSQL; não há fallback H2.
-
-## Fase 2.1 — CI
-
-### Diagnóstico
-- O job `backend-java` falha porque `BackendJava/mvnw` foi versionado como arquivo não executável (`100644`) e o runner Linux chama `./mvnw`.
-- O job frontend estava verde no baseline informado.
-
-### Correção
-- O modo Git do wrapper será alterado para `100755`, mantendo o comando canônico no workflow.
-
-### Validação
-- `git ls-files -s BackendJava/mvnw`: `100755` após a correção.
-- `BackendJava/mvnw.cmd -B test`: sucesso, 6 testes.
-- `BackendJava/mvnw.cmd -B verify`: sucesso.
-- Novo run remoto: pendente do push/execução do GitHub Actions.
-
-## Fases A–J
-
-### Concluído
-- baseline, inventário e decisões iniciais;
-- bootstrap Spring Boot, Flyway e modelo-alvo;
-- auth por cookie, CSRF, CORS e autorização relacional;
-- implementações iniciais dos módulos funcionais.
-
-### Testes executados
-- `BackendJava/mvnw.cmd -B test`: sucesso, 6 testes.
-- `BackendJava/mvnw.cmd -B verify`: sucesso, JAR executável gerado.
-- `Frontend/npm.cmd run build`: sucesso; aviso de bundle grande.
-- `Frontend/npm.cmd run lint`: sucesso; 11 avisos, zero erros.
-- `docker compose config`: sucesso com segredo efêmero.
-- `docker compose build backend-java`: não executado; Docker Desktop/engine não estava ativo (named pipe ausente).
-
-### Pendências
-- ampliar testes Testcontainers/MockMvc, rate limit, auditoria de acesso e homologação E2E.
-
-### Riscos
-- migração de dados reais exige backup e janela controlada; consentimento exige revisão jurídica.
-
-### Próxima fase
-- alinhar frontend, compilar, testar e validar Compose.
+Fase 2 continua **em andamento**, não homologada. CI verde e Testcontainers no CI são evidências importantes, mas não substituem integração React, cobertura completa, E2E, auditoria ou validação jurídica.
