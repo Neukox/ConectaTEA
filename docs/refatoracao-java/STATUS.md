@@ -1,5 +1,18 @@
 # Status
 
+## Fase 2.10 — conexões
+
+### Implementado
+- Envio canônico usa `POST /conexoes` com `{destinatarioId}` e `@Valid`.
+- Resposta usa `{status}` e rejeita `PENDENTE` como ação de resposta.
+- Listagem aceita `tipo=enviadas|recebidas` e filtro por status.
+- Destinatário inexistente retorna 404, autoconexão retorna 400 e duplicidade do
+  par canônico é traduzida para 409 pela constraint/handler global.
+
+### Risco restante
+- O teste concorrente AB/BA no PostgreSQL e MockMvc da controller ainda estão
+  pendentes; não há homologação desta subfase.
+
 ## Fase 2.9 — sessões
 
 ### Implementado
