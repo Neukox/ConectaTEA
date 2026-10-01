@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -26,6 +27,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Bean
+    RateLimitFilter rateLimitFilter(ObjectMapper mapper,
+            @Value("${app.rate-limit.enabled:true}") boolean enabled,
+            @Value("${app.rate-limit.login-per-minute:10}") int loginLimit,
+            @Value("${app.rate-limit.token-per-minute:30}") int tokenLimit) {
+        return new RateLimitFilter(mapper, enabled, loginLimit, tokenLimit);
+    }
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -52,6 +61,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwt,
+            RateLimitFilter rateLimit,
             ObjectMapper objectMapper) throws Exception {
         var csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrf.setCookiePath("/");
@@ -82,7 +92,8 @@ public class SecurityConfig {
                         .permitAll()
                         .anyRequest()
                         .authenticated())
-                .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimit, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwt, RateLimitFilter.class)
                 .build();
     }
 

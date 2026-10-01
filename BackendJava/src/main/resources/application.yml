@@ -40,6 +40,10 @@ app:
   cookie:
     secure: ${COOKIE_SECURE:false}
     same-site: ${COOKIE_SAME_SITE:Lax}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    login-per-minute: ${RATE_LIMIT_LOGIN_PER_MINUTE:10}
+    token-per-minute: ${RATE_LIMIT_TOKEN_PER_MINUTE:30}
   consent:
     version: ${CONSENT_TERM_VERSION:1.0}
     purpose: ${CONSENT_PURPOSE:Acompanhamento terapêutico da criança}
