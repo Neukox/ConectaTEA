@@ -1,5 +1,20 @@
 # Status
 
+## Fase 2.11 — dashboard
+
+### Implementado
+- Dashboard profissional retorna exatamente os oito indicadores usados pela UI.
+- “Profissionais ativos” significa conexões profissionais aceitas; a métrica não
+  inventa atividade clínica sem fonte.
+- Métricas mensais usam `createdAt` e não incluem o passado inteiro.
+- Endpoints auxiliares retornam DTOs, não entidades JPA.
+- Dashboard do responsável agrega apenas crianças vinculadas, suas metas e
+  sessões futuras autorizadas.
+
+### Risco restante
+- As agregações ainda carregam coleções e devem migrar para SQL dedicado após a
+  estabilização contratual. Testes da controller permanecem pendentes.
+
 ## Fase 2.10 — conexões
 
 ### Implementado
