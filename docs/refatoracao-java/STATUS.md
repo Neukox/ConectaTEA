@@ -1,5 +1,21 @@
 # Status
 
+## Fase 2.8 — progresso
+
+### Implementado
+- Controller usa `ProgressoRepository` como fonte do histórico; recentes não são
+  mais metas ordenadas por `updatedAt`.
+- Resumo usa camelCase e retorna média, metas ativas/concluídas e crianças ativas.
+- Evolução por categoria deriva dos registros históricos de progresso.
+- Períodos `SEMESTRAL` e `ANUAL` filtram pela data real do histórico.
+- Todas as consultas partem das metas autorizadas por criança/profissional;
+  responsável sem `criancaId` recebe 403.
+
+### Riscos restantes
+- O frontend ainda usa alguns campos snake_case e será alinhado na Fase 2.13.
+- Agregações maiores devem migrar para queries SQL específicas após medição; a
+  implementação atual prioriza correção funcional do histórico.
+
 ## Fase 2.7 — metas
 
 ### Implementado
