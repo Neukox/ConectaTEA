@@ -1,5 +1,24 @@
 # Status
 
+## Fase 2.2 — testes base / Testcontainers
+
+### Implementado
+- Perfil de teste deixou de configurar H2 e `ddl-auto=create-drop`.
+- Base de integração criada com PostgreSQL 16, Testcontainers, Flyway e
+  `ddl-auto=validate`.
+- Testes cobrem subida da V1 do zero, tabelas essenciais, unicidade de e-mail
+  sem distinção de caixa, constraint de tipo de usuário e query JPA real.
+
+### Validação local
+- `BackendJava/mvnw.cmd -B -f BackendJava/pom.xml verify`: sucesso.
+- Testes unitários executados: 8, sem falhas.
+- Testes PostgreSQL: 4 cenários preparados, mas ignorados localmente porque o
+  Docker Engine não está ativo. A execução real permanece pendente no CI.
+
+### Risco restante
+- A subfase só pode ser marcada como testada após o runner executar os quatro
+  testes contra o container PostgreSQL; não há fallback H2.
+
 ## Fase 2.1 — CI
 
 ### Diagnóstico
