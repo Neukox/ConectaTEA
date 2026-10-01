@@ -1,5 +1,25 @@
 # Status
 
+## Fase 2.5 — crianças
+
+### Implementado
+- Create e update usam DTOs separados; datas externas seguem `YYYY-MM-DD`.
+- Create retorna `{message,crianca}` e listagem retorna `{items,total}`.
+- `responsavelPendente` é persistido em `contatos_responsaveis_pendentes`; não
+  é criada conta nem senha temporária.
+- Criança arquivada desaparece da listagem e é negada pela autorização central,
+  mesmo quando o ID e um vínculo antigo são conhecidos.
+- Decisão de acesso histórico registrada no ADR-007.
+
+### Testes
+- MockMvc cobre create, envelope, data ISO e DTO inválido.
+- Teste unitário cobre IDOR sem vínculo e bloqueio de criança arquivada.
+- Testes focados: 4 executados, sem falha.
+
+### Riscos restantes
+- Contrato React ainda será ajustado na Fase 2.13.
+- Integração PostgreSQL do fluxo completo depende do Docker/CI.
+
 ## Fase 2.4 — usuários/profissionais
 
 ### Implementado no backend

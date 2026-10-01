@@ -3,8 +3,7 @@ import br.com.conectatea.crianca.api.CriancaController; import br.com.conectatea
 @RestController @RequestMapping("/vinculos") public class VinculoController { private final VinculoService service; private final CriancaRepository children; public VinculoController(VinculoService s,CriancaRepository c){service=s;children=c;}
  @GetMapping("/tokens/{codigo}/preview") public VinculoService.Preview preview(@PathVariable String codigo){return service.preview(codigo);}
  @PostMapping("/confirmar") @PreAuthorize("hasRole('RESPONSAVEL')") public VinculoService.Preview confirm(Authentication a,@Valid @RequestBody ConfirmRequest b,HttpServletRequest r){return service.confirm(b.codigo(),b.consentimentoAceito(),(AuthenticatedUser)a.getPrincipal(),r.getRemoteAddr(),r.getHeader("User-Agent"));}
- @GetMapping("/me") @PreAuthorize("hasRole('RESPONSAVEL')") public List<CriancaController.Response> mine(Authentication a){return children.findLinkedToGuardian(((AuthenticatedUser)a.getPrincipal()).id()).stream().map(CriancaController.Response::from).toList();}
+ @GetMapping("/me") @PreAuthorize("hasRole('RESPONSAVEL')") public List<CriancaController.ChildResponse> mine(Authentication a){return children.findLinkedToGuardian(((AuthenticatedUser)a.getPrincipal()).id()).stream().map(CriancaController.ChildResponse::from).toList();}
  @DeleteMapping("/criancas/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) @PreAuthorize("hasRole('RESPONSAVEL')") public void unlink(Authentication a,@PathVariable Long id){service.unlink(id,(AuthenticatedUser)a.getPrincipal());}
  public record ConfirmRequest(@NotBlank String codigo,@AssertTrue boolean consentimentoAceito){}
 }
-
