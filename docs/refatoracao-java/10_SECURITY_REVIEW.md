@@ -25,3 +25,10 @@
 
 Rate limit distribuível no login, revisão jurídica, rotação de todos os segredos
 históricos, threat model, pentest e conclusão dos testes relacionais/IDOR.
+
+## Consentimento
+
+O registro preserva responsável, criança, profissional, data, IP, user agent,
+versão e finalidade. Versão/finalidade são configuração operacional. Revogação
+ainda não foi implementada nesta fase; este desenho técnico não constitui, por
+si só, certificação ou garantia de conformidade legal.

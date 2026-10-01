@@ -1,5 +1,33 @@
 # Status
 
+## Fase 2.6 — vínculos/consentimento/QR
+
+### Implementado
+- Token continua aleatório, armazenado como SHA-256 e consumido sob
+  `PESSIMISTIC_WRITE`.
+- Revinculação reativa vínculo `DESVINCULADO`, atualiza a data e limpa a data de
+  desvinculação antes de consumir o token.
+- Replay retorna 410; token vencido muda para `EXPIRADO` sem rollback do estado.
+- Profissional pode cancelar token pendente pela rota
+  `DELETE /criancas/{childId}/tokens-vinculo/{tokenId}` com validação de posse.
+- Geração retorna QR Code PNG real, on-demand, em `qrCodeDataUrl`; base64 não é
+  persistido.
+- Versão e finalidade do consentimento saíram do código fixo e são configuráveis
+  por `CONSENT_TERM_VERSION` e `CONSENT_PURPOSE`.
+
+### Testes
+- Unitários cobrem revinculação, replay, consumo coerente e conteúdo PNG do QR.
+- Teste Testcontainers concorrente dispara duas confirmações simultâneas e exige
+  um vencedor, um 410, um token `USADO` e um único vínculo ativo.
+- `mvnw test`: 31 encontrados, 26 executados sem falha; 5 cenários PostgreSQL
+  ignorados localmente por Docker indisponível.
+
+### Limites e riscos
+- Revogação de consentimento não faz parte da Fase 2 e nenhuma alegação de
+  compliance jurídico automático é feita.
+- O teste concorrente precisa executar no CI com Docker antes de ser considerado
+  evidência homologada.
+
 ## Fase 2.5 — crianças
 
 ### Implementado

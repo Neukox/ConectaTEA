@@ -40,4 +40,6 @@ app:
   cookie:
     secure: ${COOKIE_SECURE:false}
     same-site: ${COOKIE_SAME_SITE:Lax}
-
+  consent:
+    version: ${CONSENT_TERM_VERSION:1.0}
+    purpose: ${CONSENT_PURPOSE:Acompanhamento terapêutico da criança}
