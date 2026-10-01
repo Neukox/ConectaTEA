@@ -1,0 +1,328 @@
+# Contrato canônico da API Java — fotografia da implementação
+
+**Base da API:** `/api` (context path configurado). As rotas abaixo são relativas a essa base.  
+**Escopo:** endpoints atualmente implementados nos módulos Auth, Usuários, Profissionais, Crianças, Vínculos/Consentimento, Metas, Progresso, Sessões, Conexões e Dashboard. Este documento descreve o código existente; não significa que a integração React/Java esteja homologada.
+
+## Convenções efetivas e segurança
+
+- Requests e responses Java usam propriedades JSON `camelCase`; `LocalDate` é `YYYY-MM-DD` e `Instant`/`OffsetDateTime` são ISO-8601. Enums são strings com o nome do enum.
+- A autenticação é stateless por JWT no cookie `jwt` (HttpOnly). O principal autenticado é a fonte do ID/tipo do ator; rotas próprias não recebem o ID do usuário no body.
+- É pública a autenticação de `POST /auth/login`, `POST /users/register`, documentação, health e `OPTIONS`. As demais rotas requerem autenticação. `POST`, `PUT`, `PATCH` e `DELETE` exigem CSRF via cookie `XSRF-TOKEN` e header `X-XSRF-TOKEN`, exceto login/registro. CORS aceita credenciais e origens configuradas.
+- Resposta de erro da infraestrutura de segurança: `{timestamp,status,error,code,message,path}`. Erros de validação podem também conter `fields`. Status usados pelos endpoints: `400` request inválido/filtro inválido, `401` não autenticado/credenciais inválidas/conta inativa, `403` role ou autorização relacional negada, `404` recurso/perfil ausente, `409` conflito de unicidade/concorrência, `410` token indisponível/expirado. Não se deve tratar entidades JPA como contrato HTTP; os controllers abaixo expõem records/DTOs, com exceções descritas.
+- As respostas não têm envelope global. Algumas rotas retornam `{message,...}`, enquanto outras retornam DTO, lista ou mapa diretamente.
+- Autorização relacional padrão: profissional/responsável só acessam criança não arquivada com vínculo ativo apropriado. Ausência de vínculo e criança arquivada são negadas. Listas padrão excluem arquivadas.
+- O cliente frontend citado é o consumidor encontrado no código atual, não garantia de compatibilidade. Não foram alterados clientes nesta etapa.
+
+## Auth
+
+### `POST /auth/login`
+
+- Role/autenticação: pública; CSRF dispensado.
+- Request: `{email:string,password:string}` (email e senha não vazios; email validado).
+- Response `200`: `{message:"Login realizado",user:{id,name,email,telefone,endereco,tipo}}`; JWT é entregue no cookie HttpOnly `jwt`, não no JSON.
+- Erros: `400` validação, `401` credenciais inválidas ou usuário inativo.
+- Regra: usuário precisa existir, estar ativo e a senha corresponder.
+- Frontend: `src/api/authApi.ts` (`login`). Campos principais compatíveis; o frontend tipa `user` sem telefone/endereço, mas são campos adicionais opcionais na prática.
+
+### `POST /auth/logout`
+
+- Role/autenticação: qualquer usuário autenticado; CSRF requerido.
+- Request: sem body.
+- Response `200`: `{message:"Logout realizado"}` e cookie `jwt` expirado.
+- Erros: `401` sem autenticação, `403` CSRF ausente/inválido.
+- Regra: logout invalida o cookie do cliente; não há revogação server-side de JWT emitido.
+- Frontend: `src/api/authApi.ts` (`logout`); compatível quanto ao envelope.
+
+### `GET /auth/me`
+
+- Role/autenticação: qualquer usuário autenticado.
+- Request: sem body.
+- Response `200`: `{message:"Usuário autenticado",user:{id,name,email,telefone,endereco,tipo}}`.
+- Erros: `401` sem sessão JWT válida.
+- Regra: identidade vem do principal e é consultada no banco.
+- Frontend: `src/api/authApi.ts` (`checkAuth`); compatível com `response.data.user`.
+
+## Usuários
+
+### `POST /users/register`
+
+- Role/autenticação: pública; CSRF dispensado.
+- Request: `{name,email,password,telefone?,endereco?,tipo}`; senha de 8 a 72 caracteres.
+- Response `201`: `{message:"Usuário cadastrado",user:{id,name,email,telefone,endereco,tipo}}`.
+- Erros: `400` validação, `409` email já cadastrado.
+- Regra: criação de usuário e, para `tipo: PROFISSIONAL`, perfil profissional são transacionais. O registro não autentica automaticamente.
+- Frontend: `src/api/authApi.ts` (`register`). Forma e envelope alinhados; divergência P1: validação local ainda aceita senha de 6 caracteres, mas Java exige 8.
+
+### `GET /users/me`, `PUT /users/me`, `DELETE /users/me`
+
+- Role/autenticação: qualquer usuário autenticado; ator obtido do principal. CSRF requerido em PUT/DELETE.
+- Request GET/DELETE: sem body. PUT: `{name,telefone?,endereco?}`.
+- Response GET/PUT `200`: `{id,name,email,telefone,endereco,tipo}`. DELETE `204`, sem body.
+- Erros: `400` body inválido, `401` sem autenticação/conta inativa, `403` CSRF inválido.
+- Regra: PUT/DELETE operam apenas sobre o próprio usuário; DELETE desativa, não apaga.
+- Frontend: `src/api/authApi.ts` consome registro/login/me, mas não foi localizado consumidor Java-alinhado para PUT/DELETE. Clientes legados ainda chamam `/users/{id}` (ver Profissionais).
+
+## Profissionais
+
+### `GET /profissionais?search=`
+
+- Role/autenticação: qualquer usuário autenticado.
+- Request: query opcional `search`.
+- Response `200`: array de `{id,usuarioId,name,especialidade,registroProfissional,titulo,formacaoAcademica,sobre,fotoPerfilUrl,codigoIdentificacao}`.
+- Erros: `401` não autenticado.
+- Regra: diretório de perfis com usuário ativo; busca por nome, especialidade ou título. Não aplica vínculo com criança.
+- Frontend: `src/api/protected/axiosProfissionais.ts` e `axiosPerfil.ts`. Diverge: frontend chama `/private/profissionais`, inclui filtro `usuarioId` que Java não implementa e espera nomes como `usuario_id`/campos adicionais.
+
+### `GET /profissionais/me`, `PUT /profissionais/me`
+
+- Role/autenticação: `PROFISSIONAL`; ator derivado do principal. CSRF requerido no PUT.
+- Request GET: sem body. PUT: `{especialidade?,registroProfissional?,titulo?,formacaoAcademica?,sobre?,fotoPerfilUrl?}`.
+- Response `200`: o DTO de profissional acima.
+- Erros: `400` body inválido, `401` não autenticado, `403` role/CSRF incorretos, `404` perfil não criado.
+- Regra: atualização apenas do perfil próprio. Não implementa locais de atendimento, redes sociais nem áreas de atuação do Prisma legado.
+- Frontend: deveria ser consumido por `axiosPerfil.ts`/`axiosProfissionais.ts`, mas os clientes atuais usam `/profissionais/usuario/{id}`, `/private/atualizar-perfil/{id}` e não usam `/me`; divergência de rota, campos e recursos.
+
+### `GET /profissionais/{id}`
+
+- Role/autenticação: qualquer usuário autenticado.
+- Request: `id` é ID do perfil profissional (não do usuário).
+- Response `200`: DTO de profissional.
+- Erros: `401`, `404` perfil inexistente/inativo.
+- Regra: consulta de perfil sem autorização relacional adicional.
+- Frontend: `axiosProfissionais.ts` usa rota legada `/private/profissionais/{id}`; divergência de rota e possível ambiguidade entre ID de perfil e ID de usuário.
+
+## Crianças
+
+### `POST /criancas`
+
+- Role/autenticação: `PROFISSIONAL`; vínculo profissional-criança criado pelo principal. CSRF requerido.
+- Request: `{nome,dataNascimento:"YYYY-MM-DD",genero?,diagnostico?,diagnosticoDetalhes?,observacoes?,responsavelPendente?:{nome,telefone?,email?,parentesco}}`.
+- Response `201`: `{message:"Criança cadastrada",crianca:{id,nome,dataNascimento,idade,genero,diagnostico,diagnosticoDetalhes,observacoes}}`.
+- Erros: `400` validação/data inválida, `401`, `403` role/CSRF, `404` perfil profissional ausente, `409` conflito de integridade.
+- Regra: cria criança, vínculo profissional e contato pendente numa operação; não cria conta de responsável nem gera token automaticamente.
+- Frontend: `src/api/protected/axiosCadastroCrianca.ts`. Divergência crítica: envia `{fullName,birthDate,gender,diagnosis,notes,parentesco,responsible}` e converte data para `dd/MM/yyyy`; Java requer propriedades em português e `YYYY-MM-DD`, com `responsavelPendente`.
+
+### `GET /criancas`
+
+- Role/autenticação: qualquer usuário autenticado.
+- Request: sem body.
+- Response `200`: `{items:[ChildResponse],total:number}`; `ChildResponse={id,nome,dataNascimento,idade,genero,diagnostico,diagnosticoDetalhes,observacoes}`.
+- Erros: `401` não autenticado.
+- Regra: retorna somente crianças não arquivadas ligadas ao ator com vínculo ativo; o conjunto depende da role.
+- Frontend: `axiosCadastroCrianca.ts`. Divergência: espera `{message,criancas}` e campos de relacionamento snake_case/responsável que a API não retorna.
+
+### `GET /criancas/{id}`
+
+- Role/autenticação: profissional ou responsável autenticado com vínculo ativo à criança.
+- Request: path `id`.
+- Response `200`: `ChildResponse` diretamente, sem wrapper.
+- Erros: `401`, `403` sem vínculo/arquivada, `404` não encontrada.
+- Regra: a criança arquivada não é acessível pela rota normal.
+- Frontend: `axiosCadastroCrianca.ts` espera `{message,data}` e campos de responsável/vínculos adicionais; divergente.
+
+### `PUT /criancas/{id}` e `DELETE /criancas/{id}`
+
+- Role/autenticação: apenas `PROFISSIONAL` com vínculo profissional ativo; CSRF requerido.
+- Request PUT: `{nome,dataNascimento:"YYYY-MM-DD",genero?,diagnostico?,diagnosticoDetalhes?,observacoes?}`. DELETE sem body.
+- Response PUT `200`: `ChildResponse` direto. DELETE `204`.
+- Erros: `400` validação, `401`, `403` role/vínculo/CSRF, `404` ausente.
+- Regra: PUT não altera responsável; DELETE arquiva e retira a criança das consultas normais.
+- Frontend: `axiosCadastroCrianca.ts`. Divergências: update espera envelope `{message,crianca}` e envia propriedades extras/contato de responsável; exclusão usa a mesma rota mas resposta não foi alinhada.
+
+## Vínculos, tokens e consentimento
+
+### `GET /vinculos/tokens/{codigo}/preview`
+
+- Role/autenticação: código é somente leitura; apesar de não ter restrição de role no controller, a configuração global exige JWT.
+- Request: token no path.
+- Response `200`: `{id,nome,dataNascimento:"YYYY-MM-DD",genero}`.
+- Erros: `401` sem JWT, `404` token inválido, `410` expirado/usado/cancelado.
+- Regra: token aleatório guardado como SHA-256; expiração é marcada ao ser detectada. A consulta não consome token.
+- Frontend: `src/api/protected/axiosVinculacao.ts` usa a mesma rota e DTO; divergência operacional: cliente/comentário assume validação pública, mas servidor requer usuário autenticado.
+
+### `POST /vinculos/confirmar`
+
+- Role/autenticação: `RESPONSAVEL`; CSRF requerido.
+- Request: `{codigo,consentimentoAceito:true}`.
+- Response `200`: Preview `{id,nome,dataNascimento,genero}`.
+- Erros: `400` aceite ausente/request inválido, `401`, `403` role/CSRF, `404` token inválido, `410` token indisponível.
+- Regra: ator é o responsável autenticado. Token é bloqueado para uso único; cria ou reativa vínculo, grava consentimento e consome token transacionalmente. Revinculação é reativada.
+- Frontend: `axiosVinculacao.ts` usa a rota e request compatíveis.
+
+### `GET /vinculos/me`, `DELETE /vinculos/criancas/{id}`
+
+- Role/autenticação: `RESPONSAVEL`; ator do principal. CSRF requerido no DELETE.
+- Request: GET sem body; DELETE usa ID da criança.
+- Response GET `200`: array de `ChildResponse`; DELETE `204`.
+- Erros: `401`, `403` role/vínculo/CSRF, `404` vínculo ausente.
+- Regra: GET lista relações ativas/não arquivadas. DELETE encerra o próprio vínculo; revogação de consentimento não está implementada.
+- Frontend: `axiosVinculacao.ts`; rotas e shape de lista simples alinhados, mas outros componentes antigos esperam campos adicionais de vínculo.
+
+### `POST /criancas/{id}/tokens-vinculo`, `DELETE /criancas/{childId}/tokens-vinculo/{tokenId}`
+
+- Role/autenticação: `PROFISSIONAL` com vínculo ativo à criança; ator/perfil profissional vêm do principal. CSRF requerido.
+- Request: POST sem body; DELETE sem body.
+- Response POST `200`: `{id,codigo,expiraEm:"ISO-8601",qrCodeDataUrl:"data:image/png;base64,..."}`. DELETE `204`.
+- Erros: `401`, `403` role/relacionamento/propriedade/CSRF, `404` criança/token ausente, `410` token já indisponível.
+- Regra: código de uso único expira em sete dias; QR é gerado sob demanda, não persistido. Cancelamento é permitido ao profissional proprietário.
+- Frontend: `axiosCadastroCrianca.ts` ainda chama `GET /criancas/{id}/codigo-vinculo` e espera `codigoParaVinculo/qrcodeParaVinculo`; deve migrar para POST e os novos nomes.
+
+### Consentimento (efeito de `POST /vinculos/confirmar`)
+
+- Não há endpoint independente de consentimento. O POST de confirmação grava responsável, criança, profissional, instante, IP, User-Agent, versão e finalidade configuradas (`app.consent.version`/`app.consent.purpose`, defaults disponíveis na aplicação).
+- A resposta é o Preview, não um recibo de consentimento. Não há rota de revogação. O registro técnico não representa declaração de conformidade jurídica.
+- Consumidor: `axiosVinculacao.ts`. Não há divergência relevante de request; UI/termo e versão precisam permanecer sincronizados com configuração antes de produção.
+
+## Metas
+
+### `POST /metas`
+
+- Role/autenticação: `PROFISSIONAL` ligado à criança indicada; CSRF requerido.
+- Request: `{titulo,descricao?,categoria,prioridade,dataInicio:"YYYY-MM-DD",dataFim:"YYYY-MM-DD",criancaId}`.
+- Response `201`: `{id,titulo,descricao,categoria,prioridade,status,progresso,dataInicio,dataFim,criancaId}`.
+- Erros: `400` validação/datas, `401`, `403` role/relacionamento/CSRF.
+- Regra: início não pode estar no passado no create; fim deve ser igual/posterior ao início.
+- Frontend: `src/api/protected/axiosMetas.ts` e schemas/features Metas; rota/camelCase/resumo alinhados, validar enums e datas no schema.
+
+### `GET /metas`, `GET /metas/resumo`, `GET /metas/{id}`
+
+- Role/autenticação: qualquer autenticado; responsável precisa informar `criancaId` nas consultas list/resumo sem escopo, enquanto profissional sem ID vê metas próprias. Para ID explícito, exige vínculo ativo e criança não arquivada.
+- Request: list aceita `criancaId,categoria,prioridade,status,periodo,search`; períodos `TODOS|HOJE|SEMANA|MES|ATRASADAS`. Resumo sem parâmetros. Get usa `id`.
+- Response list `200`: array de MetaResponse. Resumo: `{totalMetas,metasEmAndamento,metasVencendo,metasConcluidas}`. Get: MetaResponse.
+- Erros: `400` enum/período inválido, `401`, `403` acesso/role/contexto sem child, `404` meta ausente.
+- Regra: status temporal é derivado na leitura; 100% conclui, 90–99% quase concluída e vencimento em até 7 dias classifica VENCENDO, conforme regras de domínio atuais.
+- Frontend: `axiosMetas.ts` chama list/resumo/get; contrato de resumo compatível. A listagem atual não inclui `criancaId` na interface de filtros e componente de responsável precisa fornecê-lo.
+
+### `PUT /metas/{id}`, `PATCH /metas/{id}/progresso`, `DELETE /metas/{id}`
+
+- Role/autenticação: `PROFISSIONAL` com vínculo ativo à criança da meta; CSRF requerido.
+- Request PUT: `{titulo,descricao?,categoria,prioridade,dataInicio,dataFim}` (sem `criancaId`). PATCH: `{progresso:0..100,descricao?}`. DELETE sem body.
+- Response PUT/PATCH `200`: MetaResponse. DELETE `204`.
+- Erros: `400` validação/datas, `401`, `403` role/vínculo/CSRF, `404` inexistente.
+- Regra: atualização não muda a criança; PATCH grava histórico de progresso na mesma transação.
+- Frontend: `axiosMetas.ts` usa as rotas e PATCH compatíveis; confirmar que update schema não envia `criancaId`.
+
+## Progresso
+
+Todos os endpoints requerem autenticação. `criancaId` opcional limita consulta a criança com vínculo ativo; sem esse filtro, somente profissional consulta seu próprio conjunto. Responsável deve sempre fornecer `criancaId`. Respostas são calculadas a partir de metas e/ou registros históricos, não expõem entidades JPA.
+
+### `GET /progresso/resumo?criancaId=`
+
+- Response `200`: `{mediaProgresso,metasAtivas,metasConcluidas,criancasAtivas}`. Erros `401/403/404` conforme autenticação/autorização/criança.
+- Frontend: `features/Progresso/services/index.ts`; divergência: service não envia `criancaId` e tipos antigos usam snake_case (`media_progresso`, etc.).
+
+### `GET /progresso/recentes?criancaId=&periodo=SEMESTRAL|ANUAL`
+
+- Response `200`: array `{id,data:"ISO-8601",descricao,diferenca,progressoAtual,metaId,metaTitulo,criancaId}` (últimos dez registros do histórico).
+- Erros: `400` período inválido, `401`, `403`, `404` criança inexistente.
+- Frontend: `getAtualizacoesRecentes`; rota compatível, mas não envia filtros e modelo UI legado espera objeto aninhado/snake_case.
+
+### `GET /progresso/distribuicao-categoria?criancaId=`
+
+- Response `200`: mapa `CategoriaMeta -> contagem`; erros `401/403/404`.
+- Regra: distribuição atual é agrupamento de metas por categoria, não série histórica.
+- Frontend: service de distribuição; confirmar shape de map e nomes de enum.
+
+### `GET /progresso/evolucao-categoria?criancaId=&periodo=SEMESTRAL|ANUAL`
+
+- Response `200`: mapa `CategoriaMeta -> média de progresso histórico`; erros `400/401/403/404`.
+- Frontend: service de evolução; rota/filtro compatíveis, conferir mapeamento dos enums.
+
+### `GET /progresso/crianca?criancaId=`
+
+- Response `200`: array `{nome,progresso}` agregado por criança; erros `401/403/404`.
+- Frontend: service `getProgressoPorCrianca`; compatibilidade de shape precisa ser confirmada nos tipos de apresentação.
+
+## Sessões
+
+### `POST /sessoes`
+
+- Role/autenticação: `PROFISSIONAL` com vínculo ativo à criança; CSRF requerido.
+- Request: `{criancaId,tipo,dataHora:"ISO-8601 com offset",duracao,descricao?,observacoes?}`.
+- Response `201`: `{id,dataHora,duracao,status,tipo,descricao,observacoes,criancaId}`.
+- Erros: `400` body inválido/data/duração, `401`, `403` role/vínculo/CSRF.
+- Regra: profissional vem do principal; estado inicial definido pelo domínio.
+- Frontend: `features/Sessoes/services/index.ts`; divergência: envia `tipoSessao` e `data: Date`, mas Java espera `tipo` e `dataHora` ISO string.
+
+### `GET /sessoes`, `GET /sessoes/resumo`
+
+- Role/autenticação: qualquer autenticado. Profissional vê sessões próprias; responsável vê apenas sessões de crianças vinculadas ativas. Filtro `criancaId` também valida relação.
+- Request list: `criancaId,status,tipo,periodo,search`; período `TODOS|HOJE|SEMANA|MES`. Resumo sem parâmetros.
+- Response list `200`: array de SessionResponse. Resumo: `{sessoesHoje,sessoesConcluidas,sessoesEstaSemana,sessoesPendentes}`.
+- Erros: `400` enum/período inválido, `401`, `403` relação/CSRF quando aplicável, `404` criança ausente.
+- Regra: resumo usa role para escopo; responsável não é resolvido como profissional.
+- Frontend: serviços de Sessões chamam rotas certas, mas tipo de resumo usa `sessoes_hoje` etc.; filtros/tipos da UI ainda carregam `tipoSessao` e formato antigo.
+
+### `PUT /sessoes/{id}`, `PATCH /sessoes/{id}/status`, `DELETE /sessoes/{id}`
+
+- Role/autenticação: `PROFISSIONAL` com vínculo ativo à criança associada à sessão; CSRF requerido.
+- Request PUT: `{tipo,dataHora,duracao,descricao?,observacoes?}` (sem criancaId). PATCH: `{status}`. DELETE sem body.
+- Response PUT/PATCH `200`: SessionResponse. DELETE `204`.
+- Erros: `400` request inválido, `401`, `403` role/vínculo/CSRF, `404` sessão ausente.
+- Frontend: `features/Sessoes/services/index.ts`; update usa `tipoSessao`/`data`, incompatível.
+
+## Conexões profissionais
+
+Todos os endpoints exigem autenticação e role `PROFISSIONAL`; o ID do profissional solicitante é obtido do principal.
+
+### `POST /conexoes`
+
+- Request: `{destinatarioId}` (ID de perfil profissional); CSRF requerido.
+- Response `201`: `{id,solicitanteId,destinatarioId,status}`.
+- Erros: `400` autoconexão/request inválido, `401`, `403` role/CSRF, `404` destinatário inexistente, `409` par duplicado/conflito de unicidade.
+- Frontend: `src/api/protected/axiosAmizade.ts` envia `POST /conexoes/enviar` com `profissionalDestinoId`, divergindo rota e body.
+
+### `GET /conexoes?tipo=todas|enviadas|recebidas&status=`
+
+- Response `200`: array de ConnectionResponse filtrado por tipo/status.
+- Erros: `400` tipo/status inválido, `401`, `403` role.
+- Frontend: `axiosAmizade.ts` usa `/enviadas`, `/recebidas`, `/filtrar` e envelope `{message,data}`; backend aceita somente coleção com query params e retorna array simples.
+
+### `PUT /conexoes/{id}/responder`, `DELETE /conexoes/{id}`
+
+- Request PUT: `{status:"ACEITO"|"RECUSADO"}`; DELETE sem body; CSRF requerido.
+- Response PUT `200`: ConnectionResponse. DELETE `204`.
+- Erros: `400` status de resposta não permitido, `401`, `403` não destinatário/não participante/CSRF, `404` conexão ausente, `409` restrição de duplicidade.
+- Regra: só destinatário responde; participante pode remover.
+- Frontend: `axiosAmizade.ts` chama path de resposta compatível, mas envia `{acao:"ACEITAR"|"RECUSAR"}` e espera envelope; diverge do status e DTO Java.
+
+## Dashboard
+
+### `GET /dashboard/profissional`
+
+- Role/autenticação: `PROFISSIONAL`; escopo do principal e vínculos profissionais ativos.
+- Response `200`: `{totalCriancas,criancasEsteMes,profissionaisAtivos,profissionaisAtivosEsteMes,totalMetas,totalMetasEsteMes,taxaProgresso,taxaProgressoEsteMes}`.
+- Erros: `401`, `403` role.
+- Regra: progresso é média dos valores das metas; contadores mensais consideram criação no mês; “profissionais ativos” conta conexões aceitas do profissional, não diretório global.
+- Frontend: `features/Dashboard/services/index.ts`; nomes esperados pelo componente devem ser conferidos, mas rota/shape dos indicadores é camelCase.
+
+### `GET /dashboard/profissional/criancas`, `GET /dashboard/profissional/metas`
+
+- Role/autenticação: `PROFISSIONAL`; crianças/metas do principal.
+- Responses `200`: crianças `[{id,nome,idade,diagnostico}]`; metas `[{id,titulo,status,progresso,crianca}]`.
+- Erros: `401`, `403` role.
+- Frontend: `features/Dashboard/services/index.ts`. Divergência encontrada na lista de crianças: cards/types incluem status/profissional que o backend não retorna. O DTO de metas é próximo do esperado.
+
+### `GET /dashboard/responsavel`
+
+- Role/autenticação: `RESPONSAVEL`; crianças vinculadas ao principal, não arquivadas.
+- Response `200`: `{totalCriancas,totalMetas,sessoesProximas,taxaProgresso}`.
+- Erros: `401`, `403` role.
+- Frontend: não foi localizado consumidor correspondente em `features/Dashboard/services`; dashboard do responsável ainda não está integrado a este endpoint.
+
+## Inventário consolidado de divergências frontend/backend
+
+1. Senha: validação local de registro aceita 6; API exige 8.
+2. Profissionais: clientes chamam rotas legadas `/private/...`, `/profissionais/usuario/{id}` e `/users/{id}`; Java oferece `/profissionais`, `/profissionais/me`, `/profissionais/{id}` e `/users/me`. Perfil legado também contém locais, redes sociais e áreas de atuação, ausentes no Java.
+3. Crianças: cliente envia nomes em inglês/data `dd/MM/yyyy` e estrutura `responsible`; API exige camelCase português, data ISO e `responsavelPendente`. Shapes de lista, detalhe e update são diferentes. Geração antiga `GET .../codigo-vinculo` diverge do POST de tokens.
+4. Vínculo preview é descrito como público pelo frontend, mas o filtro global exige JWT. Confirmação e desvinculação têm paths/body compatíveis.
+5. Metas: principais rotas, camelCase e resumo coincidem; para responsável, serviços/componentes precisam incluir `criancaId` onde a consulta não tem escopo automático.
+6. Progresso: resumo/tipos legados usam snake_case, recente espera campos aninhados, e summary/recentes não enviam `criancaId`; responsável não pode consultar sem esse filtro. Distribuição representa metas atuais, não histórico.
+7. Sessões: UI envia `tipoSessao` e `data: Date`; API exige `tipo` e timestamp ISO `dataHora`. Tipos de resumo usam snake_case.
+8. Conexões: cliente usa `/enviar`, `/enviadas`, `/recebidas`, `/filtrar`, body `profissionalDestinoId`/`acao` e envelope `{message,data}`; API usa `POST /conexoes`, query params, `{destinatarioId}`/`{status}` e respostas diretas camelCase.
+9. Dashboard: DTO da lista de crianças não contém todos os campos de UI; rota do dashboard de responsável não tem consumidor localizado.
+10. Todos os endpoints mutáveis precisam de CSRF (`X-XSRF-TOKEN`); integração deve continuar usando `apiClient` com cookies/credenciais. `httpClient` permanece alias/cliente legado em alguns módulos.
+
+## Estado deste contrato
+
+Este documento foi produzido a partir dos controllers Java e clientes React atualmente versionados após a correção de lifecycle do Testcontainers. Ele registra contratos implementados e divergências observadas; não corrige essas divergências nem certifica um fluxo end-to-end do frontend. Próxima etapa deve migrar os clientes incompatíveis e adicionar/atualizar testes de contrato conforme plano de fases, sem remover o backend NestJS nesta fase.
