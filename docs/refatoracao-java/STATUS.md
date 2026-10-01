@@ -1,5 +1,20 @@
 # Status
 
+## Fase 2.1 — CI
+
+### Diagnóstico
+- O job `backend-java` falha porque `BackendJava/mvnw` foi versionado como arquivo não executável (`100644`) e o runner Linux chama `./mvnw`.
+- O job frontend estava verde no baseline informado.
+
+### Correção
+- O modo Git do wrapper será alterado para `100755`, mantendo o comando canônico no workflow.
+
+### Validação
+- `git ls-files -s BackendJava/mvnw`: `100755` após a correção.
+- `BackendJava/mvnw.cmd -B test`: sucesso, 6 testes.
+- `BackendJava/mvnw.cmd -B verify`: sucesso.
+- Novo run remoto: pendente do push/execução do GitHub Actions.
+
 ## Fases A–J
 
 ### Concluído
