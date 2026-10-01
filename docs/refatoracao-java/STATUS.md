@@ -1,5 +1,23 @@
 # Status
 
+## Fase 2.7 — metas
+
+### Implementado
+- DTOs separados para create, update, progresso e response; `criancaId` é
+  obrigatório apenas no create e não é alterável no update.
+- Update aceita `dataInicio` histórica e ainda valida a ordem das datas.
+- `GET /metas/resumo` retorna o shape canônico do frontend.
+- Filtros `categoria`, `prioridade`, `status`, `periodo`, `search` e `criancaId`
+  têm efeito; período desconhecido retorna 400 em vez de ser ignorado.
+- Status é recalculado na leitura: 100 concluída, 90–99 quase concluída e prazo
+  entre hoje e sete dias vencendo. Datas já passadas não entram em “vencendo”.
+
+### Testes e risco
+- Testes de domínio cobrem limites de progresso, prazo de sete dias e meta
+  atrasada fora da métrica “vencendo”.
+- A regra é operacional para o MVP e precisa de validação clínica futura antes
+  de ser tratada como regra clínica definitiva.
+
 ## Fase 2.6 — vínculos/consentimento/QR
 
 ### Implementado
