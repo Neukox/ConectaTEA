@@ -5,10 +5,10 @@ Atualização: 2026-10-01. Este documento substitui as afirmações de CI penden
 ## Estado de branch, CI e segurança do escopo
 
 - Branch ativa: `refactor/backend-java`.
-- SHA local ao iniciar esta consolidação documental: `844efc9221223d2565480dcbdaa89d938d49aeb7`. Esse commit já continha o contrato inicial, ainda sem o inventário completo de endpoints. O último commit de implementação/testes é `dd718edfb094e3e0abf1495207051c4096c79327`.
-- O remoto validado antes desta consolidação apontava `refactor/backend-java` para `dd718ed`. `main` e `backup/pre-refactor-java-20261001-1408` permanecem em `13df172543a633ea0e8c11b054533d0a0d71f4d7`.
-- GitHub Actions run `36918281401` no commit `dd718ed`: `frontend: success`; `backend-java: success`.
-- O job backend executou `./mvnw -B verify`; a suíte PostgreSQL/Testcontainers executou no CI com PostgreSQL disponível. Localmente, `./mvnw -B verify` passou, mas cinco testes Testcontainers foram ignorados por indisponibilidade de Docker. Nenhum teste foi executado nesta atualização documental.
+- SHA ao iniciar a finalização autônoma: `4f9cc84b0dd49fcf4932190a77e0510422a92905`; SHA funcional/documental validado antes deste registro: `f3854eb2fe3bbd0fbc71e81119e8d1b81cc3db7c`.
+- `main` e `backup/pre-refactor-java-20261001-1408` permanecem em `13df172543a633ea0e8c11b054533d0a0d71f4d7`.
+- GitHub Actions run `36924901483` no commit `f3854eb`: `frontend: success`; `backend-java: success`.
+- O job backend executou `./mvnw -B verify`; Flyway V1/V2, Hibernate validate e PostgreSQL/Testcontainers executaram no CI. Localmente, `./mvnw -B verify` passou com 33 testes, 0 falhas/erros e cinco Testcontainers ignorados por indisponibilidade de Docker; o JAR foi gerado.
 - A falha anterior `Connection refused` foi corrigida em `dd718ed`: o contexto Spring em cache podia sobreviver ao container da classe e reutilizar uma porta dinâmica encerrada. `@DirtiesContext(AFTER_CLASS)` fecha o contexto antes de o container daquela classe ser finalizado. Não houve alteração adicional dessa correção.
 - NestJS continua preservado; nenhuma migração real de banco foi executada; não houve alteração/merge na `main` nem alteração da branch de backup.
 
@@ -16,7 +16,7 @@ Atualização: 2026-10-01. Este documento substitui as afirmações de CI penden
 
 | Subfase | Implementação/evidência atual | Pendência relevante |
 |---|---|---|
-| 2.1 CI | Wrapper executável; jobs frontend e backend verdes no run `36918281401`. | Reexecutar CI após push da documentação para registrar o novo estado remoto. |
+| 2.1 CI | Wrapper executável; jobs frontend e backend verdes no run `36924901483`. | Manter os dois jobs obrigatórios nos próximos commits. |
 | 2.2 Testcontainers | PostgreSQL 16, Flyway, schema V1, constraints e query JPA; execução confirmada pelo verify no CI. | Execução local não disponível sem Docker; manter runner como evidência para integração PostgreSQL. |
 | 2.3 Auth/segurança | Usuário/role atuais lidos do banco; conta desativada bloqueada; JSON de erro; MockMvc de login/cookie/CSRF/401. | Rate limit, threat model, pentest e revisão de produção. |
 | 2.4 Usuários/profissionais | Cadastro canônico e rotas `/profissionais`, `/me`; busca/perfil ativo. | React ainda chama rotas legadas; recursos de perfil adicionais seguem no NestJS. |

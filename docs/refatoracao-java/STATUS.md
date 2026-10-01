@@ -6,9 +6,9 @@ Atualizado em 2026-10-01. Esta página é o estado consolidado mais recente; as 
 
 - Branch de trabalho: `refactor/backend-java`.
 - Branch de restauração: `backup/pre-refactor-java-20261001-1408`; `main` e backup permanecem no baseline `13df172543a633ea0e8c11b054533d0a0d71f4d7`.
-- Commit de código enviado antes desta consolidação documental: `dd718edfb094e3e0abf1495207051c4096c79327`.
-- GitHub Actions run `36918281401`: `frontend: success`, `backend-java: success`.
-- `./mvnw -B verify` terminou com `BUILD SUCCESS` localmente. Unitários e MockMvc executáveis passaram. Os testes PostgreSQL são ignorados localmente sem Docker; no job Linux do CI, Testcontainers executou com PostgreSQL e o job passou.
+- SHA funcional/documental validado antes do registro final: `f3854eb2fe3bbd0fbc71e81119e8d1b81cc3db7c`.
+- GitHub Actions run `36924901483`: `frontend: success`, `backend-java: success`.
+- `./mvnw -B verify` terminou com `BUILD SUCCESS` localmente e gerou o JAR. Resultado: 33 testes, 0 falhas/erros, 5 ignorados por Docker indisponível; no job Linux do CI, Testcontainers executou com PostgreSQL e o job passou.
 - Causa corrigida: o cache de contexto Spring mantinha datasource/porta mapeada após o ciclo de vida do container da classe de teste. `@DirtiesContext(AFTER_CLASS)` fecha o contexto antes da classe de integração seguinte. A alteração está em `dd718ed`; não foi repetida nesta execução.
 - NestJS continua preservado. Nenhuma migração real do banco foi executada. Não houve alteração em `main` nem na branch de backup.
 
