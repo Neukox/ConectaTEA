@@ -1,5 +1,21 @@
 # Status
 
+## Fase 2.9 — sessões
+
+### Implementado
+- Contrato canônico usa `tipo`, `dataHora`, `duracao` e `criancaId`.
+- Create/update têm DTOs próprios; update não recebe nem muda `criancaId`.
+- Resumo retorna `sessoesHoje`, `sessoesConcluidas`, `sessoesEstaSemana` e
+  `sessoesPendentes`.
+- Filtros por criança, status, tipo, período e busca são efetivos.
+- Responsável lista apenas sessões de crianças vinculadas e não é mais buscado
+  como profissional.
+- Escritas de profissional continuam condicionadas ao vínculo ativo.
+
+### Risco restante
+- MockMvc específico e alinhamento do cliente React permanecem pendentes; o
+  módulo está implementado, ainda não homologado.
+
 ## Fase 2.8 — progresso
 
 ### Implementado
