@@ -1,5 +1,25 @@
 # Status
 
+## Fase 2.4 — usuários/profissionais
+
+### Implementado no backend
+- Registro retorna o envelope canônico `{message,user}` e mantém a criação
+  transacional do perfil quando o tipo é `PROFISSIONAL`.
+- Senha canônica permanece com mínimo de oito caracteres.
+- Perfis usam `GET /profissionais`, `GET/PUT /profissionais/me` e
+  `GET /profissionais/{id}`; contas desativadas não aparecem na listagem.
+- Busca textual foi implementada para nome, especialidade e título.
+
+### Testes
+- MockMvc cobre registro, validação de senha, conflito de e-mail, listagem,
+  busca, conta desativada e 404.
+- `mvnw test`: 23 encontrados, 19 executados sem falha, 4 containers ignorados.
+
+### Riscos restantes
+- O frontend ainda será migrado das rotas `/private/*` na Fase 2.13.
+- Locais, redes sociais e áreas de atuação permanecem no NestJS temporariamente,
+  registrados na matriz de paridade; portanto o módulo ainda está parcial.
+
 ## Fase 2.3 — segurança/auth
 
 ### Implementado e testado localmente
