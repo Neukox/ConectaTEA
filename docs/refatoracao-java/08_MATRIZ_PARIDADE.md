@@ -10,7 +10,9 @@
 | Sessões | sim | inicial | divergente | pendente | parcial |
 | Dashboard | sim | inicial | divergente | pendente | parcial |
 | Conexões | sim | inicial | divergente parcial | pendente | parcial |
-| Auditoria/histórico | não funcional | apenas schema | n/a | pendente | não iniciado |
+| Auditoria/histórico | não funcional | eventos e histórico append-only | n/a | testes novos reservados à etapa manual | implementado, não homologado |
+
+O backend Java principal está funcionalmente implementado para iniciar a migração do frontend. A classificação continua sem homologação porque não foram executados E2E nem integração React/Java. Recursos profissionais acessórios abaixo permanecem conscientemente no NestJS e não alteram o contrato Java congelado desta fase.
 
 Nenhuma linha parcial autoriza desligar o NestJS.
 

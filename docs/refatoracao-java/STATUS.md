@@ -27,7 +27,7 @@ Atualizado em 2026-10-01. Esta página é o estado consolidado mais recente; as 
 | 2.9 Sessões | implementado parcialmente | Contratos e escopo de responsável implementados; testes específicos e alinhamento React pendentes. |
 | 2.10 Conexões | implementado parcialmente | Rotas/DTOs canônicos implementados; MockMvc e corrida oposta AB/BA pendentes. |
 | 2.11 Dashboard | implementação concluída; não homologado | Métricas/DTOs profissionais e responsável implementados; teste dedicado e validação com UI pendentes. Agregações em memória são risco de evolução, não critério funcional já validado. |
-| 2.12 Auditoria/histórico | não iniciado | Schema não significa implementação de eventos; logs e serviços funcionais ainda faltam. |
+| 2.12 Auditoria/histórico | implementado; não homologado | AuditLog/repositório/serviço, eventos sensíveis e histórico append-only implementados com Flyway V2; testes específicos permanecem para a etapa manual. |
 | 2.13 Frontend | pendente | Clientes React ainda divergem do contrato Java em rotas, campos e envelopes. Não houve migração nesta execução. |
 | 2.14 E2E/cobertura | pendente | Fluxo profissional-responsável completo ainda não foi validado de ponta a ponta. |
 | 2.15 Documentação final | parcial | Contrato canônico sendo consolidado nesta execução; plano de migração de dados e resultado final ainda faltam. |
@@ -45,9 +45,9 @@ Atualizado em 2026-10-01. Esta página é o estado consolidado mais recente; as 
 2. Executar lint e build do frontend depois da migração e validar os consumidores reais contra os DTOs do contrato.
 3. Completar cobertura MockMvc/contrato para todos os controllers; cobrir IDOR e filtros por módulo. Fazer testes específicos de progresso, sessões, conexões e dashboard, e corrida concorrente AB/BA em PostgreSQL.
 4. Automatizar e validar o fluxo E2E completo profissional/responsável, incluindo consentimento, replay, acesso autorizado e negado.
-5. Implementar auditoria e histórico de vínculo sem armazenar senha, JWT ou payload clínico integral.
-6. Criar `11_PLANO_MIGRACAO_DADOS_PRISMA_PARA_JAVA.md` como plano somente documental; não executar migração real. Manter os conceitos `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` no NestJS até decisão e migração futuras.
+5. Implementar manualmente a cobertura específica de auditoria, histórico e rate limit; a funcionalidade está presente sem armazenar senha, JWT, token bruto ou payload clínico.
+6. Executar futuramente o plano `11_PLANO_MIGRACAO_DADOS_PRISMA_PARA_JAVA.md` somente após ensaio e aprovação; nenhuma migração real ocorreu. Manter `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` no NestJS até contrato e migração próprios.
 7. Atualizar matriz, plano de testes e security review com evidência por requisito; criar `13_RESULTADO_FASE_2.md` somente após comprovar os critérios finais.
 8. Revisar rate limit, secrets, threat model, pentest e consentimento com revisão jurídica antes de produção.
 
-Fase 2 continua **em andamento**, não homologada. CI verde e Testcontainers no CI são evidências importantes, mas não substituem integração React, cobertura completa, E2E, auditoria ou validação jurídica.
+O backend está **estabilizado para migração do frontend**, mas a Fase 2 continua em andamento e não homologada. CI/Testcontainers, integração React, cobertura completa, E2E e validação jurídica continuam sendo evidências distintas.

@@ -23,8 +23,12 @@
 
 ## Pendências antes de produção
 
-Rate limit distribuível no login, revisão jurídica, rotação de todos os segredos
+O backend agora aplica rate limit local em memória, configurável, no login e nos fluxos de token. Em implantação com múltiplas réplicas ele não fornece limite global; centralização por Redis ou gateway continua pendente. Também permanecem revisão jurídica, rotação de todos os segredos
 históricos, threat model, pentest e conclusão dos testes relacionais/IDOR.
+
+## Auditoria técnica
+
+Login bem-sucedido, logout, geração/cancelamento/expiração/consumo de token, criação/reativação/encerramento de vínculo e envio/aceite/recusa/remoção de conexão são auditados. Os registros contêm apenas IDs e metadados operacionais mínimos; token bruto, JWT, cookies, senha/hash, CSRF e payload clínico são proibidos. O histórico de vínculo é atômico com a mudança de negócio; auditoria operacional usa transação independente e falha secundária não cancela a operação.
 
 ## Consentimento
 

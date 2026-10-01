@@ -16,3 +16,7 @@ Infra: Compose config/build e healthcheck.
   o job Linux do CI é o ambiente obrigatório para executá-los de verdade.
 - Próximos cenários da mesma infraestrutura: concorrência de token, replay,
   autorização relacional, CSRF e fluxo E2E.
+
+## Pendências manuais após esta execução
+
+Sem gerar nova bateria automática nesta fase, devem ser escritos posteriormente testes de auditoria (sanitização e falha secundária), histórico transacional, rate limit/429, controllers de Progresso, Sessões, Conexões e Dashboard, IDOR por módulo, corrida AB/BA de conexões e E2E profissional/responsável. O CI deve continuar executando Flyway V1+V2 e Hibernate validate no PostgreSQL Testcontainers.

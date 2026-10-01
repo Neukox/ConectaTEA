@@ -11,6 +11,8 @@
 - Resposta de erro da infraestrutura de segurança: `{timestamp,status,error,code,message,path}`. Erros de validação podem também conter `fields`. Status usados pelos endpoints: `400` request inválido/filtro inválido, `401` não autenticado/credenciais inválidas/conta inativa, `403` role ou autorização relacional negada, `404` recurso/perfil ausente, `409` conflito de unicidade/concorrência, `410` token indisponível/expirado. Não se deve tratar entidades JPA como contrato HTTP; os controllers abaixo expõem records/DTOs, com exceções descritas.
 - As respostas não têm envelope global. Algumas rotas retornam `{message,...}`, enquanto outras retornam DTO, lista ou mapa diretamente.
 - Autorização relacional padrão: profissional/responsável só acessam criança não arquivada com vínculo ativo apropriado. Ausência de vínculo e criança arquivada são negadas. Listas padrão excluem arquivadas.
+- Login e operações de geração, consulta, confirmação e cancelamento de token têm rate limit configurável. Excesso retorna `429` com `{timestamp,status,error,code:"RATE_LIMITED",message,path}` e `Retry-After: 60`. No MVP o limite é por instância.
+- Eventos sensíveis são auditados sem alterar requests/responses. Senha/hash, JWT, cookies, CSRF, token bruto e payload clínico não integram os registros.
 - O cliente frontend citado é o consumidor encontrado no código atual, não garantia de compatibilidade. Não foram alterados clientes nesta etapa.
 
 ## Inventário completo de endpoints de domínio
@@ -71,6 +73,10 @@
 **Erros transversais:** `400` validação/argumento/filtro; `401` JWT ausente, inválido, expirado ou usuário inativo; `403` role, CSRF ou autorização relacional; `404` `NoSuchElementException`/recurso ausente; `409` integridade/concorrência otimista; `410` token expirado, usado ou cancelado. A resposta do advice inclui `timestamp,status,error,code,message,path,fields` (campos nulos podem ser omitidos pelo Jackson). Rotas que lançam `ResponseStatusException` usam o status indicado pelo serviço. Códigos específicos podem variar conforme o handler que origina a falha.
 
 **Cobertura de módulos no código legado:** `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional`, além de operações legadas/mais ricas de perfil profissional, permanecem temporariamente no NestJS. Não há endpoints Java equivalentes documentados porque não existem controllers Java para esses recursos. O NestJS continua preservado como fallback; não houve migração real de dados.
+
+## Estado de congelamento
+
+O contrato Java descrito neste documento está **estabilizado para migração do frontend**. Auditoria, histórico e rate limit são transversais e não alteraram os bodies de sucesso existentes; acrescentaram apenas o possível erro `429` nos endpoints sensíveis. Não há pendência funcional conhecida no backend principal que exija mudança relevante de rota, request ou response. Isso não significa homologação: integração React, E2E, cobertura adicional e revisão jurídica/operacional permanecem pendentes.
 
 ## Auth
 

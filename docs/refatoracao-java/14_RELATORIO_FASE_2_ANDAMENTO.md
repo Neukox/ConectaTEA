@@ -27,7 +27,7 @@ Atualização: 2026-10-01. Este documento substitui as afirmações de CI penden
 | 2.9 Sessões | DTOs próprios, filtros, resumo e escopo correto para responsável. | Testes dedicados e contrato React. |
 | 2.10 Conexões | Request/resposta canônicos, filtros, validação e unicidade. | MockMvc e corrida concorrente AB/BA no PostgreSQL. |
 | 2.11 Dashboard | Controller implementado com DTOs e indicadores; profissional usa conexões aceitas na métrica “profissionais ativos”; dashboard responsável limita dados às crianças vinculadas. | Testes de comportamento da controller e validação dos indicadores com a UI. Agregações em memória ficam como risco técnico futuro. |
-| 2.12 Auditoria/histórico | Não implementado funcionalmente. | Entidades/repositórios/serviços e eventos sensíveis seguros continuam pendentes. |
+| 2.12 Auditoria/histórico | Implementado com Flyway V2, auditoria segura e histórico append-only. | Testes específicos serão escritos manualmente; revisão operacional de retenção permanece. |
 | 2.13 Frontend | Não migrado nesta execução. | Corrigir rotas, nomes, envelopes, datas, CSRF/cliente HTTP e validar lint/build. |
 | 2.14 E2E/cobertura | Não homologado. | Completar cobertura por controller e fluxo de ponta a ponta profissional/responsável. |
 | 2.15 Documentação final | Contrato iniciado e consolidado nesta execução; status atualizado. | Plano documental de migração de dados e relatório final somente quando critérios estiverem provados. |
@@ -48,8 +48,8 @@ O teste base `PostgresIntegrationTest` usa `@Testcontainers` com container está
 2. Validar os consumidores após migração; executar lint e build do frontend. Não considerar integração homologada apenas por compilação.
 3. Completar testes MockMvc/contrato ausentes, em particular Progresso, Sessões, Conexões e Dashboard, e fechar cobertura de role, IDOR, erros e CSRF por endpoint.
 4. Manter Testcontainers PostgreSQL no CI e cobrir explicitamente corrida AB/BA de conexão; automatizar e validar o fluxo completo profissional/responsável, incluindo consentimento, replay e acesso negado sem vínculo.
-5. Implementar auditoria e histórico de vínculo, sem persistir senha, JWT ou payload clínico integral.
-6. Escrever `11_PLANO_MIGRACAO_DADOS_PRISMA_PARA_JAVA.md` sem executar migração. Manter `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` no NestJS até inventário, decisão e migração futura.
+5. Escrever manualmente testes de auditoria/histórico/rate limit e definir retenção operacional; a implementação funcional já existe.
+6. Usar `11_PLANO_MIGRACAO_DADOS_PRISMA_PARA_JAVA.md` apenas numa operação futura aprovada. Manter `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` no NestJS até contrato e migração futura.
 7. Atualizar `08_MATRIZ_PARIDADE.md`, `09_PLANO_DE_TESTES.md` e `10_SECURITY_REVIEW.md` com a evidência nova sem rebaixar pendências; criar `13_RESULTADO_FASE_2.md` só depois dos critérios de aceite.
 8. Revisar segredos, rate limit, threat model, pentest e consentimento com revisão jurídica antes de produção.
 
