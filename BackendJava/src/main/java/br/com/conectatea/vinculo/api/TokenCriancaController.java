@@ -38,7 +38,7 @@ public class TokenCriancaController {
         var user = (AuthenticatedUser) authentication.getPrincipal();
         authorization.requireCrianca(user, id);
         var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
-        return links.generate(id, professional.getId());
+        return links.generate(id, professional.getId(), user.id());
     }
 
     @DeleteMapping("/{childId}/tokens-vinculo/{tokenId}")
@@ -51,6 +51,6 @@ public class TokenCriancaController {
         var user = (AuthenticatedUser) authentication.getPrincipal();
         authorization.requireCrianca(user, childId);
         var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
-        links.cancel(tokenId, childId, professional.getId());
+        links.cancel(tokenId, childId, professional.getId(), user.id());
     }
 }

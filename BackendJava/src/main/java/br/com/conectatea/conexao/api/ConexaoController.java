@@ -1,5 +1,6 @@
 package br.com.conectatea.conexao.api;
 
+import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.conexao.domain.ConexaoProfissional;
 import br.com.conectatea.conexao.domain.StatusConexao;
 import br.com.conectatea.conexao.infrastructure.ConexaoRepository;
@@ -10,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -31,12 +33,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class ConexaoController {
     private final ConexaoRepository connections;
     private final ProfissionalRepository professionals;
+    private final ObjectProvider<AuditLogService> audits;
 
     public ConexaoController(
             ConexaoRepository connections,
-            ProfissionalRepository professionals) {
+            ProfissionalRepository professionals,
+            ObjectProvider<AuditLogService> audits) {
         this.connections = connections;
         this.professionals = professionals;
+        this.audits = audits;
     }
 
     @PostMapping
@@ -52,8 +57,9 @@ public class ConexaoController {
         if (!professionals.existsById(request.destinatarioId())) {
             throw new java.util.NoSuchElementException("Destinatário não encontrado");
         }
-        return ConnectionResponse.from(connections.save(
-                new ConexaoProfissional(me, request.destinatarioId())));
+        var connection = connections.save(new ConexaoProfissional(me, request.destinatarioId()));
+        audit(authentication, "CONEXAO_ENVIADA", connection, null);
+        return ConnectionResponse.from(connection);
     }
 
     @GetMapping
@@ -80,6 +86,8 @@ public class ConexaoController {
         }
         var connection = connections.findById(id).orElseThrow();
         connection.respond(professional(authentication), request.status());
+        audit(authentication, request.status() == StatusConexao.ACEITO
+                ? "CONEXAO_ACEITA" : "CONEXAO_RECUSADA", connection, request.status().name());
         return ConnectionResponse.from(connection);
     }
 
@@ -91,7 +99,19 @@ public class ConexaoController {
         if (!connection.participant(professional(authentication))) {
             throw new AccessDeniedException("Não participa da conexão");
         }
+        audit(authentication, "CONEXAO_REMOVIDA", connection, connection.getStatus().name());
         connections.delete(connection);
+    }
+
+    private void audit(Authentication authentication, String event, ConexaoProfissional connection, String metadata) {
+        try {
+            var service = audits.getIfAvailable();
+            if (service != null) service.record(((AuthenticatedUser) authentication.getPrincipal()).id(),
+                    event, "CONEXAO_PROFISSIONAL", connection.getId(), null,
+                    connection.getSolicitanteId(), "SUCESSO", metadata);
+        } catch (RuntimeException ignored) {
+            // O serviço registra a falha sem expor o conteúdo da operação.
+        }
     }
 
     private Long professional(Authentication authentication) {

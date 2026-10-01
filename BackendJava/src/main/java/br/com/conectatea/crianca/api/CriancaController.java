@@ -9,6 +9,8 @@ import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import br.com.conectatea.vinculo.domain.VinculoProfissionalCrianca;
+import br.com.conectatea.vinculo.domain.HistoricoVinculo;
+import br.com.conectatea.vinculo.infrastructure.HistoricoVinculoRepository;
 import br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -19,6 +21,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,18 +44,31 @@ public class CriancaController {
     private final ProfissionalRepository professionals;
     private final VinculoProfissionalRepository links;
     private final AuthorizationService authorization;
+    private final ObjectProvider<HistoricoVinculoRepository> history;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public CriancaController(
             CriancaRepository children,
             ContatoResponsavelPendenteRepository pendingContacts,
             ProfissionalRepository professionals,
             VinculoProfissionalRepository links,
-            AuthorizationService authorization) {
+            AuthorizationService authorization,
+            ObjectProvider<HistoricoVinculoRepository> history) {
         this.children = children;
         this.pendingContacts = pendingContacts;
         this.professionals = professionals;
         this.links = links;
         this.authorization = authorization;
+        this.history = history;
+    }
+
+    public CriancaController(CriancaRepository children,
+            ContatoResponsavelPendenteRepository pendingContacts,
+            ProfissionalRepository professionals, VinculoProfissionalRepository links,
+            AuthorizationService authorization) {
+        this(children, pendingContacts, professionals, links, authorization,
+                new org.springframework.beans.factory.support.DefaultListableBeanFactory()
+                        .getBeanProvider(HistoricoVinculoRepository.class));
     }
 
     @PostMapping
@@ -70,6 +86,10 @@ public class CriancaController {
                 request.nome(), request.dataNascimento(), request.genero(),
                 request.diagnostico(), request.diagnosticoDetalhes(), request.observacoes()));
         links.save(new VinculoProfissionalCrianca(professional.getId(), child.getId()));
+        var historyRepository = history.getIfAvailable();
+        if (historyRepository != null) historyRepository.save(new HistoricoVinculo(
+                child.getId(), user.id(), null, professional.getId(),
+                "VINCULO_PROFISSIONAL_CRIADO", "VINCULADO", null));
         if (request.responsavelPendente() != null) {
             var contact = request.responsavelPendente();
             pendingContacts.save(new ContatoResponsavelPendente(
