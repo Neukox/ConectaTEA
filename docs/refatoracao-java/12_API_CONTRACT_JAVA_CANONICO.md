@@ -13,6 +13,65 @@
 - Autorização relacional padrão: profissional/responsável só acessam criança não arquivada com vínculo ativo apropriado. Ausência de vínculo e criança arquivada são negadas. Listas padrão excluem arquivadas.
 - O cliente frontend citado é o consumidor encontrado no código atual, não garantia de compatibilidade. Não foram alterados clientes nesta etapa.
 
+## Inventário completo de endpoints de domínio
+
+`/api` é o prefixo real (context path). Os detalhes de body, query, response e divergências estão nas seções por módulo abaixo. `Aut.` indica JWT obrigatório; `CSRF` aplica-se aos métodos mutáveis, salvo login/registro. “Testado” significa evidência automatizada existente/executada; “homologado” exige integração frontend + fluxo E2E validado. Nenhum endpoint abaixo é declarado homologado nesta fotografia.
+
+| Módulo | Método e rota completa | Role | Aut./CSRF | Autorização relacional | Sucesso | Situação/evidência |
+|---|---|---|---|---|---:|---|
+| Auth | `POST /api/auth/login` | pública | não / dispensado | não se aplica | 200 | implementado; MockMvc de login/cookie; não homologado |
+| Auth | `POST /api/auth/logout` | qualquer autenticado | sim / sim | principal da sessão | 200 | implementado; sem teste dedicado conhecido; não homologado |
+| Auth | `GET /api/auth/me` | qualquer autenticado | sim / não | principal da sessão | 200 | implementado; cobertura de auth parcial; não homologado |
+| Usuários | `POST /api/users/register` | pública | não / dispensado | não se aplica | 201 | implementado e testado por MockMvc; não homologado |
+| Usuários | `GET /api/users/me` | qualquer autenticado | sim / não | próprio principal | 200 | implementado; sem teste dedicado conhecido; não homologado |
+| Usuários | `PUT /api/users/me` | qualquer autenticado | sim / sim | próprio principal | 200 | implementado; sem teste dedicado conhecido; não homologado |
+| Usuários | `DELETE /api/users/me` | qualquer autenticado | sim / sim | próprio principal; desativa conta | 204 | implementado; bloqueio de JWT inativo testado; não homologado |
+| Profissionais | `GET /api/profissionais?search=` | qualquer autenticado | sim / não | diretório de perfis ativos; sem vínculo infantil | 200 | implementado; listagem/busca MockMvc; não homologado |
+| Profissionais | `GET /api/profissionais/me` | PROFISSIONAL | sim / não | perfil do principal | 200 | implementado; perfil MockMvc parcial; não homologado |
+| Profissionais | `PUT /api/profissionais/me` | PROFISSIONAL | sim / sim | perfil do principal | 200 | implementado; perfil MockMvc parcial; não homologado |
+| Profissionais | `GET /api/profissionais/{id}` | qualquer autenticado | sim / não | leitura de perfil ativo, sem vínculo infantil | 200 | implementado; 404 coberto no conjunto MockMvc; não homologado |
+| Crianças | `POST /api/criancas` | PROFISSIONAL | sim / sim | ator cria vínculo profissional ativo | 201 | implementado; MockMvc create/DTO inválido; não homologado |
+| Crianças | `GET /api/criancas` | PROFISSIONAL ou RESPONSAVEL | sim / não | lista por vínculos ativos do principal | 200 | implementado; integração frontend pendente; não homologado |
+| Crianças | `GET /api/criancas/{id}` | PROFISSIONAL ou RESPONSAVEL | sim / não | vínculo ativo e não arquivada | 200 | implementado; IDOR/arquivada cobertos unitariamente; não homologado |
+| Crianças | `PUT /api/criancas/{id}` | PROFISSIONAL | sim / sim | vínculo profissional ativo e não arquivada | 200 | implementado; contrato frontend pendente; não homologado |
+| Crianças | `DELETE /api/criancas/{id}` | PROFISSIONAL | sim / sim | vínculo profissional ativo; arquivamento lógico | 204 | implementado; regra de acesso arquivada testada; não homologado |
+| Tokens | `POST /api/criancas/{id}/tokens-vinculo` | PROFISSIONAL | sim / sim | vínculo profissional ativo e não arquivada | 200 | implementado; QR/regra unitária; integração PostgreSQL no CI; não homologado |
+| Tokens | `DELETE /api/criancas/{childId}/tokens-vinculo/{tokenId}` | PROFISSIONAL | sim / sim | vínculo ativo e token pertencente ao profissional/criança | 204 | implementado; testes de domínio parciais; não homologado |
+| Vínculos | `GET /api/vinculos/tokens/{codigo}/preview` | qualquer role autenticada | sim / não | valida token; não cria vínculo | 200 | implementado; preview no fluxo frontend, E2E pendente; não homologado |
+| Vínculos | `POST /api/vinculos/confirmar` | RESPONSAVEL | sim / sim | cria/reativa vínculo para o principal responsável | 200 | implementado; replay/concorrência exercitados no PostgreSQL CI; E2E completo pendente |
+| Vínculos | `GET /api/vinculos/me` | RESPONSAVEL | sim / não | vínculos ativos do principal; crianças não arquivadas | 200 | implementado; sem homologação frontend/backend |
+| Vínculos | `DELETE /api/vinculos/criancas/{id}` | RESPONSAVEL | sim / sim | encerra apenas vínculo do principal | 204 | implementado; regra parcial; E2E pendente |
+| Metas | `POST /api/metas` | PROFISSIONAL | sim / sim | vínculo ativo com `criancaId` | 201 | implementado; regras de domínio testadas; não homologado |
+| Metas | `GET /api/metas?criancaId=&categoria=&prioridade=&status=&periodo=&search=` | qualquer autenticado | sim / não | profissional: próprias; responsável: `criancaId` obrigatório e vínculo ativo | 200 | implementado; filtros de domínio cobertos parcialmente; não homologado |
+| Metas | `GET /api/metas/resumo` | qualquer autenticado | sim / não | profissional: próprias; responsável recebe 403 sem escopo infantil permitido | 200 | implementado; não homologado |
+| Metas | `GET /api/metas/{id}` | qualquer autenticado | sim / não | vínculo ativo à criança da meta | 200 | implementado; não homologado |
+| Metas | `PUT /api/metas/{id}` | PROFISSIONAL | sim / sim | vínculo ativo à criança da meta | 200 | implementado; regras de domínio testadas; não homologado |
+| Metas | `PATCH /api/metas/{id}/progresso` | PROFISSIONAL | sim / sim | vínculo ativo à criança da meta | 200 | implementado; regras de progresso testadas; não homologado |
+| Metas | `DELETE /api/metas/{id}` | PROFISSIONAL | sim / sim | vínculo ativo à criança da meta | 204 | implementado; sem homologação frontend/backend |
+| Progresso | `GET /api/progresso/resumo?criancaId=` | qualquer autenticado | sim / não | profissional: metas próprias; responsável deve escopar criança vinculada | 200 | implementado; frontend usa tipos antigos; não homologado |
+| Progresso | `GET /api/progresso/recentes?criancaId=&periodo=` | qualquer autenticado | sim / não | mesmo escopo relacional do resumo | 200 | implementado; sem teste de controller conhecido; não homologado |
+| Progresso | `GET /api/progresso/distribuicao-categoria?criancaId=` | qualquer autenticado | sim / não | mesmo escopo relacional do resumo | 200 | implementado; frontend ainda a validar; não homologado |
+| Progresso | `GET /api/progresso/evolucao-categoria?criancaId=&periodo=` | qualquer autenticado | sim / não | mesmo escopo relacional do resumo | 200 | implementado; frontend ainda a validar; não homologado |
+| Progresso | `GET /api/progresso/crianca?criancaId=` | qualquer autenticado | sim / não | mesmo escopo relacional do resumo | 200 | implementado; frontend ainda a validar; não homologado |
+| Sessões | `POST /api/sessoes` | PROFISSIONAL | sim / sim | vínculo ativo com criança | 201 | implementado; testes específicos de controller pendentes; não homologado |
+| Sessões | `GET /api/sessoes?criancaId=&status=&tipo=&periodo=&search=` | qualquer autenticado | sim / não | profissional: próprias; responsável: crianças vinculadas; filtro valida vínculo | 200 | implementado; testes específicos pendentes; não homologado |
+| Sessões | `GET /api/sessoes/resumo` | qualquer autenticado | sim / não | profissional: próprias; responsável: crianças vinculadas | 200 | implementado; testes específicos pendentes; não homologado |
+| Sessões | `PUT /api/sessoes/{id}` | PROFISSIONAL | sim / sim | vínculo ativo à criança da sessão | 200 | implementado; testes específicos pendentes; não homologado |
+| Sessões | `PATCH /api/sessoes/{id}/status` | PROFISSIONAL | sim / sim | vínculo ativo à criança da sessão | 200 | implementado; testes específicos pendentes; não homologado |
+| Sessões | `DELETE /api/sessoes/{id}` | PROFISSIONAL | sim / sim | vínculo ativo à criança da sessão | 204 | implementado; testes específicos pendentes; não homologado |
+| Conexões | `POST /api/conexoes` | PROFISSIONAL | sim / sim | ator e destinatário são perfis profissionais; sem vínculo infantil | 201 | implementado; MockMvc/AB-BA pendentes; não homologado |
+| Conexões | `GET /api/conexoes?tipo=&status=` | PROFISSIONAL | sim / não | lista relações do perfil do principal | 200 | implementado; MockMvc pendente; não homologado |
+| Conexões | `PUT /api/conexoes/{id}/responder` | PROFISSIONAL destinatário | sim / sim | somente destinatário responde | 200 | implementado; MockMvc pendente; não homologado |
+| Conexões | `DELETE /api/conexoes/{id}` | PROFISSIONAL participante | sim / sim | solicitante ou destinatário | 204 | implementado; MockMvc pendente; não homologado |
+| Dashboard | `GET /api/dashboard/profissional` | PROFISSIONAL | sim / não | dados do perfil do principal e vínculos próprios | 200 | implementado; comportamento da controller sem teste dedicado conhecido; não homologado |
+| Dashboard | `GET /api/dashboard/profissional/criancas` | PROFISSIONAL | sim / não | crianças vinculadas ao perfil do principal | 200 | implementado; teste dedicado pendente; não homologado |
+| Dashboard | `GET /api/dashboard/profissional/metas` | PROFISSIONAL | sim / não | metas do perfil do principal | 200 | implementado; teste dedicado pendente; não homologado |
+| Dashboard | `GET /api/dashboard/responsavel` | RESPONSAVEL | sim / não | crianças vinculadas ao principal | 200 | implementado; teste dedicado pendente; não homologado |
+
+**Erros transversais:** `400` validação/argumento/filtro; `401` JWT ausente, inválido, expirado ou usuário inativo; `403` role, CSRF ou autorização relacional; `404` `NoSuchElementException`/recurso ausente; `409` integridade/concorrência otimista; `410` token expirado, usado ou cancelado. A resposta do advice inclui `timestamp,status,error,code,message,path,fields` (campos nulos podem ser omitidos pelo Jackson). Rotas que lançam `ResponseStatusException` usam o status indicado pelo serviço. Códigos específicos podem variar conforme o handler que origina a falha.
+
+**Cobertura de módulos no código legado:** `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional`, além de operações legadas/mais ricas de perfil profissional, permanecem temporariamente no NestJS. Não há endpoints Java equivalentes documentados porque não existem controllers Java para esses recursos. O NestJS continua preservado como fallback; não houve migração real de dados.
+
 ## Auth
 
 ### `POST /auth/login`
