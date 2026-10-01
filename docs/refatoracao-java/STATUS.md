@@ -1,5 +1,25 @@
 # Status
 
+## Fase 2.3 — segurança/auth
+
+### Implementado e testado localmente
+- Autenticação por JWT agora recarrega o usuário pelo ID e só cria o contexto
+  quando a conta existe e continua ativa.
+- Role e identidade usadas na autorização vêm do banco, não de claims antigas.
+- Erros globais mapeiam validação, argumento inválido, ausência, credenciais,
+  acesso negado, integridade e concorrência para HTTP/JSON previsível.
+- Entry point 401 e access denied 403 também retornam JSON padronizado.
+- MockMvc cobre 401, DTO inválido, cookie JWT HttpOnly e CSRF com/sem header.
+
+### Validação
+- `BackendJava/mvnw.cmd -B -f BackendJava/pom.xml verify`: sucesso.
+- 17 testes encontrados; 13 executados sem falha e 4 Testcontainers ignorados
+  pela indisponibilidade local do Docker.
+
+### Riscos restantes
+- Autorização relacional e criança arquivada serão reforçadas junto aos módulos.
+- A execução PostgreSQL e o status remoto do CI continuam pendentes do runner.
+
 ## Fase 2.2 — testes base / Testcontainers
 
 ### Implementado
