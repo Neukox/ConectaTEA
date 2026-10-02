@@ -1,4 +1,15 @@
-# Status da Fase 2 — backend Java
+# Status da migração — backend Java
+
+## Fase 3 — recursos profissionais
+
+| Recurso | Java/Flyway | Frontend | E2E | Estado |
+|---|---|---|---|---|
+| LocalAtendimento | implementado | migrado | criação/persistência | aguarda CI |
+| RedeSocial | implementado | migrado | criação/persistência | aguarda CI |
+| AreaAtuacao | catálogo leitura | seleção integrada | depende de catálogo real | aguarda CI/manual |
+| AreaAtuacaoProfissional | associação explícita | vincular/remover | manual com catálogo | aguarda CI/manual |
+
+NestJS está preservado; nenhuma migração real foi executada. A Fase 3 só fica pronta após CI/E2E verdes e auditoria final.
 
 Atualizado em 2026-10-02. Esta página é o estado consolidado mais recente; as notas de risco abaixo permanecem ativas mesmo com CI verde.
 
@@ -46,7 +57,7 @@ Atualizado em 2026-10-02. Esta página é o estado consolidado mais recente; as 
 3. Completar cobertura MockMvc/contrato para todos os controllers; cobrir IDOR e filtros por módulo. Fazer testes específicos de progresso, sessões, conexões e dashboard, e corrida concorrente AB/BA em PostgreSQL.
 4. Automatizar e validar o fluxo E2E completo profissional/responsável, incluindo consentimento, replay, acesso autorizado e negado.
 5. Implementar manualmente a cobertura específica de auditoria, histórico e rate limit; a funcionalidade está presente sem armazenar senha, JWT, token bruto ou payload clínico.
-6. Executar futuramente o plano `11_PLANO_MIGRACAO_DADOS_PRISMA_PARA_JAVA.md` somente após ensaio e aprovação; nenhuma migração real ocorreu. Manter `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` no NestJS até contrato e migração próprios.
+6. Executar futuramente o plano `11_PLANO_MIGRACAO_DADOS_PRISMA_PARA_JAVA.md` somente após ensaio e aprovação; nenhuma migração real ocorreu. Os quatro recursos da Fase 3 já possuem contrato Java, mas os dados Prisma ainda aguardam migração autorizada.
 7. Atualizar matriz, plano de testes e security review com evidência por requisito; criar `13_RESULTADO_FASE_2.md` somente após comprovar os critérios finais.
 8. Revisar rate limit, secrets, threat model, pentest e consentimento com revisão jurídica antes de produção.
 
@@ -60,7 +71,7 @@ O backend está **estabilizado para migração do frontend**, mas a Fase 2 conti
 - Profissionais, usuários, crianças, tokens/QR, vínculos, metas, progresso, sessões, conexões e dashboards usam rotas e JSON canônicos Java em camelCase.
 - O dashboard do responsável e a listagem/desvinculação de suas crianças agora são próprios; o fluxo simulado de vínculo foi substituído por preview e confirmação reais.
 - Validação local: npm run lint sem erros (5 avisos preexistentes de Fast Refresh em arquivos não alterados), npm run build aprovado e mvn -B verify aprovado. No GitHub Actions, o run 37000403678 aprovou os jobs frontend e backend-java.
-- Permanecem sem homologação: E2E com banco/backend em execução, leitura de QR em navegadores sem BarcodeDetector (entrada manual continua disponível) e recursos legados LocalAtendimento, RedeSocial, AreaAtuacao e AreaAtuacaoProfissional.
+- Permanecem sem homologação manual: execução local completa, seleção de área com catálogo real e leitura de QR em navegadores sem `BarcodeDetector` (entrada manual continua disponível).
 
 ## Estabilização final do frontend após a Fase 2.13 — 2026-10-02
 

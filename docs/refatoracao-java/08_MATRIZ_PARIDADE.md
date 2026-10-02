@@ -1,5 +1,16 @@
 # Matriz de paridade
 
+## Fase 3
+
+| Recurso | Prisma | API Java | Frontend | Evidência atual |
+|---|---|---|---|---|
+| LocalAtendimento | preservado | implementada | migrado | Flyway/JPA + E2E; CI pendente |
+| RedeSocial | preservado | implementada | migrado | Flyway/JPA + E2E; CI pendente |
+| AreaAtuacao | preservado | catálogo implementado | migrado | sem seed inventada; manual pendente |
+| AreaAtuacaoProfissional | preservado | vínculo implementado | migrado | associação explícita; manual pendente |
+
+O antigo `PUT /profissionais/usuario/{usuarioId}` não possui consumer React. O contrato novo usa identidade autenticada. “Homologado” permanece proibido até CI e teste local.
+
 | Módulo | NestJS | Java | Frontend | Testes | Status |
 |---|---:|---:|---:|---:|---|
 | Auth/Users | sim | contrato canônico | ajuste de senha pendente | MockMvc parcial | parcial |
@@ -18,11 +29,7 @@ Nenhuma linha parcial autoriza desligar o NestJS.
 
 ## Recursos profissionais do Prisma legado
 
-`LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e
-`AreaAtuacaoProfissional` não foram descartados. A decisão da Fase 2 é mantê-los
-temporariamente no NestJS, porque ainda não há modelo, migration nem contrato Java
-homologado para esses dados. A migração exige inventário e mapeamento no plano de
-dados antes de qualquer desligamento do backend legado.
+`LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` foram implementados no Java pela Fase 3. Os modelos Prisma não foram descartados e seguem apenas como fonte histórica para a futura migração de dados.
 
 Critérios de mudança de status:
 
@@ -54,4 +61,4 @@ O status não é “homologado”: lint/build/verify comprovam consistência est
 | Sessões | compatível e estabilizado | form separado do request e `dataHora` com offset local explícito |
 | Conexões e dashboards | compatível | endpoints/DTOs canônicos; CI verde no run `37031485540` |
 
-Nenhum recurso legado acessório foi reintroduzido no contrato Java. `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` permanecem preservados somente no NestJS até fase futura própria.
+Os recursos acessórios agora fazem parte do contrato Java da Fase 3. O código equivalente permanece no NestJS sem consumer funcional até a remoção física autorizada.

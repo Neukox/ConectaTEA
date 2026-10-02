@@ -1,5 +1,21 @@
 # Contrato canônico da API Java — fotografia da implementação
 
+## Recursos profissionais — Fase 3
+
+Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige `PROFISSIONAL`, deriva ownership do principal e não aceita `usuarioId`.
+
+| Método e rota | Request | Response/status | Erros | Consumer |
+|---|---|---|---|---|
+| `GET /areas-atuacao` | — | `[{id,nome}]` 200 | 401 | edição de perfil |
+| `GET/POST /profissionais/me/locais-atendimento` | POST `{nome,cidade}` | lista 200 / objeto 201 | 400/401/403/404/409 | perfil |
+| `PUT/DELETE /profissionais/me/locais-atendimento/{id}` | PUT `{nome,cidade}` | objeto 200 / 204 | 400/401/403/404/409 | edição |
+| `GET/POST /profissionais/me/redes-sociais` | POST `{tipo,url}` | lista 200 / objeto 201 | 400/401/403/404/409 | perfil |
+| `PUT/DELETE /profissionais/me/redes-sociais/{id}` | PUT `{tipo,url}` | objeto 200 / 204 | 400/401/403/404/409 | edição |
+| `GET/POST /profissionais/me/areas-atuacao` | POST `{areaId}` | lista 200 / objeto 201 | 400/401/403/404 | perfil |
+| `DELETE /profissionais/me/areas-atuacao/{areaId}` | — | 204 | 401/403/404 | edição |
+
+`url` é HTTP(S), não vazia e limitada a 2048 caracteres. Repetir vínculo de área é idempotente. Não há endpoint administrativo de catálogo porque o legado não comprovou essa regra.
+
 **Base da API:** `/api` (context path configurado). As rotas abaixo são relativas a essa base.  
 **Escopo:** endpoints atualmente implementados nos módulos Auth, Usuários, Profissionais, Crianças, Vínculos/Consentimento, Metas, Progresso, Sessões, Conexões e Dashboard. Este documento descreve o código existente; não significa que a integração React/Java esteja homologada.
 
@@ -72,7 +88,7 @@
 
 **Erros transversais:** `400` validação/argumento/filtro; `401` JWT ausente, inválido, expirado ou usuário inativo; `403` role, CSRF ou autorização relacional; `404` `NoSuchElementException`/recurso ausente; `409` integridade/concorrência otimista; `410` token expirado, usado ou cancelado. A resposta do advice inclui `timestamp,status,error,code,message,path,fields` (campos nulos podem ser omitidos pelo Jackson). Rotas que lançam `ResponseStatusException` usam o status indicado pelo serviço. Códigos específicos podem variar conforme o handler que origina a falha.
 
-**Cobertura de módulos no código legado:** `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional`, além de operações legadas/mais ricas de perfil profissional, permanecem temporariamente no NestJS. Não há endpoints Java equivalentes documentados porque não existem controllers Java para esses recursos. O NestJS continua preservado como fallback; não houve migração real de dados.
+**Cobertura do legado:** os quatro modelos permanecem fisicamente no Prisma somente como referência para a futura migração de dados. Seus consumers ativos usam os endpoints Java da Fase 3; não houve migração real de dados.
 
 ## Estado de congelamento
 

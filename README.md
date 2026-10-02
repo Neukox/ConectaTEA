@@ -18,7 +18,8 @@ Plataforma para acompanhamento de crianças com TEA, conectando responsáveis e 
 ### Stack Tecnológico
 
 - **Frontend**: React + TypeScript + Vite + Axios
-- **Backend**: NestJS + TypeScript + Prisma ORM
+- **Backend principal**: Java 21 + Spring Boot + JPA + Flyway
+- **Backend legado**: NestJS + Prisma preservado temporariamente para referência e migração
 - **Database**: PostgreSQL
 - **Autenticação**: JWT + Guards
 - **Validação**: DTOs + Class-validator
@@ -73,12 +74,7 @@ Variáveis obrigatórias e instruções completas estão em `BackendJava/.env.ex
 
 ### Backend legado (NestJS)
 
-```bash
-cd Backend
-npm install
-npm run start:dev
-# Servidor rodando em http://localhost:3000
-```
+`Backend/` não participa do runtime alvo. Ele permanece preservado para auditoria, planejamento da migração de dados e rollback até autorização explícita da Fase 4.
 
 ### Frontend (React)
 
@@ -92,9 +88,7 @@ npm run dev
 ### Banco de Dados
 
 ```bash
-cd Backend
-npx prisma migrate dev
-npx prisma studio  # Interface visual do banco
+docker compose up postgres
 ```
 
 ### Ambiente Docker (opcional)
@@ -130,7 +124,7 @@ http://localhost:3000/api/docs
 ## 📂 Estrutura Modular
 
 ```
-Backend/src/
+BackendJava/src/main/java/br/com/conectatea/
 ├── auth/           # Autenticação JWT
 ├── users/          # Usuários do sistema
 ├── profissionais/  # Perfis profissionais

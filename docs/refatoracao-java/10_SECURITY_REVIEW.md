@@ -36,3 +36,7 @@ O registro preserva responsável, criança, profissional, data, IP, user agent,
 versão e finalidade. Versão/finalidade são configuração operacional. Revogação
 ainda não foi implementada nesta fase; este desenho técnico não constitui, por
 si só, certificação ou garantia de conformidade legal.
+
+## Recursos de perfil profissional — Fase 3
+
+Locais, redes e vínculos de áreas usam rotas `/profissionais/me`: ownership vem do `AuthenticatedUser`, eliminando o `usuarioId` arbitrário do legado. IDs alheios em update/delete resultam em 403. URLs aceitam somente HTTP(S), têm limite e não entram integralmente na auditoria; a UI abre links com `noreferrer`. O catálogo de áreas é somente leitura e não existe administração sem regra comprovada. A exposição pública desses detalhes não foi ampliada.

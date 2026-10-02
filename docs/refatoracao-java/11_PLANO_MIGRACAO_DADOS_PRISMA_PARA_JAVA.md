@@ -20,7 +20,10 @@ Este documento é somente um plano. Nenhuma migração real foi executada. A ori
 | `ConexaoProfissional` | `conexoes_profissionais` | `solicitado_id→destinatario_id`; calcular `par_menor_id/par_maior_id`. Como o alvo aceita um par único, consolidar duplicatas por regra explícita e auditável antes da carga. |
 | `AuditLog` | `audit_logs` | `userId→usuario_id`, `action→evento/acao`, `details→metadados`; sanitizar detalhes e rejeitar senha, JWT, cookie, token bruto, segredo e payload clínico. |
 | `HistoricoVinculos` | `historico_vinculos` | `tipo_evento→evento`, `data_evento→created_at`, IDs diretos; descrição somente após revisão de conteúdo sensível. |
-| `LocalAtendimento`, `RedeSocial`, `AreaAtuacao`, `AreaAtuacaoProfissional` | sem tabela Java nesta fase | Permanecem no NestJS. Não descartar; migrar somente após contrato e migrations Java próprios. |
+| `LocalAtendimento` | `locais_atendimento` | Preservar nome, cidade e profissional; validar duplicatas por profissional/nome/cidade. |
+| `RedeSocial` | `redes_sociais` | Preservar tipo e URL HTTP(S); resolver tipos duplicados por profissional antes da carga. |
+| `AreaAtuacao` | `areas_atuacao` | Preservar IDs e nome; consolidar duplicatas case-insensitive sem inventar catálogo. |
+| `AreaAtuacaoProfissional` | `areas_atuacao_profissionais` | Preservar chave composta e carregar depois de profissionais e áreas. |
 
 ## IDs, relações e enums
 
