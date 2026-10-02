@@ -31,3 +31,19 @@ A suíte `E2E/tests/conectatea.e2e.spec.js` cobre:
 Esta suíte não substitui os testes manuais reservados ao aprendizado: controllers, matriz completa de IDOR, auditoria/histórico, rate limit/429, concorrência AB/BA e integrações específicas com JUnit/MockMvc/Testcontainers.
 
 E2E verde não equivale a certificação de produção ou conformidade jurídica.
+
+
+## Resultado final da execução
+
+- Commit homologado: `f264d8320693ec376affd67d63aba6b129f2783f`.
+- GitHub Actions: `37037277203`.
+- `frontend`: success.
+- `backend-java`: success.
+- `e2e`: success.
+
+### Falhas reais encontradas pelo E2E
+
+1. **CSRF de SPA** — a primeira execução chegou ao cadastro de criança, mas a mutação recebeu 403. Foi implementado bootstrap de CSRF autenticado e handler próprio de SPA, preservando cookie `XSRF-TOKEN` e header `X-XSRF-TOKEN`.
+2. **Lista de crianças desatualizada** — depois do 201 da API, a página continuava com o estado local antigo. O callback do cadastro passou a recarregar a listagem.
+
+Essas falhas demonstram por que build/CI de camadas isoladas não substituem homologação ponta a ponta.
