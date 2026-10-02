@@ -4,10 +4,10 @@
 
 | Recurso | Prisma | API Java | Frontend | Evidência atual |
 |---|---|---|---|---|
-| LocalAtendimento | preservado | implementada | migrado | Flyway/JPA + E2E; CI pendente |
-| RedeSocial | preservado | implementada | migrado | Flyway/JPA + E2E; CI pendente |
-| AreaAtuacao | preservado | catálogo implementado | migrado | sem seed inventada; manual pendente |
-| AreaAtuacaoProfissional | preservado | vínculo implementado | migrado | associação explícita; manual pendente |
+| LocalAtendimento | preservado | implementada | migrado | Flyway/JPA + E2E verde |
+| RedeSocial | preservado | implementada | migrado | Flyway/JPA + E2E verde |
+| AreaAtuacao | preservado | catálogo implementado | migrado | CI verde; sem seed inventada; manual pendente |
+| AreaAtuacaoProfissional | preservado | vínculo implementado | migrado | CI verde; associação explícita; manual pendente |
 
 O antigo `PUT /profissionais/usuario/{usuarioId}` não possui consumer React. O contrato novo usa identidade autenticada. “Homologado” permanece proibido até CI e teste local.
 

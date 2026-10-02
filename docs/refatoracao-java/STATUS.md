@@ -4,12 +4,12 @@
 
 | Recurso | Java/Flyway | Frontend | E2E | Estado |
 |---|---|---|---|---|
-| LocalAtendimento | implementado | migrado | criação/persistência | aguarda CI |
-| RedeSocial | implementado | migrado | criação/persistência | aguarda CI |
-| AreaAtuacao | catálogo leitura | seleção integrada | depende de catálogo real | aguarda CI/manual |
-| AreaAtuacaoProfissional | associação explícita | vincular/remover | manual com catálogo | aguarda CI/manual |
+| LocalAtendimento | implementado | migrado | criação/persistência | CI validado |
+| RedeSocial | implementado | migrado | criação/persistência | CI validado |
+| AreaAtuacao | catálogo leitura | seleção integrada | depende de catálogo real | CI validado; manual pendente |
+| AreaAtuacaoProfissional | associação explícita | vincular/remover | manual com catálogo | CI validado; manual pendente |
 
-NestJS está preservado; nenhuma migração real foi executada. A Fase 3 só fica pronta após CI/E2E verdes e auditoria final.
+NestJS está preservado; nenhuma migração real foi executada. GitHub Actions run `37050290884`: `frontend`, `backend-java` e `e2e` concluíram com sucesso no SHA `3b71cbb`. A validação funcional manual local permanece pendente.
 
 Atualizado em 2026-10-02. Esta página é o estado consolidado mais recente; as notas de risco abaixo permanecem ativas mesmo com CI verde.
 

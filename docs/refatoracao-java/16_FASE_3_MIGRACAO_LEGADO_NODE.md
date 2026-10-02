@@ -29,7 +29,17 @@ Somente `PROFISSIONAL` opera recursos próprios. O profissional é resolvido do 
 
 O perfil React usa o `apiClient` central e endpoints Java. A tela permite CRUD de locais/redes e associação às áreas disponíveis, sem redesign. O E2E integrado cobre criação e persistência visual de local e rede; áreas dependem de catálogo previamente migrado e não recebem seed inventada.
 
-O workflow continua com jobs `frontend`, `backend-java` e `e2e`, usando PostgreSQL + Spring Boot + React, sem NestJS. Resultados finais devem ser registrados após execução local e GitHub Actions.
+O workflow continua com jobs `frontend`, `backend-java` e `e2e`, usando PostgreSQL + Spring Boot + React, sem NestJS. O run `37050290884` concluiu os três jobs com sucesso no SHA `3b71cbb`. Localmente, `npm ci`, lint e build passaram; `mvn verify` passou com 33 testes, cinco integrações ignoradas por indisponibilidade do Docker local. O E2E/PostgreSQL real foi comprovado pelo job Linux.
+
+## Auditoria final de consumers
+
+| Recurso | Consumer antigo | Consumer novo | Status |
+|---|---|---|---|
+| locais | `PUT /profissionais/usuario/{usuarioId}` no legado, sem chamada React atual | `/profissionais/me/locais-atendimento` | Java ativo |
+| redes | mesmo update agregado legado, sem chamada React atual | `/profissionais/me/redes-sociais` | Java ativo |
+| áreas | inclusão em response legado, sem seleção React atual | `/areas-atuacao` e `/profissionais/me/areas-atuacao` | Java ativo |
+
+Busca em Frontend, E2E, Docker e workflow não encontrou NestJS, Prisma, porta 3001 ou rota de perfil legada como dependência funcional. As ocorrências restantes estão no código `Backend/` preservado e em documentação histórica/plano de migração. Portanto: **BACKEND NESTJS SEM CONSUMIDORES FUNCIONAIS**.
 
 ## Limitações e pendências
 
