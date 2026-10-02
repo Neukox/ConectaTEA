@@ -61,3 +61,14 @@ O backend está **estabilizado para migração do frontend**, mas a Fase 2 conti
 - O dashboard do responsável e a listagem/desvinculação de suas crianças agora são próprios; o fluxo simulado de vínculo foi substituído por preview e confirmação reais.
 - Validação local: npm run lint sem erros (5 avisos preexistentes de Fast Refresh em arquivos não alterados), npm run build aprovado e mvn -B verify aprovado. No GitHub Actions, o run 37000403678 aprovou os jobs frontend e backend-java.
 - Permanecem sem homologação: E2E com banco/backend em execução, leitura de QR em navegadores sem BarcodeDetector (entrada manual continua disponível) e recursos legados LocalAtendimento, RedeSocial, AreaAtuacao e AreaAtuacaoProfissional.
+
+## Estabilização final do frontend após a Fase 2.13 — 2026-10-02
+
+- Corrigida a inversão confirmada: `/profissional/dashboard` renderiza `DashboardProfissional` e `/responsavel/dashboard` renderiza `DashboardResponsavel`, ambas protegidas pela role correspondente.
+- A auditoria de navegação removeu constants sem rota real, alinhou `/responsavel/criancas` e retirou do dropdown do responsável as ações enganosas de perfil/configurações. Nenhum link visível aponta para rota inexistente.
+- Removido o modal isolado de vínculo que simulava sucesso. O fluxo ativo usa preview, consentimento e confirmação reais.
+- Corrigidos: espera real da mutation de atualização de meta, filtros de progresso recente, formatação de diferença negativa, invalidações relacionadas e transformação de sessão para ISO-8601 com offset local, sem deslocamento acidental de data/hora.
+- `npm ci`, `npm run lint` e `npm run build` aprovados. O lint manteve cinco warnings históricos de Fast Refresh; o build manteve apenas o aviso de chunk principal acima de 500 kB.
+- `mvn -B verify` aprovado: 33 testes, zero falhas/erros e cinco testes Testcontainers ignorados localmente por Docker indisponível.
+- GitHub Actions run `37031485540` no commit funcional `39a8248`: jobs `frontend` e `backend-java` concluídos com sucesso.
+- O frontend está estabilizado para a próxima fase. A homologação E2E React/Java/PostgreSQL continua deliberadamente pendente.

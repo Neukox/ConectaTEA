@@ -62,3 +62,13 @@ O frontend React existente foi preservado e sua camada de integração foi migra
 Foram alinhados profissionais/usuários, crianças e tokens, confirmação de vínculo, metas, progresso, sessões, conexões, dashboard profissional e um dashboard próprio do responsável. Recursos profissionais acessórios sem contrato Java continuam conscientemente no NestJS e não são enviados a /profissionais/me.
 
 Evidências: instalação reprodutível com npm ci; ESLint com zero erros e cinco avisos preexistentes de Fast Refresh; TypeScript/Vite build aprovado; Maven verify aprovado; GitHub Actions run 37000403678 com frontend e backend-java em success. Não houve migração real de banco. A homologação continua pendente porque os fluxos não foram executados de ponta a ponta contra banco/backend local.
+
+## Revisão e estabilização final do frontend — 2026-10-02
+
+A execução partiu de `efc95d74f5d4ebc24a1c2e5c9b8054d2cecef4f3` na branch `refactor/backend-java`. O bug confirmado de dashboards invertidos foi corrigido com componentes explicitamente nomeados. A auditoria removeu rotas configuradas sem implementação, alinhou `/responsavel/criancas`, eliminou a navegação enganosa do responsável para telas inexistentes e removeu um modal isolado que simulava vínculo.
+
+Na estabilização funcional foram corrigidos o retorno assíncrono da atualização de meta, o filtro de progresso recente, o sinal de diferença negativa, tipos `any` remanescentes, invalidações de crianças/metas/progresso/sessões/dashboards e a transformação de data/hora de sessão para ISO-8601 com offset local. O update de meta continua aceitando datas históricas; o create valida datas contra o dia local.
+
+Validação local final: `npm ci` aprovado; lint com zero erros e cinco warnings históricos; build TypeScript/Vite aprovado com warning de tamanho de chunk; Maven verify aprovado com 33 testes, zero falhas/erros e cinco Testcontainers ignorados sem Docker. O GitHub Actions run `37031485540`, referente ao commit funcional `39a8248`, concluiu `frontend` e `backend-java` com sucesso.
+
+`main` e `backup/pre-refactor-java-20261001-1408` continuam no baseline `13df172543a633ea0e8c11b054533d0a0d71f4d7`. O NestJS foi preservado e nenhuma migração real foi executada. A única pendência de homologação do frontend é a fase E2E real React/Java/PostgreSQL, que não faz parte desta execução.

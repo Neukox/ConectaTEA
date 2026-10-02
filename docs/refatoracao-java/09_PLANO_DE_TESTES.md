@@ -31,3 +31,14 @@ Sem gerar nova bateria automática nesta fase, devem ser escritos posteriormente
 - Auditoria estática: cliente Axios único, contratos camelCase, datas YYYY-MM-DD/ISO-8601 e ausência das rotas legadas dos módulos migrados.
 
 Ainda é obrigatório homologar em ambiente integrado: registro/login/me/logout, perfis, CRUD/arquivamento de criança, token/QR, preview/consentimento, metas, progresso, sessões, conexões e dashboards de ambas as roles. A indisponibilidade de uma infraestrutura local completa não deve ser confundida com aprovação E2E.
+
+## Evidência da estabilização final — 2026-10-02
+
+- `npm ci`: aprovado.
+- `npm run lint`: aprovado com zero erros e cinco warnings históricos de Fast Refresh.
+- `npm run build`: TypeScript e Vite aprovados; warning não bloqueante de chunk acima de 500 kB registrado.
+- `mvn -B verify`: `BUILD SUCCESS`, 33 testes, zero falhas/erros e cinco ignorados por Docker local indisponível.
+- GitHub Actions run `37031485540`: `frontend: success` e `backend-java: success` no commit funcional `39a8248`.
+- Busca estática final sem `/private/`, `/codigo-vinculo`, endpoints antigos de conexão, snake_case listado, `localStorage`, `httpClient`, Axios paralelo ou mock funcional ativo.
+
+Próxima etapa obrigatória: E2E real com React, Java e PostgreSQL. Nenhuma infraestrutura ou suíte E2E foi criada nesta estabilização.

@@ -397,3 +397,11 @@ Este documento foi produzido a partir dos controllers Java e clientes React atua
 Em 2026-10-02, os consumidores foram alinhados ao contrato descrito neste documento: autenticação por cookie e /auth/me; rotas /me para usuário/profissional; crianças com nomes portugueses e LocalDate; token via POST /criancas/{id}/tokens-vinculo; vínculo com preview/consentimento; criancaId nas metas; progresso e resumos em camelCase; sessões com tipo/dataHora; conexões com respostas diretas; dashboards separados por role.
 
 O apiClient é o cliente HTTP único e mantém withCredentials e withXSRFToken. Os itens do inventário anterior representam o estado pré-migração e foram resolvidos no frontend, com exceção dos recursos acessórios que permanecem no NestJS e da homologação E2E ainda pendente.
+
+## Correções finais posteriores à Fase 2.13
+
+O inventário histórico acima permanece para registrar o estado anterior. Na revisão final de 2026-10-02, os consumidores foram novamente comparados com controllers e records Java. Foram confirmados os DTOs diretos de usuários/profissionais, crianças, token, vínculo, metas, progresso, sessões, conexões e dashboards.
+
+As correções adicionais foram: dashboards associados à role correta; constants de rotas inexistentes removidas; mutation de meta aguardando a resposta HTTP; invalidações de cache relacionadas; progresso recente respeitando filtro; e `dataHora` de sessão emitido como ISO-8601 com offset local explícito. `tipoSessao`, `data` e `horario` permanecem somente no modelo de formulário e são transformados para `{tipo,dataHora}` antes do request.
+
+O run `37031485540` validou `frontend` e `backend-java` no commit funcional `39a8248`. Isso comprova CI estático/unitário, não substitui a fase E2E real ainda pendente.

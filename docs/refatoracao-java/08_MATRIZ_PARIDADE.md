@@ -42,3 +42,16 @@ Critérios de mudança de status:
 | Conexões/dashboards | implementada | rotas diretas e dashboards próprios por role | E2E pendente |
 
 O status não é “homologado”: lint/build/verify comprovam consistência estática e testes backend, mas não substituem o fluxo integrado profissional–responsável.
+
+## Revisão final de paridade do frontend
+
+| Área | Estado após estabilização | Evidência/limite |
+|---|---|---|
+| Rotas e roles | corrigido | dashboards por role, rota plural de crianças e navegação visível auditados |
+| Auth/HTTP | preservado e conferido | cookie HttpOnly, `/auth/me`, logout, CSRF e instância Axios única; E2E pendente |
+| Crianças, token e vínculos | compatível | LocalDate/camelCase, POST de token e fluxo real; câmera depende de `BarcodeDetector` |
+| Metas e progresso | compatível e estabilizado | update aguarda resposta real; caches e filtros relacionados corrigidos |
+| Sessões | compatível e estabilizado | form separado do request e `dataHora` com offset local explícito |
+| Conexões e dashboards | compatível | endpoints/DTOs canônicos; CI verde no run `37031485540` |
+
+Nenhum recurso legado acessório foi reintroduzido no contrato Java. `LocalAtendimento`, `RedeSocial`, `AreaAtuacao` e `AreaAtuacaoProfissional` permanecem preservados somente no NestJS até fase futura própria.
