@@ -1,5 +1,11 @@
 # Security review
 
+## Estado consolidado atual
+
+O runtime usa exclusivamente Spring Boot; NestJS/Prisma foram removidos. A autenticação usa JWT no cookie HttpOnly `jwt`, CSRF por `XSRF-TOKEN`/`X-XSRF-TOKEN`, ownership relacional contra IDOR, token de vínculo single-use, consentimento auditável e rate limit local. OpenAPI/Swagger não enfraquece esses controles e pode ser desativado por `OPENAPI_ENABLED=false` e `SWAGGER_UI_ENABLED=false`.
+
+Swagger expõe metadados da API quando habilitado; em produção sua exposição deve ser decisão operacional explícita. Permanecem necessários threat model, pentest, rotação de segredos históricos e revisão jurídica. Este documento não declara conformidade LGPD nem segurança produtiva certificada.
+
 ## Controles implementados
 
 - JWT sem fallback, BCrypt e cookie HttpOnly/Secure configurável.

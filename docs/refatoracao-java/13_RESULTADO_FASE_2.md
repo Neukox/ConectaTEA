@@ -1,5 +1,7 @@
 # Resultado final — Fase 2 da refatoração Java
 
+> **Fotografia histórica:** este relatório descreve o encerramento da Fase 2. Para o estado vigente após Fases 3 e 4, consulte `STATUS.md` e `20_RESULTADO_FINAL_REFATORACAO.md`.
+
 Data: 2026-10-02
 
 ## Identificação

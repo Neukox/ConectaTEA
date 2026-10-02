@@ -1,5 +1,7 @@
 # Fase 3 — migração dos recursos profissionais legados
 
+> **Fotografia histórica:** a preservação do backend antigo descrita neste relatório terminou na Fase 4. O backup pré-remoção é `backup/pre-remocao-nestjs`; não havia dados reais para migrar.
+
 ## Objetivo e baseline
 
 Trabalho iniciado em `refactor/fase-3-remocao-legado-node`, a partir da `main` limpa e sincronizada no SHA `5fe5d9f2664f9b3a1ebb4037a59d658a3bb4b05e`. O objetivo é retirar dependências funcionais de NestJS/Prisma sem apagar `Backend/` e sem executar migração real de dados.

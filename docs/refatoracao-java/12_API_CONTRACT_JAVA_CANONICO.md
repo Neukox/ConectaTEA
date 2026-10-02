@@ -1,5 +1,7 @@
 # Contrato canônico da API Java — fotografia da implementação
 
+**Estado atual:** este é o contrato textual do único backend ativo. O OpenAPI em `/api/v3/api-docs` e a Swagger UI refletem os controllers Java; trechos explicitamente históricos ao final registram divergências já resolvidas.
+
 ## Recursos profissionais — Fase 3
 
 Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige `PROFISSIONAL`, deriva ownership do principal e não aceita `usuarioId`.
@@ -391,7 +393,7 @@ Todos os endpoints exigem autenticação e role `PROFISSIONAL`; o ID do profissi
 - Erros: `401`, `403` role.
 - Frontend: não foi localizado consumidor correspondente em `features/Dashboard/services`; dashboard do responsável ainda não está integrado a este endpoint.
 
-## Inventário consolidado de divergências frontend/backend
+## Inventário histórico de divergências frontend/backend — resolvido
 
 1. Senha: validação local de registro aceita 6; API exige 8.
 2. Profissionais: clientes chamam rotas legadas `/private/...`, `/profissionais/usuario/{id}` e `/users/{id}`; Java oferece `/profissionais`, `/profissionais/me`, `/profissionais/{id}` e `/users/me`. Perfil legado também contém locais, redes sociais e áreas de atuação, ausentes no Java.
@@ -404,11 +406,11 @@ Todos os endpoints exigem autenticação e role `PROFISSIONAL`; o ID do profissi
 9. Dashboard: DTO da lista de crianças não contém todos os campos de UI; rota do dashboard de responsável não tem consumidor localizado.
 10. Todos os endpoints mutáveis precisam de CSRF (`X-XSRF-TOKEN`); integração deve continuar usando `apiClient` com cookies/credenciais. `httpClient` permanece alias/cliente legado em alguns módulos.
 
-## Estado deste contrato
+## Estado histórico deste contrato na Fase 2
 
 Este documento foi produzido a partir dos controllers Java e clientes React atualmente versionados após a correção de lifecycle do Testcontainers. Ele registra contratos implementados e divergências observadas; não corrige essas divergências nem certifica um fluxo end-to-end do frontend. Próxima etapa deve migrar os clientes incompatíveis e adicionar/atualizar testes de contrato conforme plano de fases, sem remover o backend NestJS nesta fase.
 
-## Consumidores React após a Fase 2.13
+## Consumidores React após a Fase 2.13 — histórico
 
 Em 2026-10-02, os consumidores foram alinhados ao contrato descrito neste documento: autenticação por cookie e /auth/me; rotas /me para usuário/profissional; crianças com nomes portugueses e LocalDate; token via POST /criancas/{id}/tokens-vinculo; vínculo com preview/consentimento; criancaId nas metas; progresso e resumos em camelCase; sessões com tipo/dataHora; conexões com respostas diretas; dashboards separados por role.
 

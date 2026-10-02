@@ -1,5 +1,7 @@
 # Plano de remoção definitiva do NestJS/Prisma
 
+> **Plano executado na Fase 4:** pré-condições verificadas, backup publicado e backend legado removido. O texto abaixo é preservado como registro da estratégia.
+
 Após aprovação funcional e documental, uma Fase 4 poderá remover `Backend/`, incluindo fontes NestJS, dependências, configuração, schema e migrations Prisma. Referências históricas úteis devem permanecer nos documentos ou em tag/branch protegida, não no runtime.
 
 ## Pré-condições

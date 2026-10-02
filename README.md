@@ -1,151 +1,69 @@
-# ConectaTEA 🧩
+# ConectaTEA
 
-Plataforma para acompanhamento de crianças com TEA, conectando responsáveis e profissionais especializados.
+Plataforma para acompanhamento de crianças com TEA, conectando responsáveis e profissionais.
 
-## 🏗️ Arquitetura
+## Arquitetura atual
 
-### Diagrama da Arquitetura
-
-```
-┌─────────────────┐    HTTP/REST    ┌─────────────────┐    ORM     ┌─────────────────┐
-│                 │ ──────────────► │                 │ ─────────► │                 │
-│  Frontend       │                 │  Backend        │            │  PostgreSQL     │
-│  React + Vite   │ ◄────────────── │  NestJS         │ ◄───────── │  Database       │
-│  TypeScript     │     JSON        │  TypeScript     │   Prisma   │                 │
-└─────────────────┘                 └─────────────────┘            └─────────────────┘
+```text
+Browser → React 19 / TypeScript / Vite → REST → Java 21 / Spring Boot → JPA / Hibernate → PostgreSQL
+                                               ├─ Spring Security
+                                               ├─ Flyway
+                                               └─ OpenAPI / Swagger UI
 ```
 
-### Stack Tecnológico
+- Frontend: React, TypeScript, Vite, Tailwind, Axios e TanStack Query.
+- Backend: Java 21 e Spring Boot 3.5, em monólito modular.
+- Banco e schema: PostgreSQL e Flyway; Hibernate usa `ddl-auto=validate`.
+- Autenticação: JWT no cookie HttpOnly `jwt`, com proteção CSRF para a SPA.
+- E2E: Playwright contra React, Spring Boot e PostgreSQL reais.
+- CI: GitHub Actions com jobs `frontend`, `backend-java` e `e2e`.
 
-- **Frontend**: React + TypeScript + Vite + Axios
-- **Backend principal**: Java 21 + Spring Boot + JPA + Flyway
-- **Backend legado**: NestJS + Prisma preservado temporariamente para referência e migração
-- **Database**: PostgreSQL
-- **Autenticação**: JWT + Guards
-- **Validação**: DTOs + Class-validator
+O antigo backend NestJS/Prisma foi removido após a migração integral para Java. Seu estado anterior permanece recuperável em `backup/pre-remocao-nestjs` e nos documentos históricos.
 
-## ⚡ Funcionalidades Principais
+## Execução local no Windows
 
-### 🔐 Sistema de Autenticação
+Pré-requisitos: Docker, JDK 21+ e Node.js 22.
 
-- Login/registro seguro com JWT
-- Guards de autenticação em rotas protegidas
-- Middleware de validação de tokens
+1. Defina as variáveis descritas em `BackendJava/.env.example`, usando segredos locais próprios.
+2. Suba o banco:
 
-### 👥 Gestão de Profissionais
+```powershell
+docker compose up -d postgres
+```
 
-- Cadastro completo de perfil profissional
-- Especialidades, locais de atendimento, redes sociais
-- Sistema de conexões entre profissionais
-- Envio, aceite, recusa e remoção de solicitações
+3. Inicie o backend em outro terminal:
 
-### 👶 Gestão de Crianças
-
-- CRUD completo para crianças cadastradas
-- Vinculação com responsáveis
-- Acompanhamento de desenvolvimento
-
-### 🔗 Sistema de Conexões
-
-- Solicitações de amizade entre profissionais
-- Status: PENDENTE, ACEITO, RECUSADO
-- Listagem de conexões por profissional
-- Remoção de conexões existentes
-
-## 🛠️ Instalação e Configuração do Projeto
-
-### Pré-requisitos
-
-- Node.js (v16+)
-- npm (v8+)
-- PostgreSQL (v12+) (local ou Docker)
-- Docker (opcional, para execução do banco, e outros serviços)
-
-### Backend principal (Java/Spring Boot)
-
-```bash
+```powershell
 cd BackendJava
-./mvnw spring-boot:run
-# API em http://localhost:3000/api
-# Swagger em http://localhost:3000/api/docs
+.\mvnw.cmd spring-boot:run
 ```
 
-Variáveis obrigatórias e instruções completas estão em `BackendJava/.env.example` e `BackendJava/README.md`. O NestJS permanece temporariamente como referência para homologação.
+4. Verifique:
 
-### Backend legado (NestJS)
+- Health: `http://localhost:3000/api/actuator/health`
+- Swagger UI: `http://localhost:3000/api/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:3000/api/v3/api-docs`
 
-`Backend/` não participa do runtime alvo. Ele permanece preservado para auditoria, planejamento da migração de dados e rollback até autorização explícita da Fase 4.
+5. Inicie o frontend:
 
-### Frontend (React)
-
-```bash
+```powershell
 cd Frontend
-npm install
-npm run dev
-# Aplicação rodando em http://localhost:5173
+npm.cmd ci
+npm.cmd run dev
 ```
 
-### Banco de Dados
+6. Abra `http://localhost:5173`.
 
-```bash
-docker compose up postgres
+## Validação
+
+```powershell
+cd Frontend
+npm.cmd ci
+npm.cmd run lint
+npm.cmd run build
+
+cd ..\BackendJava
+.\mvnw.cmd -B verify
 ```
 
-### Ambiente Docker (opcional)
-
-[docker-compose.yml](./docker-compose.yml) para orquestração de serviços (PostgreSQL, etc).
-
-No diretório raiz do projeto, execute:
-
-```bash
-docker-compose up -d
-```
-
-Para parar os serviços:
-
-```bash
-docker-compose down
-```
-
-Para ver logs:
-
-```bash
-docker-compose logs -f {service_name}
-```
-
-## Documentação da API
-
-para ver todos os endpoints e detalhes, rode o backend e acesse:
-
-```bash
-http://localhost:3000/api/docs
-```
-
-## 📂 Estrutura Modular
-
-```
-BackendJava/src/main/java/br/com/conectatea/
-├── auth/           # Autenticação JWT
-├── users/          # Usuários do sistema
-├── profissionais/  # Perfis profissionais
-├── criancas/       # Gestão de crianças
-├── conexoes/       # Sistema de conexões
-└── prisma/         # Configurações (Prisma)
-
-Frontend/src/
-├── api/            # Cliente HTTP + endpoints
-├── assets/         # Imagens, estilos, etc.
-├── pages/          # Componentes de página
-├── components/     # Componentes reutilizáveis
-├── hooks/          # Hooks customizados
-├── config/         # Configurações globais
-├── lib/            # Utilitários e helpers
-├── context/        # Contextos React
-├── features/       # Funcionalidades específicas
-├── services/       # Serviços de negócios
-└── routes/         # Definição de rotas
-```
-
----
-
-**ConectaTEA** - Conectando cuidado especializado para crianças com TEA 💙
+Consulte `docs/refatoracao-java/18_OPENAPI_SWAGGER.md` para testar autenticação e CSRF no Swagger e `docs/refatoracao-java/STATUS.md` para o estado consolidado.
