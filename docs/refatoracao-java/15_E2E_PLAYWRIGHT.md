@@ -1,5 +1,9 @@
 # Homologação E2E — Playwright
 
+## Ampliação da Fase 3
+
+O fluxo principal abre a edição do perfil, cria um local e uma rede social pela UI Java e recarrega a visualização para comprovar persistência. Áreas não recebem seed fictícia; a seleção será exercitada quando houver catálogo real preparado no ambiente.
+
 ## Arquitetura validada
 
 `Chromium/Playwright -> React/Vite -> Spring Boot/Spring Security -> JPA -> PostgreSQL 16`.

@@ -1,5 +1,11 @@
 # Security review
 
+## Estado consolidado atual
+
+O runtime usa exclusivamente Spring Boot; NestJS/Prisma foram removidos. A autenticação usa JWT no cookie HttpOnly `jwt`, CSRF por `XSRF-TOKEN`/`X-XSRF-TOKEN`, ownership relacional contra IDOR, token de vínculo single-use, consentimento auditável e rate limit local. OpenAPI/Swagger não enfraquece esses controles e pode ser desativado por `OPENAPI_ENABLED=false` e `SWAGGER_UI_ENABLED=false`.
+
+Swagger expõe metadados da API quando habilitado; em produção sua exposição deve ser decisão operacional explícita. Permanecem necessários threat model, pentest, rotação de segredos históricos e revisão jurídica. Este documento não declara conformidade LGPD nem segurança produtiva certificada.
+
 ## Controles implementados
 
 - JWT sem fallback, BCrypt e cookie HttpOnly/Secure configurável.
@@ -36,3 +42,7 @@ O registro preserva responsável, criança, profissional, data, IP, user agent,
 versão e finalidade. Versão/finalidade são configuração operacional. Revogação
 ainda não foi implementada nesta fase; este desenho técnico não constitui, por
 si só, certificação ou garantia de conformidade legal.
+
+## Recursos de perfil profissional — Fase 3
+
+Locais, redes e vínculos de áreas usam rotas `/profissionais/me`: ownership vem do `AuthenticatedUser`, eliminando o `usuarioId` arbitrário do legado. IDs alheios em update/delete resultam em 403. URLs aceitam somente HTTP(S), têm limite e não entram integralmente na auditoria; a UI abre links com `noreferrer`. O catálogo de áreas é somente leitura e não existe administração sem regra comprovada. A exposição pública desses detalhes não foi ampliada.

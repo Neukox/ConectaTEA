@@ -27,7 +27,9 @@ class FlywaySchemaIntegrationTest extends PostgresIntegrationTest {
                 String.class);
         assertThat(tables).contains(
                 "usuarios", "profissionais", "criancas", "tokens_vinculo",
-                "metas", "progressos", "sessoes", "audit_logs");
+                "metas", "progressos", "sessoes", "audit_logs",
+                "locais_atendimento", "redes_sociais", "areas_atuacao",
+                "areas_atuacao_profissionais");
     }
 
     @Test

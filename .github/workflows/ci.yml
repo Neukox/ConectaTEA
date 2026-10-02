@@ -100,6 +100,12 @@ jobs:
           cat backend-e2e.log || true
           exit 1
 
+      - name: Validar OpenAPI e Swagger UI
+        run: |
+          curl --fail --silent http://127.0.0.1:3000/api/v3/api-docs -o openapi.json
+          jq -e '.openapi and .info and .paths and .components.securitySchemes.cookieAuth' openapi.json > /dev/null
+          curl --fail --silent http://127.0.0.1:3000/api/swagger-ui/index.html > /dev/null
+
       - name: Subir frontend
         env:
           VITE_API_URL: http://127.0.0.1:3000/api

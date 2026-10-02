@@ -23,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/profissionais")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Profissionais")
 public class ProfissionalController {
     private final ProfissionalRepository professionals;
     private final UsuarioRepository users;

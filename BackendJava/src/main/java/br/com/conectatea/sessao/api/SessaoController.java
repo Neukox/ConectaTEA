@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/sessoes")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Sessões")
 public class SessaoController {
     private final SessaoRepository sessions;
     private final CriancaRepository children;

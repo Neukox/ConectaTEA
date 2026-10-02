@@ -38,6 +38,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/criancas")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Crianças")
 public class CriancaController {
     private final CriancaRepository children;
     private final ContatoResponsavelPendenteRepository pendingContacts;

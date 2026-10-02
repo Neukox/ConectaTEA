@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/criancas")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Vínculos")
 public class TokenCriancaController {
     private final VinculoService links;
     private final AuthorizationService authorization;

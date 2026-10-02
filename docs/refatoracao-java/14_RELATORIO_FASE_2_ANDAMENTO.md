@@ -1,5 +1,7 @@
 # Relatório de andamento — Fase 2
 
+> **Fotografia histórica:** branches, pendências e referências ao NestJS abaixo pertencem à Fase 2 e não representam o estado consolidado atual.
+
 Atualização: 2026-10-01. Este documento substitui as afirmações de CI pendente e resume a situação comprovada antes da consolidação documental atual. A Fase 2 segue em andamento e não está homologada.
 
 ## Estado de branch, CI e segurança do escopo

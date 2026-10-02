@@ -5,6 +5,7 @@ import { getApiErrorMessage } from '~/api/errors'
 import Header from '~/components/layout/Header'
 import { PageLayout } from '~/components/layout'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
+import { listarMeusLocais, listarMinhasAreas, listarMinhasRedes, type AreaAtuacao, type LocalAtendimento, type RedeSocial } from '~/api/protected/axiosRecursosProfissionais'
 
 export default function VerPerfil() {
   const { id } = useParams()
@@ -12,11 +13,15 @@ export default function VerPerfil() {
   const { notificarErro } = useNotificacoesContext()
   const [perfil, setPerfil] = useState<Profissional | null>(null)
   const [loading, setLoading] = useState(true)
+  const [locais, setLocais] = useState<LocalAtendimento[]>([])
+  const [redes, setRedes] = useState<RedeSocial[]>([])
+  const [areas, setAreas] = useState<AreaAtuacao[]>([])
 
   useEffect(() => {
     const carregar = async () => {
       try {
         setPerfil(id ? await obterProfissionalPorId(Number(id)) : await obterMeuPerfilProfissional())
+        if (!id) { const [loadedLocais, loadedRedes, loadedAreas] = await Promise.all([listarMeusLocais(), listarMinhasRedes(), listarMinhasAreas()]); setLocais(loadedLocais); setRedes(loadedRedes); setAreas(loadedAreas) }
       } catch (error) {
         notificarErro('Erro ao carregar perfil', getApiErrorMessage(error))
       } finally {
@@ -51,7 +56,7 @@ export default function VerPerfil() {
             <div><dt className='text-sm text-gray-500'>Código de identificação</dt><dd className='font-medium'>{perfil.codigoIdentificacao || 'Não informado'}</dd></div>
             <div className='sm:col-span-2'><dt className='text-sm text-gray-500'>Sobre</dt><dd className='mt-1 text-gray-700'>{perfil.sobre || 'Nenhuma apresentação cadastrada.'}</dd></div>
           </dl>
-          <p className='mt-8 rounded-lg bg-amber-50 p-4 text-sm text-amber-900'>Locais de atendimento, redes sociais e áreas de atuação permanecem temporariamente no sistema legado e não são exibidos por esta API.</p>
+          {!id && <div className='mt-8 grid gap-5 border-t pt-6'><section><h3 className='font-semibold'>Locais de atendimento</h3><ul className='mt-2 text-gray-700'>{locais.map((local) => <li key={local.id}>{local.nome} — {local.cidade}</li>)}</ul></section><section><h3 className='font-semibold'>Redes sociais</h3><ul className='mt-2'>{redes.map((rede) => <li key={rede.id}><a className='text-green-700 underline' href={rede.url} target='_blank' rel='noreferrer'>{rede.tipo}</a></li>)}</ul></section><section><h3 className='font-semibold'>Áreas de atuação</h3><p className='mt-2 text-gray-700'>{areas.map((area) => area.nome).join(', ') || 'Nenhuma área vinculada.'}</p></section></div>}
         </div>
       )}
     </PageLayout>
