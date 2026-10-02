@@ -34,7 +34,7 @@ export interface UpdateSessaoRequest {
   descricao?: string
   tipo: Sessao['tipo']
   dataHora: string
-  duracao?: number
+  duracao: number
   observacoes?: string | null
 } 
 

@@ -20,6 +20,9 @@ export default function useCadastrarMeta(
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METAS] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METAS_RESUMO] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.META, id] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_METAS] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_RESPONSAVEL] })
     },
     onError: (error) => {
       actions.error?.(error)

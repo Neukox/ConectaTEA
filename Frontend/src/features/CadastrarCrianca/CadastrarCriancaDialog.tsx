@@ -74,11 +74,13 @@ export function CadastrarCriancaDialog({
         observacoes: String(formData.observacoes || '').trim(),
       }
 
-      console.log('Dados para envio:', dadosParaEnvio)
-
       // Usar a função de cadastro com tipagem correta
       await cadastrarCrianca(dadosParaEnvio)
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_CRIANCAS] }),
+      ])
 
       // Limpar formulário e fechar modal
       setFormData(getInitialFormData())

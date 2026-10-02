@@ -125,7 +125,11 @@ export default function CadastrarCriancas() {
       async () => {
         try {
           await excluirCrianca(criancaId)
-          await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] })
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] }),
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_CRIANCAS] }),
+          ])
 
           // Atualizar lista local removendo a criança excluída
           const novasCriancas = criancas.filter((c) => c.id !== criancaId)
@@ -173,9 +177,6 @@ export default function CadastrarCriancas() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      // Debug: verificar dados antes do envio
-      console.log('Dados do formulário antes do envio:', formData)
-
       // Criar uma cópia profunda dos dados para evitar referências
       const dadosParaEnvio = {
         nomeCompleto: String(formData.nomeCompleto).trim(),
@@ -192,17 +193,20 @@ export default function CadastrarCriancas() {
         observacoes: String(formData.observacoes || '').trim(),
       }
 
-      console.log('Dados processados para envio:', dadosParaEnvio)
-
       // Usar a função de cadastro com tipagem correta
-      const response = await cadastrarCrianca(dadosParaEnvio)
+      await cadastrarCrianca(dadosParaEnvio)
 
       // Limpar formulário e fechar modal de cadastro IMEDIATAMENTE
       setFormData(getInitialFormData())
       fecharModal()
 
       // Recarregar lista
-      fetchCriancas()
+      await Promise.all([
+        fetchCriancas(),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_CRIANCAS] }),
+      ])
 
       // Mostrar mensagem de sucesso
       notificarSucesso(

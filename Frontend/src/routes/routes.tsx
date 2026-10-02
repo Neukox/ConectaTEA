@@ -12,7 +12,7 @@ import Register from '../pages/Register'
 import CadastrarCriancas from '../pages/Profissional/CadastrarCriancas/CadastrarCriancas'
 import EditarCriancaCadastrada from '../pages/Profissional/CadastrarCriancas/EditarCriancaCadastrada'
 import VerDetalhesCriancaCadastrada from '../pages/Profissional/CadastrarCriancas/VerDetalhesCriancaCadastrada'
-import Dashboard from '../pages/Profissional/Dashboard/Dashboard'
+import DashboardProfissional from '../pages/Profissional/Dashboard/Dashboard'
 import PerfilEdit from '../pages/Profissional/Perfil/EditarPerfil'
 import PerfilProfissional from '../pages/Profissional/Perfil/VerPerfil'
 import Profissionais from '../pages/Profissional/Profissionais/Profissionais'
@@ -48,7 +48,7 @@ export default function AppRoutes() {
         path='/profissional/dashboard'
         element={
           <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
-            <DashboardResponsavel />
+            <DashboardProfissional />
           </ProtectedRoute>
         }
       />
@@ -163,7 +163,7 @@ export default function AppRoutes() {
         path='/responsavel/dashboard'
         element={
           <ProtectedRoute allowedRoles={['RESPONSAVEL']}>
-            <Dashboard />
+            <DashboardResponsavel />
           </ProtectedRoute>
         }
       />

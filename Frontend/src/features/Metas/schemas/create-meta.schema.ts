@@ -1,4 +1,5 @@
 import z from 'zod'
+import { format } from 'date-fns'
 import { CategoriaMeta, PrioridadeMeta } from '../types'
 
 export const CreateMetaSchema = z
@@ -18,13 +19,13 @@ export const CreateMetaSchema = z
     dataInicio: z
       .string()
       .nonempty('Data de início é obrigatória')
-      .refine((date) => date >= new Date().toISOString().slice(0, 10), {
+      .refine((date) => date >= format(new Date(), 'yyyy-MM-dd'), {
         message: 'A data de início não pode ser uma data anterior a hoje',
       }),
     dataFim: z
       .string()
       .nonempty('Data de fim é obrigatória')
-      .refine((date) => date >= new Date().toISOString().slice(0, 10), {
+      .refine((date) => date >= format(new Date(), 'yyyy-MM-dd'), {
         message: 'A data de fim não pode ser anterior a hoje',
       }),
     descricao: z

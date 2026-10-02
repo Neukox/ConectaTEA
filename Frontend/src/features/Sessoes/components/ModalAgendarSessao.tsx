@@ -28,6 +28,7 @@ import useAgendarSessao from '../hooks/useAgendarSessao'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
 import useCriancas from '~/features/Criancas/hooks/useCriancas'
 import type { CreateSessaoRequest } from '../services'
+import { toOffsetDateTime } from '../utils'
 
 interface ModalAgendarSessaoProps {
   isOpen: boolean
@@ -77,15 +78,11 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
   })
 
   const submitForm = (data: CreateSessaoData) => {
-    const [hours, minutes] = data.horario.split(':').map(Number)
-    const sessionDate = parseISO(data.data)
-    sessionDate.setHours(hours, minutes, 0, 0)
-
     const formattedData: CreateSessaoRequest = {
       descricao: data.descricao,
       tipo: data.tipoSessao as TipoSessaoValue,
       criancaId: data.criancaId,
-      dataHora: sessionDate.toISOString(),
+      dataHora: toOffsetDateTime(data.data, data.horario),
       duracao: data.duracao,
       observacoes: data.observacoes,
     }

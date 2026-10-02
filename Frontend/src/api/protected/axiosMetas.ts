@@ -22,8 +22,8 @@ export interface AtualizarProgressoData {
   descricao?: string
 }
 
-export const atualizarProgresso = async (data: AtualizarProgressoData) => {
-  const response = await api.patch(`/metas/${data.id}/progresso`, {
+export const atualizarProgresso = async (data: AtualizarProgressoData): Promise<Meta> => {
+  const response = await api.patch<Meta>(`/metas/${data.id}/progresso`, {
     progresso: data.progresso,
     descricao: data.descricao,
   })

@@ -56,21 +56,25 @@ export function UserDropdown() {
       >
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => navigate(user?.tipo === 'PROFISSIONAL' ? '/profissional/perfil' : '/responsavel/dashboard')}
-          className='cursor-pointer'
-        >
-          <User className='mr-2 h-4 w-4' />
-          <span>Meu Perfil</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => navigate(user?.tipo === 'PROFISSIONAL' ? '/profissional/configuracoes' : '/responsavel/dashboard')}
-          className='cursor-pointer'
-        >
-          <Settings className='mr-2 h-4 w-4' />
-          <span>Configurações</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        {user?.tipo === 'PROFISSIONAL' && (
+          <>
+            <DropdownMenuItem
+              onClick={() => navigate('/profissional/perfil')}
+              className='cursor-pointer'
+            >
+              <User className='mr-2 h-4 w-4' />
+              <span>Meu Perfil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate('/profissional/configuracoes')}
+              className='cursor-pointer'
+            >
+              <Settings className='mr-2 h-4 w-4' />
+              <span>Configurações</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem
           onClick={handleLogout}
           className='cursor-pointer text-red-600 focus:text-red-600'

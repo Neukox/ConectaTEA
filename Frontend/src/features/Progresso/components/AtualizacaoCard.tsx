@@ -14,7 +14,7 @@ export function AtualizacaoCard({ data }: AtualizacaoCardProps) {
 
   const atualizacao =
     data.diferenca < 0
-      ? `-${data.diferenca}%`
+      ? `${data.diferenca}%`
       : data.diferenca === 0
         ? `${data.diferenca}%`
         : `+${data.diferenca}%`

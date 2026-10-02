@@ -8,7 +8,7 @@ import DashboardStatsProfisional from '~/features/Dashboard/components/profissio
 import DashboardCriancasProfissional from '~/features/Dashboard/components/profissional/DashboardCriancasProfissional'
 import DashboardMetasProfissional from '~/features/Dashboard/components/profissional/DashboardMetasProfissional'
 
-export default function Dashboard() {
+export default function DashboardProfissional() {
   const [showModal, setShowModal] = useState(false)
   const [showMetaModal, setShowMetaModal] = useState(false)
 

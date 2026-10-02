@@ -127,7 +127,10 @@ export default function EditarCriancaCadastrada() {
 
       // Atualizar criança usando a API real
       await atualizarCrianca(parseInt(id), updateData)
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_CRIANCAS] }),
+      ])
 
       notificarSucesso(
         'Dados atualizados!',

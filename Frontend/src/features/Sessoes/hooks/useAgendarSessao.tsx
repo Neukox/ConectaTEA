@@ -15,6 +15,7 @@ export default function useAgendarSessao(actions: {
       actions.success?.()
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SESSOES] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SESSOES_RESUMO] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_RESPONSAVEL] })
     },
     onError: (error) => {
       actions.error?.(error)
