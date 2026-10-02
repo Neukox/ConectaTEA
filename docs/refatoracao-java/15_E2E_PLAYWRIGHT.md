@@ -13,7 +13,7 @@ A suíte `E2E/tests/conectatea.e2e.spec.js` cobre:
 1. cadastro/login de profissional e responsável;
 2. dashboards separados por role;
 3. sessão por cookie e `/auth/me`;
-4. rejeição de mutação sem CSRF;
+4. fluxo de mutações com CSRF real; a rejeição sem CSRF é coberta pelo MockMvc do backend;
 5. cadastro de criança pela UI;
 6. criação de meta pela UI;
 7. atualização de progresso;
