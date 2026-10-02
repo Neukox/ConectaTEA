@@ -10,6 +10,8 @@ Com o backend local na porta padrão e context path `/api`, as URLs verificadas 
 - OpenAPI JSON: `http://localhost:3000/api/v3/api-docs`
 - atalho configurado da UI: `http://localhost:3000/api/docs`
 
+O GitHub Actions run `37053545940` confirmou HTTP 200 para o JSON e para `/api/swagger-ui/index.html`; a validação também exigiu `openapi`, `info`, `paths` e `components.securitySchemes.cookieAuth` no documento.
+
 ## Autenticação e CSRF
 
 O contrato usa o security scheme `cookieAuth`, correspondente ao cookie HttpOnly `jwt`. Não existe autenticação Bearer para o cliente.

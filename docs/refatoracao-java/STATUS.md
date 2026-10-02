@@ -8,7 +8,7 @@
 | Frontend consumindo API Java | concluído |
 | PostgreSQL/Flyway V1–V3 | concluído |
 | E2E React + Java + PostgreSQL | verde |
-| OpenAPI/Swagger | implementado; validação no CI obrigatória |
+| OpenAPI/Swagger | concluído e validado por HTTP no CI |
 | Runtime NestJS | removido |
 | Runtime Prisma | removido |
 | Migração de dados | não necessária; não existem dados reais no legado |
@@ -21,7 +21,7 @@ Branch de trabalho: `refactor/fase-3-remocao-legado-node`. Backup imediatamente 
 
 - Fase 2: backend Java, frontend e suíte E2E integrados.
 - Fase 3: LocalAtendimento, RedeSocial, AreaAtuacao e AreaAtuacaoProfissional migrados; CI `37050862663` verde no SHA `b167563`.
-- Fase final: OpenAPI/Swagger, retirada do Node e novo CI devem ser registrados em `20_RESULTADO_FINAL_REFATORACAO.md`.
+- Fase final: OpenAPI/Swagger e retirada do Node validados no GitHub Actions run `37053545940`, com `frontend`, `backend-java` e `e2e` em `success` no SHA `3c3ab7a`.
 
 ## Pendências deliberadas
 

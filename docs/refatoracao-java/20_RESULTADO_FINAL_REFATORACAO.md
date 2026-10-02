@@ -22,4 +22,6 @@
 
 Frontend, backend Java, Flyway, E2E e CI formam o runtime oficial. O código NestJS, Prisma e suas configurações operacionais foram removidos; relatórios históricos permanecem para auditoria. A validação funcional humana e a revisão documental ainda são obrigatórias antes do PR final.
 
+GitHub Actions run `37053545940`, SHA `3c3ab7a`: jobs `frontend`, `backend-java` e `e2e` concluídos com sucesso. O job E2E validou PostgreSQL/Flyway, OpenAPI JSON, Swagger UI e Playwright integrado.
+
 A grande trilha educacional JUnit/Mockito/MockMvc não foi automatizada nesta execução e será conduzida posteriormente com o usuário.
