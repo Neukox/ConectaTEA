@@ -1,5 +1,6 @@
 package br.com.conectatea.auth.api;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -32,7 +33,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest({AuthController.class, CsrfController.class})
 @Import({
         SecurityConfig.class,
         JwtAuthenticationFilter.class,
@@ -101,9 +102,19 @@ class AuthControllerWebMvcTest {
 
     @Test
     void protectedPostWithCsrfSucceeds() throws Exception {
+        var csrfBootstrap = mockMvc.perform(get("/auth/csrf")
+                        .with(authentication(authenticatedUser())))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("XSRF-TOKEN"))
+                .andReturn();
+
+        var csrfCookie = csrfBootstrap.getResponse().getCookie("XSRF-TOKEN");
+        assertNotNull(csrfCookie);
+
         mockMvc.perform(post("/auth/logout")
                         .with(authentication(authenticatedUser()))
-                        .with(csrf().asHeader()))
+                        .cookie(csrfCookie)
+                        .header("X-XSRF-TOKEN", csrfCookie.getValue()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Logout realizado"));
     }
