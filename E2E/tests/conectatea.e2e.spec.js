@@ -95,6 +95,25 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   expect(me.status).toBe(200)
   expect(me.json.user.tipo).toBe('PROFISSIONAL')
 
+  await profPage.goto('/profissional/perfil/editar')
+  await profPage.getByRole('button', { name: 'Adicionar local' }).click()
+  await profPage.getByPlaceholder('Nome do local').fill(`Clinica E2E ${run}`)
+  await profPage.getByPlaceholder('Cidade').fill('Salvador')
+  const localCreated = profPage.waitForResponse((r) => r.url().endsWith('/api/profissionais/me/locais-atendimento') && r.request().method() === 'POST')
+  await profPage.getByRole('button', { name: 'Salvar local' }).click()
+  expect((await localCreated).status()).toBe(201)
+
+  await profPage.getByRole('button', { name: 'Adicionar rede' }).click()
+  await profPage.getByPlaceholder('Plataforma').fill('LinkedIn')
+  await profPage.getByPlaceholder('https://...').fill(`https://example.test/${run}`)
+  const networkCreated = profPage.waitForResponse((r) => r.url().endsWith('/api/profissionais/me/redes-sociais') && r.request().method() === 'POST')
+  await profPage.getByRole('button', { name: 'Salvar rede' }).click()
+  expect((await networkCreated).status()).toBe(201)
+
+  await profPage.goto('/profissional/perfil')
+  await expect(profPage.getByText(`Clinica E2E ${run}`)).toBeVisible()
+  await expect(profPage.getByRole('link', { name: 'LinkedIn' })).toBeVisible()
+
   await profPage.goto('/profissional/criancas')
   await profPage.getByRole('button', { name: 'Nova Criança' }).click()
   const childDialog = profPage.getByRole('dialog')
