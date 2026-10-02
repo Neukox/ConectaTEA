@@ -4,12 +4,13 @@ import { cadastrarMeta } from '~/api/protected/axiosMetas'
 import { queryClient, QUERY_KEYS } from '~/api/query-client'
 import type { ResponseError } from '~/api/types'
 import type { CreateMetaData } from '../schemas/create-meta.schema'
+import type { Meta } from '../types'
 
 export default function useCadastrarMeta(actions: {
   success?: () => void
   error?: (error?: AxiosError<ResponseError> | Error) => void
 }) {
-  return useMutation<void, AxiosError<ResponseError>, CreateMetaData>({
+  return useMutation<Meta, AxiosError<ResponseError>, CreateMetaData>({
     mutationFn: cadastrarMeta,
     onSuccess: () => {
       actions.success?.()

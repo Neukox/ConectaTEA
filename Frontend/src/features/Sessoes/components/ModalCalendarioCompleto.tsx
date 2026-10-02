@@ -24,28 +24,19 @@ const ModalCalendarioCompleto: React.FC<ModalCalendarioCompletoProps> = ({
   onClose,
   sessions,
 }) => {
-  const [date, setDate] = useState(new Date(2024, 0, 14)) // Start at mock date
+  const [date, setDate] = useState(new Date())
   const [view, setView] = useState<View>(Views.MONTH)
 
   const { openEditarSessaoModal } = useSessoesModal()
 
   // Map sessions to calendar events
   const events: CalendarEvent[] = sessions.map((session) => {
-    // Logic to construct date/time
-    // Fallback date logic since mock data in Sessoes.tsx doesn't have full date strings yet for all items
-    // In a real app, session.date would be a full ISO string or Date object.
-    const eventDate = parseSessionDateString(session.data)
-    const [hours, minutes] = session.data
-      .split(', ')[1]
-      .split(':')
-      .map((part) => parseInt(part, 10))
-    const startDate = new Date(eventDate)
-    startDate.setHours(hours, minutes)
+    const startDate = parseSessionDateString(session.dataHora)
 
     // quick parse duration "60min" -> 60
     const duration = session.duracao
     const endDate = new Date(startDate)
-    endDate.setMinutes(minutes + duration)
+    endDate.setMinutes(endDate.getMinutes() + duration)
 
     const tipo = TipoSessao[session.tipo]
 
@@ -59,7 +50,7 @@ const ModalCalendarioCompleto: React.FC<ModalCalendarioCompletoProps> = ({
 
     return {
       id: String(session.id),
-      title: `${session.crianca.nome} - ${tipo}`,
+      title: `Criança #${session.criancaId} - ${tipo}`,
       start: startDate,
       end: endDate,
       color,
@@ -84,7 +75,7 @@ const ModalCalendarioCompleto: React.FC<ModalCalendarioCompletoProps> = ({
             view={view}
             onView={setView}
             onSelectEvent={(event) => {
-              const parsedDate = parseSessionDateString(event.resource?.data as string);
+              const parsedDate = parseSessionDateString(event.resource?.dataHora as string)
 
               openEditarSessaoModal({
                 id: event.resource?.id as number,

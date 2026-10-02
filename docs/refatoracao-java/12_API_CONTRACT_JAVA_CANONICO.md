@@ -391,3 +391,9 @@ Todos os endpoints exigem autenticação e role `PROFISSIONAL`; o ID do profissi
 ## Estado deste contrato
 
 Este documento foi produzido a partir dos controllers Java e clientes React atualmente versionados após a correção de lifecycle do Testcontainers. Ele registra contratos implementados e divergências observadas; não corrige essas divergências nem certifica um fluxo end-to-end do frontend. Próxima etapa deve migrar os clientes incompatíveis e adicionar/atualizar testes de contrato conforme plano de fases, sem remover o backend NestJS nesta fase.
+
+## Consumidores React após a Fase 2.13
+
+Em 2026-10-02, os consumidores foram alinhados ao contrato descrito neste documento: autenticação por cookie e /auth/me; rotas /me para usuário/profissional; crianças com nomes portugueses e LocalDate; token via POST /criancas/{id}/tokens-vinculo; vínculo com preview/consentimento; criancaId nas metas; progresso e resumos em camelCase; sessões com tipo/dataHora; conexões com respostas diretas; dashboards separados por role.
+
+O apiClient é o cliente HTTP único e mantém withCredentials e withXSRFToken. Os itens do inventário anterior representam o estado pré-migração e foram resolvidos no frontend, com exceção dos recursos acessórios que permanecem no NestJS e da homologação E2E ainda pendente.

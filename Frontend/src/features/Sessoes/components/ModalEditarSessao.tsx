@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '~/components/ui'
-import { TipoSessao, type SessaoToEdit } from '../types'
+import { TipoSessao, type SessaoToEdit, type TipoSessao as TipoSessaoValue } from '../types'
 import {
   UpdateSessaoSchema,
   type UpdateSessaoData,
@@ -80,10 +80,10 @@ const ModalEditarSessao: React.FC<ModalEditarSessaoProps> = ({
 
     const formattedData: UpdateSessaoRequest = {
       descricao: data.descricao,
-      tipoSessao: data.tipoSessao,
+      tipo: data.tipoSessao as TipoSessaoValue,
       duracao: data.duracao,
       observacoes: data.observacoes,
-      data: sessionDate,
+      dataHora: sessionDate.toISOString(),
     }
 
     mutation.mutate({ id: session?.id || 0, ...formattedData })

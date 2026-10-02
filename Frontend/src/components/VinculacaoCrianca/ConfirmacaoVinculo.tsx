@@ -4,9 +4,8 @@ import { formatDate, calculateAge } from '~/lib/date.utils'
 interface CriancaData {
   id: number
   nome: string
-  data_nascimento: string
-  diagnostico: string
-  status: string
+  dataNascimento: string
+  genero?: string
 }
 
 interface ConfirmacaoVinculoProps {
@@ -48,7 +47,7 @@ export default function ConfirmacaoVinculo({
               Idade
             </label>
             <p className='text-lg font-semibold text-gray-900'>
-              {calculateAge(crianca.data_nascimento)} anos
+              {calculateAge(crianca.dataNascimento)} anos
             </p>
           </div>
 
@@ -57,28 +56,20 @@ export default function ConfirmacaoVinculo({
               Data de Nascimento
             </label>
             <p className='text-lg font-semibold text-gray-900'>
-              {formatDate(crianca.data_nascimento)}
+              {formatDate(crianca.dataNascimento)}
             </p>
           </div>
 
           <div>
             <label className='mb-1 block text-sm font-semibold text-gray-700'>
-              Diagnóstico
+              Gênero
             </label>
             <p className='text-lg font-semibold text-gray-900'>
-              {crianca.diagnostico}
+              {crianca.genero || 'Não informado'}
             </p>
           </div>
         </div>
 
-        <div className='border-t border-gray-200 pt-4'>
-          <label className='mb-2 block text-sm font-semibold text-gray-700'>
-            Status de Vínculo
-          </label>
-          <div className='inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-800'>
-            ⏳ {crianca.status}
-          </div>
-        </div>
       </div>
 
       <div className='rounded-lg border border-blue-200 bg-blue-50 p-4'>

@@ -7,6 +7,7 @@ import { cn } from '~/lib/utils'
 import useSessoesModal from '../hooks/useSessoesModal'
 import { ptBR } from 'date-fns/locale'
 import { parseSessionDateString } from '../utils'
+import useCriancas from '~/features/Criancas/hooks/useCriancas'
 
 interface SessionItemProps {
   sessao: Sessao
@@ -14,6 +15,10 @@ interface SessionItemProps {
 
 const SessionItem: React.FC<SessionItemProps> = ({ sessao }) => {
   const { openEditarSessaoModal } = useSessoesModal()
+  const { data: criancas } = useCriancas()
+  const nomeCrianca =
+    criancas?.items.find((crianca) => crianca.id === sessao.criancaId)?.nome ??
+    `Criança #${sessao.criancaId}`
   // Badges
   const bagdeTipo = TIPO_SESSAO_BADGE[sessao.tipo]
   const bagdeStatus = STATUS_SESSAO_BADGE[sessao.status]
@@ -23,14 +28,14 @@ const SessionItem: React.FC<SessionItemProps> = ({ sessao }) => {
   const tipo = TipoSessao[sessao.tipo]
 
   // Date parsing
-  const parsedDate = parseSessionDateString(sessao.data);
+  const parsedDate = parseSessionDateString(sessao.dataHora)
 
   const handleEditClick = () => {
     openEditarSessaoModal({
       id: sessao.id,
       data: format(parsedDate, 'yyyy-MM-dd', { locale: ptBR }),
       horario: format(parsedDate, 'HH:mm', { locale: ptBR }),
-      descricao: sessao.descricao,
+      descricao: sessao.descricao ?? '',
       duracao: sessao.duracao,
       observacoes: sessao.observacoes,
       tipoSessao: sessao.tipo,
@@ -55,7 +60,7 @@ const SessionItem: React.FC<SessionItemProps> = ({ sessao }) => {
           <div className='space-y-2'>
             <div className='flex flex-wrap items-center gap-3'>
               <h3 className='text-lg font-bold text-gray-800'>
-                {sessao.crianca.nome}
+                {nomeCrianca}
               </h3>
               <Badge className={cn('font-medium', bagdeStatus)}>{status}</Badge>
               <Badge className={cn('font-medium', bagdeTipo)}>{tipo}</Badge>
@@ -69,9 +74,6 @@ const SessionItem: React.FC<SessionItemProps> = ({ sessao }) => {
               </div>
             )}
 
-            <div className='flex items-center gap-2 text-sm text-gray-500'>
-              <span>Profissional: {sessao.profissional.nome}</span>
-            </div>
           </div>
         </div>
 

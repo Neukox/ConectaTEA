@@ -7,7 +7,6 @@ import {
 import { Button } from '~/components/ui/button'
 import type { MetasFilters } from '../types'
 import { CategoriaMeta, PrioridadeMeta, StatusMeta } from '../types'
-import { Periodo } from '~/api/types'
 
 interface FiltrosMetasPopoverProps {
   filtros: MetasFilters
@@ -34,11 +33,14 @@ export function FiltrosMetas({
     setOpen(false)
   }
 
-  const handleChange = (field: keyof MetasFilters, value: string) => {
+  const handleChange = (
+    field: Exclude<keyof MetasFilters, 'criancaId'>,
+    value: string,
+  ) => {
     setFiltrosLocais((prev) => {
       const newFiltros = { ...prev }
       if (value) {
-        newFiltros[field] = value
+        return { ...prev, [field]: value }
       } else {
         delete newFiltros[field]
       }
@@ -136,7 +138,7 @@ export function FiltrosMetas({
               className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100 focus:outline-none'
             >
               <option value=''>Todos</option>
-              {Object.entries(Periodo).map(([key, label]) => (
+              {Object.entries({ TODOS: 'Todos', HOJE: 'Hoje', SEMANA: 'Semana', MES: 'Mês', ATRASADAS: 'Atrasadas' }).map(([key, label]) => (
                 <option
                   key={key}
                   value={key}

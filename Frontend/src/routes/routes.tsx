@@ -22,6 +22,9 @@ import Configuracoes from '../pages/Profissional/Configuracoes/Configuracoes'
 
 // Páginas do Responsável
 import VincularCrianca from '../pages/Responsavel/VincularCrianca'
+import DashboardResponsavel from '../pages/Responsavel/Dashboard'
+import DashboardRedirect from '../components/DashboardRedirect'
+import MeusVinculos from '../pages/Responsavel/MeusVinculos'
 
 export default function AppRoutes() {
   return (
@@ -45,7 +48,7 @@ export default function AppRoutes() {
         path='/profissional/dashboard'
         element={
           <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
-            <Dashboard />
+            <DashboardResponsavel />
           </ProtectedRoute>
         }
       />
@@ -74,14 +77,14 @@ export default function AppRoutes() {
         }
       />
 
-      {/* <Route
+      <Route
         path='/profissional/profissionais'
         element={
           <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
             <Profissionais />
           </ProtectedRoute>
         }
-      /> */}
+      />
 
       <Route
         path='/profissional/perfil'
@@ -173,16 +176,17 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Rota de compatibilidade */}
       <Route
-        path='/dashboard'
+        path='/responsavel/criancas'
         element={
-          <ProtectedRoute allowedRoles={['PROFISSIONAL', 'RESPONSAVEL']}>
-            <Dashboard />
+          <ProtectedRoute allowedRoles={['RESPONSAVEL']}>
+            <MeusVinculos />
           </ProtectedRoute>
         }
       />
+
+      {/* Rota de compatibilidade */}
+      <Route path='/dashboard' element={<DashboardRedirect />} />
     </Routes>
   )
 }

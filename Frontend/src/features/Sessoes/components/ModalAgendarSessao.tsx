@@ -23,7 +23,7 @@ import {
 } from '../schemas/create-sessao.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import ErrorField from '~/components/common/ErrorField'
-import { TipoSessao } from '../types'
+import { TipoSessao, type TipoSessao as TipoSessaoValue } from '../types'
 import useAgendarSessao from '../hooks/useAgendarSessao'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
 import useCriancas from '~/features/Criancas/hooks/useCriancas'
@@ -83,9 +83,9 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
 
     const formattedData: CreateSessaoRequest = {
       descricao: data.descricao,
-      tipoSessao: data.tipoSessao,
+      tipo: data.tipoSessao as TipoSessaoValue,
       criancaId: data.criancaId,
-      data: sessionDate,
+      dataHora: sessionDate.toISOString(),
       duracao: data.duracao,
       observacoes: data.observacoes,
     }
@@ -138,7 +138,7 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
               required
             >
               <option value=''>Selecione uma criança</option>
-              {dataCriancas?.criancas.map((child) => (
+              {dataCriancas?.items.map((child) => (
                 <option
                   key={child.id}
                   value={child.id}

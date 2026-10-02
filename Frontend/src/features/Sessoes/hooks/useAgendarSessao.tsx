@@ -3,12 +3,13 @@ import type { AxiosError } from 'axios'
 import { queryClient, QUERY_KEYS } from '~/api/query-client'
 import type { ResponseError } from '~/api/types'
 import { createSessao, type CreateSessaoRequest } from '../services'
+import type { Sessao } from '../types'
 
 export default function useAgendarSessao(actions: {
   success?: () => void
   error?: (error?: AxiosError<ResponseError>) => void
 }) {
-  return useMutation<void, AxiosError<ResponseError>, CreateSessaoRequest>({
+  return useMutation<Sessao, AxiosError<ResponseError>, CreateSessaoRequest>({
     mutationFn: createSessao,
     onSuccess: () => {
       actions.success?.()

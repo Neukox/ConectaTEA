@@ -2,27 +2,25 @@ import React, { useMemo } from 'react'
 import { TipoSessao, type Sessao } from '../types'
 import { format } from 'date-fns'
 import useSessoes from '../hooks/useSessoes'
+import useCriancas from '~/features/Criancas/hooks/useCriancas'
 import NotFoundData from '~/components/common/NotFoundData'
 import { LuCalendar } from 'react-icons/lu'
 import NextSessionsLoading from './NextSessionLoading'
 import { parseSessionDateString } from '../utils'
 
-interface NextSessionsProps {
-  sessions?: Sessao[]
-}
-
-const NextSessions: React.FC<NextSessionsProps> = () => {
+const NextSessions: React.FC = () => {
   const { data, isLoading } = useSessoes()
+  const { data: criancas } = useCriancas()
 
   const sessions = useMemo(() => {
     if (isLoading || !data) return []
     const nextSessions = data
       .filter((session) => {
-        const parsedDate = parseSessionDateString(session.data)
+        const parsedDate = parseSessionDateString(session.dataHora)
 
         return session.status === 'AGENDADA' && parsedDate >= new Date()
       })
-      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+      .sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime())
       .slice(0, 3)
 
     return nextSessions
@@ -30,7 +28,7 @@ const NextSessions: React.FC<NextSessionsProps> = () => {
 
   const formattedData = sessions.map((session) => ({
     ...session,
-    data: parseSessionDateString(session.data),
+    dataHora: parseSessionDateString(session.dataHora),
   }))
 
   return (
@@ -45,19 +43,16 @@ const NextSessions: React.FC<NextSessionsProps> = () => {
             >
               <div className='flex flex-col items-center justify-center rounded-lg bg-gray-50 px-3 py-2 text-center'>
                 <span className='text-sm font-bold text-gray-800'>
-                  {format(session.data, 'HH:mm')}
+                  {format(session.dataHora, 'HH:mm')}
                 </span>
                 <span className='text-xs text-gray-500'>
-                  {format(session.data, 'dd/MM')}
+                  {format(session.dataHora, 'dd/MM')}
                 </span>
               </div>
               <div>
                 <h4 className='font-bold text-gray-800'>
-                  {session.crianca.nome}
+                  {criancas?.items.find((child) => child.id === session.criancaId)?.nome ?? `Criança #${session.criancaId}`}
                 </h4>
-                <p className='text-xs text-gray-500'>
-                  {session.profissional.nome}
-                </p>
                 <span className='mt-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
                   {TipoSessao[session.tipo]}
                 </span>

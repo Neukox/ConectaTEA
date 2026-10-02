@@ -1,40 +1,46 @@
 import { api } from '~/api/apiClient'
-import type { ProgressoFilters } from '../types'
+import type {
+  DistribuicaoPorCategoriaData,
+  ProgressoCriancaData,
+  ProgressoFilters,
+  ProgressoRecente,
+  ProgressoStats,
+} from '../types'
 
-export async function getProgressoResumo() {
-  const response = await api.get('/progresso/resumo')
+export async function getProgressoResumo(filtros?: ProgressoFilters) {
+  const response = await api.get<ProgressoStats>('/progresso/resumo', {
+    params: { criancaId: filtros?.criancaId },
+  })
   return response.data
 }
 
-// Mock service to get evolução por categoria
 export async function getEvolucaoPorCategoria(filtros?: ProgressoFilters) {
-  const response = await api.get('/progresso/evolucao-categoria', {
+  const response = await api.get<DistribuicaoPorCategoriaData>('/progresso/evolucao-categoria', {
     params: filtros,
   })
 
   return response.data
 }
 
-// Mock service to get distribuição por categoria
 export async function getDistribuicaoPorCategoria(filtros?: ProgressoFilters) {
-  const response = await api.get('/progresso/distribuicao-categoria', {
+  const response = await api.get<DistribuicaoPorCategoriaData>('/progresso/distribuicao-categoria', {
     params: filtros,
   })
 
   return response.data
 }
 
-// Mock service to get progresso por criança
 export async function getProgressoPorCrianca(filtros?: ProgressoFilters) {
-  const response = await api.get('/progresso/crianca', {
+  const response = await api.get<ProgressoCriancaData[]>('/progresso/crianca', {
     params: filtros,
   })
 
   return response.data
 }
 
-// Mock service to get atualizações recentes
-export async function getAtualizacoesRecentes() {
-  const response = await api.get('/progresso/recentes')
+export async function getAtualizacoesRecentes(filtros?: ProgressoFilters) {
+  const response = await api.get<ProgressoRecente[]>('/progresso/recentes', {
+    params: filtros,
+  })
   return response.data
 }

@@ -1,5 +1,6 @@
-import { Periodo } from '~/api/types'
 import type { UpdateSessaoData } from '../schemas/update-sessao.schema'
+
+export type PeriodoSessao = 'TODOS' | 'HOJE' | 'SEMANA' | 'MES'
 
 export type TipoSessao =
   | 'TERAPIA_INDIVIDUAL'
@@ -15,37 +16,29 @@ export type StatusSessao =
   | 'CANCELADA'
 
 export interface SessoesSummary {
-  sessoes_hoje: number
-  sessoes_concluidas: number
-  sessoes_esta_semana: number
-  sessoes_pendentes: number
+  sessoesHoje: number
+  sessoesConcluidas: number
+  sessoesEstaSemana: number
+  sessoesPendentes: number
 }
 
 export interface SessoesFilters {
   criancaId?: number
   status?: StatusSessao
   tipo?: TipoSessao
-  periodo?: Periodo
+  periodo?: PeriodoSessao
   search?: string
 }
 
 export interface Sessao {
   id: number
-  descricao: string
-  data: string
+  descricao?: string | null
+  dataHora: string
   duracao: number
   tipo: TipoSessao
   status: StatusSessao
   observacoes: string | null
-  crianca: {
-    id: number
-    nome: string
-  }
-  profissional_id: number
-  profissional: {
-    id: number
-    nome: string
-  }
+  criancaId: number
 }
 
 export type SessaoToEdit = UpdateSessaoData & {

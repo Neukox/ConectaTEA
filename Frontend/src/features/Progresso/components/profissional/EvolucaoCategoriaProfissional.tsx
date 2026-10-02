@@ -37,7 +37,7 @@ export function EvolucaoCategoriaProfissional() {
   }
 
   // Estado de sucesso - sem dados
-  if (!data || data.length === 0) {
+  if (!data || Object.keys(data).length === 0) {
     return (
       <NotFoundData
         className='h-100'
@@ -49,5 +49,5 @@ export function EvolucaoCategoriaProfissional() {
   }
 
   // Estado de sucesso - com dados
-  return <EvolucaoPorCategoria data={data} />
+  return <EvolucaoPorCategoria data={[{ ...data, periodo: 'Média' }]} />
 }

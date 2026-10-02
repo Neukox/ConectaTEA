@@ -9,6 +9,7 @@ import {
 } from '../../../api/protected/axiosCadastroCrianca'
 import { useNotificacoesContext } from '../../../api/barraNotificacao'
 import { PageLayout } from '~/components/layout'
+import { queryClient, QUERY_KEYS } from '~/api/query-client'
 
 export default function EditarCriancaCadastrada() {
   const { id } = useParams<{ id: string }>()
@@ -60,20 +61,11 @@ export default function EditarCriancaCadastrada() {
               | 'Prefiro não informar') || 'Outro',
           diagnostico: String(criancaData.diagnostico || ''),
           diagnosticoOutro: '',
-          nomeResponsavel: String(criancaData.responsavel?.nome || ''),
-          telefone: String(criancaData.responsavel?.telefone || ''),
-          email: String(criancaData.responsavel?.email || ''),
-          endereco: String(criancaData.responsavel?.endereco || ''),
-          parentesco:
-            (criancaData.parentesco as
-              | 'PAI'
-              | 'MAE'
-              | 'AVO'
-              | 'AVOA'
-              | 'TIO'
-              | 'TIA'
-              | 'TUTOR'
-              | 'OUTRO') || 'OUTRO',
+          nomeResponsavel: '',
+          telefone: '',
+          email: '',
+          endereco: '',
+          parentesco: 'OUTRO' as const,
           observacoes: String(criancaData.observacoes || ''),
         }
 
@@ -107,17 +99,6 @@ export default function EditarCriancaCadastrada() {
     }))
   }
 
-  // Função para atualizar dados aninhados do responsável
-  const updateResponsavelData = (
-    field: keyof CadastroCriancaFormData,
-    value: string,
-  ) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [field]: value,
-    }))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -142,17 +123,11 @@ export default function EditarCriancaCadastrada() {
             ? formData.diagnosticoOutro
             : formData.diagnostico,
         observacoes: formData.observacoes,
-        parentesco: formData.parentesco,
-        responsavel: {
-          nome: formData.nomeResponsavel,
-          telefone: formData.telefone,
-          email: formData.email,
-          endereco: formData.endereco,
-        },
       }
 
       // Atualizar criança usando a API real
       await atualizarCrianca(parseInt(id), updateData)
+      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] })
 
       notificarSucesso(
         'Dados atualizados!',
@@ -356,92 +331,6 @@ export default function EditarCriancaCadastrada() {
                     value={formData.diagnostico}
                     onChange={(e) =>
                       updateFormData('diagnostico', e.target.value)
-                    }
-                    className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Informações do Responsável */}
-            <div className='mb-8'>
-              <h3 className='mb-6 text-lg font-semibold text-gray-900'>
-                Informações do Responsável
-              </h3>
-              <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                <div>
-                  <label className='mb-2 block text-sm font-medium text-gray-700'>
-                    Nome do Responsável <span className='text-red-500'>*</span>
-                  </label>
-                  <input
-                    type='text'
-                    required
-                    value={formData.nomeResponsavel}
-                    onChange={(e) =>
-                      updateResponsavelData('nomeResponsavel', e.target.value)
-                    }
-                    className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  />
-                </div>
-
-                <div>
-                  <label className='mb-2 block text-sm font-medium text-gray-700'>
-                    Parentesco <span className='text-red-500'>*</span>
-                  </label>
-                  <select
-                    required
-                    value={formData.parentesco}
-                    onChange={(e) =>
-                      updateResponsavelData(
-                        'parentesco',
-                        e.target.value as
-                          | 'PAI'
-                          | 'MAE'
-                          | 'AVO'
-                          | 'AVOA'
-                          | 'TIO'
-                          | 'TIA'
-                          | 'TUTOR'
-                          | 'OUTRO',
-                      )
-                    }
-                    className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  >
-                    <option value='PAI'>Pai</option>
-                    <option value='MAE'>Mãe</option>
-                    <option value='AVO'>Avô</option>
-                    <option value='AVOA'>Avó</option>
-                    <option value='TIO'>Tio</option>
-                    <option value='TIA'>Tia</option>
-                    <option value='TUTOR'>Tutor/Responsável Legal</option>
-                    <option value='OUTRO'>Outro</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className='mb-2 block text-sm font-medium text-gray-700'>
-                    Telefone <span className='text-red-500'>*</span>
-                  </label>
-                  <input
-                    type='tel'
-                    required
-                    value={formData.telefone}
-                    onChange={(e) =>
-                      updateResponsavelData('telefone', e.target.value)
-                    }
-                    className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  />
-                </div>
-
-                <div>
-                  <label className='mb-2 block text-sm font-medium text-gray-700'>
-                    E-mail
-                  </label>
-                  <input
-                    type='email'
-                    value={formData.email}
-                    onChange={(e) =>
-                      updateResponsavelData('email', e.target.value)
                     }
                     className='w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   />

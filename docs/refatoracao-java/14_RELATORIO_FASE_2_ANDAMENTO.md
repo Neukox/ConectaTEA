@@ -28,7 +28,7 @@ Atualização: 2026-10-01. Este documento substitui as afirmações de CI penden
 | 2.10 Conexões | Request/resposta canônicos, filtros, validação e unicidade. | MockMvc e corrida concorrente AB/BA no PostgreSQL. |
 | 2.11 Dashboard | Controller implementado com DTOs e indicadores; profissional usa conexões aceitas na métrica “profissionais ativos”; dashboard responsável limita dados às crianças vinculadas. | Testes de comportamento da controller e validação dos indicadores com a UI. Agregações em memória ficam como risco técnico futuro. |
 | 2.12 Auditoria/histórico | Implementado com Flyway V2, auditoria segura e histórico append-only. | Testes específicos serão escritos manualmente; revisão operacional de retenção permanece. |
-| 2.13 Frontend | Não migrado nesta execução. | Corrigir rotas, nomes, envelopes, datas, CSRF/cliente HTTP e validar lint/build. |
+| 2.13 Frontend | Migrado ao contrato Java; validações locais aprovadas. | Homologar o fluxo E2E React/Java e registrar a evidência final de CI. |
 | 2.14 E2E/cobertura | Não homologado. | Completar cobertura por controller e fluxo de ponta a ponta profissional/responsável. |
 | 2.15 Documentação final | Contrato iniciado e consolidado nesta execução; status atualizado. | Plano documental de migração de dados e relatório final somente quando critérios estiverem provados. |
 
@@ -54,3 +54,11 @@ O teste base `PostgresIntegrationTest` usa `@Testcontainers` com container está
 8. Revisar segredos, rate limit, threat model, pentest e consentimento com revisão jurídica antes de produção.
 
 Não fazer nesta fase documental: migrar frontend, iniciar auditoria, adicionar testes, remover NestJS, executar migração real, alterar branch de backup ou fazer merge na `main`.
+
+## Execução da Fase 2.13 — 2026-10-02
+
+O frontend React existente foi preservado e sua camada de integração foi migrada para o contrato Java. Foram removidos rotas NestJS antigas dos módulos já migrados, envelopes e campos snake_case, clientes HTTP duplicados, mocks funcionais do vínculo e estruturas fictícias de crianças, progresso e sessões. Autenticação usa cookie HttpOnly, /auth/me e CSRF pelo apiClient.
+
+Foram alinhados profissionais/usuários, crianças e tokens, confirmação de vínculo, metas, progresso, sessões, conexões, dashboard profissional e um dashboard próprio do responsável. Recursos profissionais acessórios sem contrato Java continuam conscientemente no NestJS e não são enviados a /profissionais/me.
+
+Evidências locais: instalação reprodutível com npm ci; ESLint com zero erros e cinco avisos preexistentes de Fast Refresh; TypeScript/Vite build aprovado; Maven verify aprovado. Não houve migração real de banco. A homologação continua pendente porque os fluxos não foram executados de ponta a ponta contra banco/backend local e o CI do SHA final ainda precisa ser registrado após o push.

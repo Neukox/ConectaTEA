@@ -24,15 +24,12 @@ export interface Meta {
   id: number
   descricao: string
   status: StatusMeta
-  profissional_id: number
   titulo: string
   categoria: CategoriaMeta
   prioridade: PrioridadeMeta
-  crianca_id: number
-  data_inicio: Date
-  data_fim: Date
-  created_at: Date
-  updated_at: Date
+  criancaId: number
+  dataInicio: string
+  dataFim: string
 }
 
 export const PrioridadeMeta = {
@@ -57,13 +54,7 @@ export const CategoriaMeta = {
   MOTORA: 'Motora',
 } satisfies Record<CategoriaMeta, string>
 
-export interface MetasInfo extends Meta {
-  crianca: {
-    id: number
-    nome: string
-  }
-  updates: number[]
-}
+export type MetasInfo = Meta
 
 export interface MetaToEdit extends UpdateMetaData {
   id: number
@@ -75,25 +66,4 @@ export interface MetaToUpdateProgress {
   progresso: number
 }
 
-export interface MetaDetails {
-  id: number
-  titulo: string
-  descricao: string
-  categoria: CategoriaMeta
-  prioridade: PrioridadeMeta
-  status: StatusMeta
-  dataInicio: Date
-  dataFim: Date
-  crianca: {
-    id: number
-    nome: string
-  }
-  profissional: {
-    id: number
-    name: string
-  }
-  progresso: {
-    atual: number
-    data: Date
-  }
-}
+export type MetaDetails = Meta

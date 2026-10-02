@@ -1,4 +1,3 @@
-import type { Periodo } from '~/api/types'
 import { CategoriaMeta } from '~/features/Metas/types'
 
 export interface EvolucaoPorCategoriaData
@@ -15,28 +14,23 @@ export interface ProgressoCriancaData {
 
 export interface ProgressoRecente {
   id: number
-  data: Date
+  data: string
   descricao: string
   diferenca: number
-  progresso_atual: number
-  meta: {
-    id: number
-    titulo: string
-  }
-  crianca: string
-  profissional: {
-    titulo: string
-    nome: string
-  }
+  progressoAtual: number
+  metaId: number
+  metaTitulo: string
+  criancaId: number
 }
 
 export interface ProgressoStats {
-  media_progresso: number
-  metas_ativas: number
-  metas_concluidas: number
-  criancas_ativas: number
+  mediaProgresso: number
+  metasAtivas: number
+  metasConcluidas: number
+  criancasAtivas: number
 }
 
 export interface ProgressoFilters {
-  periodo?: Periodo
+  criancaId?: number
+  periodo?: 'SEMESTRAL' | 'ANUAL'
 }

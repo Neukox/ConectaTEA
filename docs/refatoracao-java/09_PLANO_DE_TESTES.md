@@ -20,3 +20,13 @@ Infra: Compose config/build e healthcheck.
 ## Pendências manuais após esta execução
 
 Sem gerar nova bateria automática nesta fase, devem ser escritos posteriormente testes de auditoria (sanitização e falha secundária), histórico transacional, rate limit/429, controllers de Progresso, Sessões, Conexões e Dashboard, IDOR por módulo, corrida AB/BA de conexões e E2E profissional/responsável. O CI deve continuar executando Flyway V1+V2 e Hibernate validate no PostgreSQL Testcontainers.
+
+## Evidência da Fase 2.13 — frontend
+
+- npm ci: aprovado.
+- npm run lint: aprovado com zero erros; cinco avisos preexistentes de Fast Refresh em arquivos não alterados.
+- npm run build (tsc -b + Vite): aprovado.
+- mvn -B verify: aprovado, preservando a suíte Java.
+- Auditoria estática: cliente Axios único, contratos camelCase, datas YYYY-MM-DD/ISO-8601 e ausência das rotas legadas dos módulos migrados.
+
+Ainda é obrigatório homologar em ambiente integrado: registro/login/me/logout, perfis, CRUD/arquivamento de criança, token/QR, preview/consentimento, metas, progresso, sessões, conexões e dashboards de ambas as roles. A indisponibilidade de uma infraestrutura local completa não deve ser confundida com aprovação E2E.

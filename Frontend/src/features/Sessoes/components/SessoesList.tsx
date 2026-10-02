@@ -18,7 +18,7 @@ export function SessoesList({ sessoes }: SessoesListProps) {
   useEffect(() => {
     const possibleDates = sessoes
       .map((s) => {
-        const date = parseSessionDateString(s.data)
+        const date = parseSessionDateString(s.dataHora)
         return new Date(date.getFullYear(), date.getMonth(), date.getDate())
       })
       .sort((a, b) => a.getTime() - b.getTime())
@@ -45,7 +45,7 @@ export function SessoesList({ sessoes }: SessoesListProps) {
     if (!selectedDate) return []
 
     return sessoes.filter((s) => {
-      const sessionDate = parseSessionDateString(s.data)
+      const sessionDate = parseSessionDateString(s.dataHora)
       const sessionDateOnly = new Date(
         sessionDate.getFullYear(),
         sessionDate.getMonth(),

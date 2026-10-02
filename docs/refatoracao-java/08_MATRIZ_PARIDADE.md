@@ -30,3 +30,15 @@ Critérios de mudança de status:
 - **testado:** testes automatizados relevantes executados no banco-alvo;
 - **homologado:** frontend integrado e fluxo E2E validado;
 - **parcial:** qualquer requisito do módulo ainda está pendente.
+
+## Atualização da paridade frontend — Fase 2.13
+
+| Área | Paridade React/Java | Evidência | Limite |
+|---|---|---|---|
+| Auth e segurança HTTP | implementada | cookie HttpOnly, /auth/me, cliente único e XSRF | E2E pendente |
+| Usuários/profissionais | implementada no contrato Java | /users/me, /profissionais/me e diretório canônico | acessórios de perfil seguem no NestJS |
+| Crianças/tokens/vínculos | implementada | DTOs canônicos, QR/token, preview, consentimento e listagem real | homologação com câmera/backend pendente |
+| Metas/progresso/sessões | implementada | camelCase, datas ISO, filtros e summaries Java | E2E pendente |
+| Conexões/dashboards | implementada | rotas diretas e dashboards próprios por role | E2E pendente |
+
+O status não é “homologado”: lint/build/verify comprovam consistência estática e testes backend, mas não substituem o fluxo integrado profissional–responsável.

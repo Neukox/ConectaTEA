@@ -18,8 +18,7 @@ export default function Login() {
     e.preventDefault();
     try {
       const data = await login(email, senha);
-      localStorage.setItem("user", JSON.stringify(data.user)); // salva os dados do usuário
-      setUser(data.user as Parameters<typeof setUser>[0]);
+      setUser(data.user)
       
       notificarSucesso(
         'Login realizado!',

@@ -7,7 +7,7 @@ import type { ResponseError } from '~/api/types'
 
 export default function useProgressosRecentes() {
   return useQuery<ProgressoRecente[], AxiosError<ResponseError>>({
-    queryFn: getAtualizacoesRecentes,
+    queryFn: () => getAtualizacoesRecentes(),
     queryKey: [QUERY_KEYS.PROGRESSOS_RECENTES],
     staleTime: 1 * 60 * 1000, // 1 minuto
   })

@@ -10,17 +10,13 @@ import {
 import { Badge } from '~/components/ui/badge'
 import { OutlineButton } from './OutlineButton'
 import { ProgressBar } from '~/components/common/ProgressBar'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { useMetasModal } from '../hooks/useMetasModal'
+import useCriancas from '~/features/Criancas/hooks/useCriancas'
 
 interface MetaCardProps {
   meta: MetasInfo
 }
-
-// Função para gerar URL de avatar baseada no nome
-// TODO: substituir por dados reais no backend quando for implementado. Por enquanto, usamos um gerador de avatares.
-const buildAvatarUrl = (nome: string) =>
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=random`
 
 export function MetaCard({ meta }: MetaCardProps) {
   const navigate = useNavigate()
@@ -32,18 +28,10 @@ export function MetaCard({ meta }: MetaCardProps) {
   else if (meta.prioridade === 'MEDIA') prioridadeTone = 'warning'
   else prioridadeTone = 'success'
 
-  const dataInicio = format(meta.data_inicio, 'dd/MM/yyyy')
-  const dataFim = format(meta.data_fim, 'dd/MM/yyyy')
-
-  const avatarUrl = buildAvatarUrl(meta.crianca.nome)
-
-  const progressUpdates: string[] = meta.updates.map((value) => {
-    if (value < 0) {
-      return `-${value}%`
-    }
-
-    return `+${value}%`
-  })
+  const { data: criancas } = useCriancas()
+  const nomeCrianca = criancas?.items.find(({ id }) => id === meta.criancaId)?.nome
+  const dataInicio = format(parseISO(meta.dataInicio), 'dd/MM/yyyy')
+  const dataFim = format(parseISO(meta.dataFim), 'dd/MM/yyyy')
 
   const onEdit = (meta: Meta) => {
     openAtualizarMetaModal({
@@ -51,8 +39,8 @@ export function MetaCard({ meta }: MetaCardProps) {
       titulo: meta.titulo,
       categoria: meta.categoria,
       prioridade: meta.prioridade,
-      dataInicio: format(meta.data_inicio, 'yyyy-MM-dd'),
-      dataFim: format(meta.data_fim, 'yyyy-MM-dd'),
+      dataInicio: meta.dataInicio,
+      dataFim: meta.dataFim,
       descricao: meta.descricao || '',
     })
   }
@@ -69,17 +57,15 @@ export function MetaCard({ meta }: MetaCardProps) {
     <div className='rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md'>
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div className='flex items-center gap-4'>
-          <img
-            src={avatarUrl}
-            alt={meta.crianca.nome}
-            className='h-12 w-12 rounded-full border'
-          />
           <div>
             <div className='text-lg font-semibold text-green-800'>
               {meta.titulo}
             </div>
             <div className='text-xs text-gray-500'>
               {CategoriaMeta[meta.categoria]} • {StatusMeta[meta.status]}
+            </div>
+            <div className='text-xs text-gray-500'>
+              {nomeCrianca ?? `Criança #${meta.criancaId}`}
             </div>
             <div className='mt-1 flex items-center gap-2'>
               <span className='text-xs text-gray-400'>
@@ -118,16 +104,6 @@ export function MetaCard({ meta }: MetaCardProps) {
         </ProgressBar>
       </div>
       <div className='mt-4 flex flex-wrap items-center gap-2'>
-        {progressUpdates.map((update, index) => (
-          <Badge
-            key={index}
-            variant='outline'
-            tone={update.startsWith('+') ? 'success' : 'danger'}
-            className='font-medium'
-          >
-            {update}
-          </Badge>
-        ))}
         <Badge
           variant='outline'
           tone={prioridadeTone}

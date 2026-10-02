@@ -4,7 +4,6 @@ import {
   FileText,
   Target,
   TrendingUp,
-  User,
 } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PageLayout } from '~/components/layout/PageLayout'
@@ -17,15 +16,15 @@ import {
   PrioridadeMeta,
   StatusMeta,
 } from '~/features/Metas/types'
-import { FaUserDoctor } from 'react-icons/fa6'
 import useDetalhesMeta from '~/features/Metas/hooks/useDetalhesMeta'
-import { format, formatDistance } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { format } from 'date-fns'
 import NotFoundData from '~/components/common/NotFoundData'
 import VerDetalhesMetaSkeleton from './VerDetalhesMetaSkeleton'
 import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
 import { useEffect } from 'react'
+import useCriancas from '~/features/Criancas/hooks/useCriancas'
+import { parseISO } from 'date-fns'
 
 export default function VerDetalhesMeta() {
   const { id } = useParams()
@@ -35,12 +34,8 @@ export default function VerDetalhesMeta() {
   const metaId = Number(id)
   const isValidId = !isNaN(metaId) && metaId > 0
 
-  console.log('metaId:', metaId)
-  console.log('metaId is not nan:', !isNaN(metaId))
-  console.log('metaId > 0 :', metaId > 0)
-  console.log('isValidId:', isValidId)
-
   const { data: meta, isLoading, isError, error } = useDetalhesMeta(metaId)
+  const { data: criancas } = useCriancas()
 
   const { openAtualizarProgressoModal } = useMetasModal()
 
@@ -74,7 +69,7 @@ export default function VerDetalhesMeta() {
     }
 
     return () => clearTimeout(timer)
-  }, [isError, isValidId])
+  }, [error?.response?.data?.message, isError, isValidId, navigate, notificarErro])
 
   // Estado de carregamento
   if (isLoading) {
@@ -149,7 +144,7 @@ export default function VerDetalhesMeta() {
                 openAtualizarProgressoModal({
                   id: meta.id,
                   titulo: meta.titulo,
-                  progresso: meta.progresso.atual,
+                  progresso: meta.progresso,
                 })
               }
             >
@@ -181,17 +176,10 @@ export default function VerDetalhesMeta() {
                   <div className='mb-2 flex items-center justify-between'>
                     <span className='font-medium text-gray-700'>Conclusão</span>
                     <span className='font-bold text-green-700'>
-                      {meta.progresso.atual}%
+                      {meta.progresso}%
                     </span>
                   </div>
-                  <ProgressBar value={meta.progresso.atual} />
-                  <p className='mt-4 text-sm text-gray-500'>
-                    Última atualização:{' '}
-                    {formatDistance(new Date(meta.progresso.data), new Date(), {
-                      addSuffix: true,
-                      locale: ptBR,
-                    })}
-                  </p>
+                  <ProgressBar value={meta.progresso} />
                 </div>
               </section>
             </div>
@@ -211,42 +199,23 @@ export default function VerDetalhesMeta() {
                         Período
                       </p>
                       <p className='text-sm text-gray-600'>
-                        {format(new Date(meta.dataInicio), 'dd/MM/yyyy')} -{' '}
-                        {format(new Date(meta.dataFim), 'dd/MM/yyyy')}
+                        {format(parseISO(meta.dataInicio), 'dd/MM/yyyy')} -{' '}
+                        {format(parseISO(meta.dataFim), 'dd/MM/yyyy')}
                       </p>
                     </div>
                   </div>
 
                   <div className='flex items-start gap-3'>
-                    <User className='mt-0.5 h-5 w-5 text-gray-400' />
                     <div>
                       <p className='text-sm font-medium text-gray-900'>
                         Criança
                       </p>
-                      <div className='mt-1 flex items-center gap-2'>
-                        <img
-                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(meta.crianca.nome)}&background=random`}
-                          alt={meta.crianca.nome}
-                          className='h-6 w-6 rounded-full'
-                        />
-                        <p className='text-sm text-gray-600'>
-                          {meta.crianca.nome}
-                        </p>
-                      </div>
+                      <p className='text-sm text-gray-600'>
+                        {criancas?.items.find(({ id }) => id === meta.criancaId)?.nome ?? `Criança #${meta.criancaId}`}
+                      </p>
                     </div>
                   </div>
 
-                  <div className='flex items-start gap-3'>
-                    <FaUserDoctor className='mt-0.5 h-5 w-5 text-gray-400' />
-                    <div>
-                      <p className='text-sm font-medium text-gray-900'>
-                        Profissional
-                      </p>
-                      <p className='text-sm text-gray-600'>
-                        {meta.profissional.name}
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
 

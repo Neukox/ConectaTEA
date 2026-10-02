@@ -1,6 +1,7 @@
 import { api } from '../apiClient'
+import type { CriancaListagem } from './axiosCadastroCrianca'
 
-interface ValidarCodigoResponse {
+export interface ValidarCodigoResponse {
   id: number
   nome: string
   dataNascimento: string
@@ -46,17 +47,16 @@ export const vinculacaoAPI = {
    * Obtém os vínculos do responsável
    * @returns Lista de crianças vinculadas
    */
-  async obterVinculos() {
-    const response = await api.get('/vinculos/me')
+  async obterVinculos(): Promise<CriancaListagem[]> {
+    const response = await api.get<CriancaListagem[]>('/vinculos/me')
     return response.data
   },
 
   /**
    * Desvincula uma criança
-   * @param crianca_id - ID da criança a desvincular
+   * @param criancaId - ID da criança a desvincular
    */
-  async desvincularCrianca(crianca_id: number) {
-    const response = await api.delete(`/vinculos/criancas/${crianca_id}`)
-    return response.data
+  async desvincularCrianca(criancaId: number): Promise<void> {
+    await api.delete(`/vinculos/criancas/${criancaId}`)
   },
 }

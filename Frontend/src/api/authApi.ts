@@ -2,40 +2,35 @@
 // ATUALIZADO PARA TRABALHAR COM COOKIES SEGUROS
 
 // authApi.ts
-import { api } from "./apiClient";
-import { AxiosError } from "axios";
+import { api } from './apiClient'
+import { getApiErrorMessage } from './errors'
+
+export type UserRole = 'PROFISSIONAL' | 'RESPONSAVEL'
+
+export interface AuthUser {
+  id: number
+  name: string
+  email: string
+  telefone?: string | null
+  endereco?: string | null
+  tipo: UserRole
+}
 
 // Tipagem do retorno do login (sem token, pois agora está no cookie)
 interface AuthResponse {
-  message: string;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    tipo: string;
-  };
+  message: string
+  user: AuthUser
 }
 
 // Tipagem do retorno do registro
 interface RegisterResponse {
-  message: string;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    tipo: string;
-  };
+  message: string
+  user: AuthUser
 }
 
 // Tipagem do retorno do logout
 interface LogoutResponse {
-  message: string;
-}
-
-// Tipagem do erro do servidor
-interface ServerError {
-  message: string;
-  statusCode?: number;
+  message: string
 }
 
 export const login = async (
@@ -49,32 +44,7 @@ export const login = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Erro ao fazer login:", error);
-
-    if (error instanceof AxiosError) {
-      const status = error.response?.status;
-      const message =
-        (error.response?.data as ServerError)?.message || "Erro desconhecido";
-
-      switch (status) {
-        case 401:
-          throw new Error("Email ou senha incorretos.");
-        case 400:
-          throw new Error(
-            message || "Dados inválidos. Verifique os campos e tente novamente."
-          );
-        case 500:
-          throw new Error(
-            "Erro interno do servidor. Tente novamente mais tarde."
-          );
-        default:
-          throw new Error(`Erro ${status}: ${message}`);
-      }
-    }
-
-    throw new Error(
-      "Erro de conexão. Verifique sua internet e tente novamente."
-    );
+    throw new Error(getApiErrorMessage(error, 'Email ou senha incorretos.'))
   }
 };
 
@@ -82,7 +52,7 @@ export const register = async (
   nome: string,
   email: string,
   senha: string,
-  tipoUsuario: string
+  tipoUsuario: UserRole
 ): Promise<RegisterResponse> => {
   try {
     // Validações básicas no frontend
@@ -94,8 +64,8 @@ export const register = async (
       throw new Error("Email é obrigatório");
     }
 
-    if (!senha || senha.length < 6) {
-      throw new Error("Senha deve ter pelo menos 6 caracteres");
+    if (!senha || senha.length < 8) {
+      throw new Error('Senha deve ter pelo menos 8 caracteres')
     }
 
     if (!tipoUsuario?.trim()) {
@@ -112,46 +82,12 @@ export const register = async (
       name: nome.trim(),
       email: email.trim().toLowerCase(),
       password: senha,
-      tipo: tipoUsuario.toUpperCase(),
+      tipo: tipoUsuario,
     });
 
     return response.data;
   } catch (error) {
-    console.error("Erro ao registrar usuário:", error);
-
-    // Se é um erro que já lançamos com validação
-    if (error instanceof Error && !error.message.includes("Request failed")) {
-      throw error;
-    }
-
-    // Tratamento de erros do servidor
-    if (error instanceof AxiosError) {
-      const status = error.response?.status;
-      const message =
-        (error.response?.data as ServerError)?.message || "Erro desconhecido";
-
-      switch (status) {
-        case 409:
-          throw new Error(
-            "Este email já está registrado. Tente fazer login ou use outro email."
-          );
-        case 400:
-          throw new Error(
-            message || "Dados inválidos. Verifique os campos e tente novamente."
-          );
-        case 500:
-          throw new Error(
-            "Erro interno do servidor. Tente novamente mais tarde."
-          );
-        default:
-          throw new Error(`Erro ${status}: ${message}`);
-      }
-    }
-
-    // Erro de rede ou outro
-    throw new Error(
-      "Erro de conexão. Verifique sua internet e tente novamente."
-    );
+    throw new Error(getApiErrorMessage(error, 'Não foi possível criar a conta.'))
   }
 };
 
@@ -159,38 +95,18 @@ export const logout = async (): Promise<LogoutResponse> => {
   try {
     const response = await api.post<LogoutResponse>("/auth/logout");
 
-    // Remover dados do localStorage se existirem (compatibilidade)
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    console.log("Logout realizado com sucesso");
-    return response.data;
+    return response.data
   } catch (error) {
-    console.error("Erro ao fazer logout:", error);
-
-    // Mesmo com erro na API, limpar localStorage local
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    if (error instanceof AxiosError) {
-      const status = error.response?.status;
-      const message =
-        (error.response?.data as ServerError)?.message || "Erro desconhecido";
-      throw new Error(`Erro ${status}: ${message}`);
-    }
-
-    throw new Error("Erro de conexão durante logout.");
+    throw new Error(getApiErrorMessage(error, 'Erro de conexão durante logout.'))
   }
 };
 
 // Nova função para verificar se o usuário está autenticado e obter seus dados
-export const checkAuth = async (): Promise<AuthResponse["user"] | null> => {
+export const checkAuth = async (): Promise<AuthUser | null> => {
   try {
-    // Faz uma requisição para um endpoint protegido para verificar se o cookie é válido
-    const response = await api.get("/auth/me"); // Precisaremos criar este endpoint
-    return response.data.user;
+    const response = await api.get<AuthResponse>('/auth/me')
+    return response.data.user
   } catch {
-    console.log("Usuário não autenticado");
-    return null;
+    return null
   }
-};
+}

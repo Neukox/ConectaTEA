@@ -1,12 +1,18 @@
-import { api } from '~/api/httpClient'
+import { api } from '~/api/apiClient'
 import type {
   DadosCriancasDashboard,
   DadosDashboard,
   DadosMetasDashboard,
+  DadosDashboardResponsavel,
 } from '../types'
 
 export async function getDadosDashboardProfissional(): Promise<DadosDashboard> {
   const response = await api.get<DadosDashboard>('/dashboard/profissional')
+  return response.data
+}
+
+export async function getDadosDashboardResponsavel(): Promise<DadosDashboardResponsavel> {
+  const response = await api.get<DadosDashboardResponsavel>('/dashboard/responsavel')
   return response.data
 }
 
