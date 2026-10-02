@@ -70,6 +70,7 @@ public class SecurityConfig {
                 .cors(cors -> { })
                 .csrf(configurer -> configurer
                         .csrfTokenRepository(csrf)
+                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                         .ignoringRequestMatchers("/auth/login", "/users/register"))
                 .sessionManagement(configurer -> configurer
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
