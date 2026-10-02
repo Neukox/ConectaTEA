@@ -72,3 +72,18 @@ Na estabilização funcional foram corrigidos o retorno assíncrono da atualiza�
 Validação local final: `npm ci` aprovado; lint com zero erros e cinco warnings históricos; build TypeScript/Vite aprovado com warning de tamanho de chunk; Maven verify aprovado com 33 testes, zero falhas/erros e cinco Testcontainers ignorados sem Docker. O GitHub Actions run `37031485540`, referente ao commit funcional `39a8248`, concluiu `frontend` e `backend-java` com sucesso.
 
 `main` e `backup/pre-refactor-java-20261001-1408` continuam no baseline `13df172543a633ea0e8c11b054533d0a0d71f4d7`. O NestJS foi preservado e nenhuma migração real foi executada. A única pendência de homologação do frontend é a fase E2E real React/Java/PostgreSQL, que não faz parte desta execução.
+
+
+## Homologação E2E automatizada — encerramento da Fase 2
+
+A fase E2E foi implementada com Playwright e integrada ao GitHub Actions. O job sobe PostgreSQL 16 efêmero, backend Spring Boot e frontend Vite, espera os healthchecks e executa Chromium headless contra a aplicação real.
+
+Durante a primeira execução o fluxo identificou uma falha real de integração CSRF: login e leitura funcionavam, mas a criação de criança retornava 403. A correção adotou o fluxo de SPA com `/auth/csrf` e `SpaCsrfTokenRequestHandler`, mantendo CSRF ativo. O teste MockMvc existente foi ajustado para representar cookie + header reais.
+
+Na execução seguinte a API já retornou 201 ao cadastrar a criança, mas a tela não atualizava a listagem porque o estado local da página não era recarregado pelo callback do diálogo. O frontend foi corrigido para executar `fetchCriancas()` após o cadastro.
+
+Resultado final: GitHub Actions run `37037277203`, commit `f264d8320693ec376affd67d63aba6b129f2783f`, com `frontend`, `backend-java` e `e2e` em `success`.
+
+O E2E cobre cadastro/login das duas roles, dashboards corretos, criança, meta, progresso, sessão, token/QR, consentimento e vínculo, replay rejeitado, IDOR básico, conexão entre profissionais, indicadores e desvinculação. A cobertura manual detalhada de controllers, IDOR, auditoria, rate limit e concorrência AB/BA continua reservada à trilha pedagógica do desenvolvedor e não foi substituída pelo Playwright.
+
+Nenhuma migração real de dados foi executada. NestJS, `main` e a branch de backup permanecem preservados.
