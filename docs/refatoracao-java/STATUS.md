@@ -1,6 +1,6 @@
 # Status da Fase 2 — backend Java
 
-Atualizado em 2026-10-01. Esta página é o estado consolidado mais recente; as notas de risco abaixo permanecem ativas mesmo com CI verde.
+Atualizado em 2026-10-02. Esta página é o estado consolidado mais recente; as notas de risco abaixo permanecem ativas mesmo com CI verde.
 
 ## Snapshot verificável
 
@@ -28,9 +28,9 @@ Atualizado em 2026-10-01. Esta página é o estado consolidado mais recente; as 
 | 2.10 Conexões | implementado parcialmente | Rotas/DTOs canônicos implementados; MockMvc e corrida oposta AB/BA pendentes. |
 | 2.11 Dashboard | implementação concluída; não homologado | Métricas/DTOs profissionais e responsável implementados; teste dedicado e validação com UI pendentes. Agregações em memória são risco de evolução, não critério funcional já validado. |
 | 2.12 Auditoria/histórico | implementado; não homologado | AuditLog/repositório/serviço, eventos sensíveis e histórico append-only implementados com Flyway V2; testes específicos permanecem para a etapa manual. |
-| 2.13 Frontend | implementado; não homologado | React 19/Tailwind 4 preservados; clientes, DTOs, autenticação, vínculos, dashboards e módulos migrados ao contrato Java. Lint/build locais e verify Java aprovados; E2E React/Java permanece pendente. |
-| 2.14 E2E/cobertura | pendente | Fluxo profissional-responsável completo ainda não foi validado de ponta a ponta. |
-| 2.15 Documentação final | parcial | Contrato canônico sendo consolidado nesta execução; plano de migração de dados e resultado final ainda faltam. |
+| 2.13 Frontend | implementado e homologado no fluxo E2E | React 19/Tailwind 4 preservados; clientes, DTOs, autenticação, vínculos, dashboards e módulos migrados ao contrato Java. Lint/build locais e verify Java aprovados; E2E React/Java permanece pendente. |
+| 2.14 E2E/cobertura | homologado no fluxo automatizado principal | Playwright executa React/Vite -> Spring Boot/Security -> JPA -> PostgreSQL 16; run 37037277203 aprovado. Cobertura manual detalhada continua separada. |
+| 2.15 Documentação final | consolidada para a Fase 2 | Resultado final registrado após E2E verde; riscos de produção e testes manuais permanecem explicitamente separados. |
 
 ## Segurança e autorização
 
@@ -72,3 +72,19 @@ O backend está **estabilizado para migração do frontend**, mas a Fase 2 conti
 - `mvn -B verify` aprovado: 33 testes, zero falhas/erros e cinco testes Testcontainers ignorados localmente por Docker indisponível.
 - GitHub Actions run `37031485540` no commit funcional `39a8248`: jobs `frontend` e `backend-java` concluídos com sucesso.
 - O frontend está estabilizado para a próxima fase. A homologação E2E React/Java/PostgreSQL continua deliberadamente pendente.
+
+
+## Homologação E2E automatizada — 2026-10-02
+
+- Suíte Playwright adicionada em `E2E/`, executando Chromium headless contra frontend React real, backend Java real e PostgreSQL 16 efêmero.
+- Workflow CI passou a possuir três jobs: `frontend`, `backend-java` e `e2e`.
+- Durante a homologação o E2E encontrou duas falhas reais:
+  1. mutações do frontend recebiam 403 por incompatibilidade do tratamento CSRF de SPA; corrigido com bootstrap `/auth/csrf` e `SpaCsrfTokenRequestHandler`;
+  2. após cadastrar uma criança com sucesso, a listagem local não era recarregada; corrigido o callback de sucesso para refazer a consulta.
+- O teste existente de autenticação foi ajustado para validar o fluxo CSRF real por cookie + header, sem remover a proteção.
+- GitHub Actions run `37037277203` no commit `f264d8320693ec376affd67d63aba6b129f2783f`: `frontend: success`, `backend-java: success`, `e2e: success`.
+- O fluxo automatizado cobre cadastro/login por role, criança, meta, progresso, sessão, token/QR, consentimento/vínculo, replay, IDOR básico, conexão profissional, dashboards e desvinculação.
+- `main` e `backup/pre-refactor-java-20261001-1408` permanecem em `13df172543a633ea0e8c11b054533d0a0d71f4d7`.
+- NestJS continua preservado e nenhuma migração real de banco foi executada.
+
+A refatoração está tecnicamente homologada no escopo funcional automatizado da Fase 2. Isso não elimina as pendências de produção, revisão jurídica, threat model/pentest nem a trilha manual de testes reservada ao aprendizado.
