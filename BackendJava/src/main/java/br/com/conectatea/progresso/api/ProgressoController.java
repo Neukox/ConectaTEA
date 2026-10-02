@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/progresso")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Progresso")
 public class ProgressoController {
     private final MetaRepository metas;
     private final ProgressoRepository progress;

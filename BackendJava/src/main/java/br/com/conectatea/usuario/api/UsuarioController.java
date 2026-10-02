@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/users")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Usuários")
 public class UsuarioController {
     private final UsuarioRepository users;
     private final PasswordEncoder encoder;

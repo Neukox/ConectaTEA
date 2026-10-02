@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/dashboard")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Dashboards")
 public class DashboardController {
     private final ProfissionalRepository professionals;
     private final CriancaRepository children;

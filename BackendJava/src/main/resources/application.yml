@@ -20,7 +20,10 @@ spring:
   jackson:
     default-property-inclusion: non_null
 springdoc:
+  api-docs:
+    enabled: ${OPENAPI_ENABLED:true}
   swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:true}
     path: /docs
 management:
   endpoints:

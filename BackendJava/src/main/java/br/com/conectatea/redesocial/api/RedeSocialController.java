@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+@io.swagger.v3.oas.annotations.tags.Tag(name="Perfil Profissional")
 @RestController @RequestMapping("/profissionais/me/redes-sociais") @PreAuthorize("hasRole('PROFISSIONAL')")
 public class RedeSocialController {
     private final RedeSocialService service;

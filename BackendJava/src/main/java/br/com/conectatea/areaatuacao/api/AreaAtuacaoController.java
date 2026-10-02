@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Perfil Profissional")
 public class AreaAtuacaoController {
     private final AreaAtuacaoService service;
     public AreaAtuacaoController(AreaAtuacaoService service) { this.service = service; }

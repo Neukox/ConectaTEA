@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/conexoes")
 @PreAuthorize("hasRole('PROFISSIONAL')")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Conexões")
 public class ConexaoController {
     private final ConexaoRepository connections;
     private final ProfissionalRepository professionals;
