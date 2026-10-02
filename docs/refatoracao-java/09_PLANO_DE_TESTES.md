@@ -27,6 +27,7 @@ Sem gerar nova bateria automática nesta fase, devem ser escritos posteriormente
 - npm run lint: aprovado com zero erros; cinco avisos preexistentes de Fast Refresh em arquivos não alterados.
 - npm run build (tsc -b + Vite): aprovado.
 - mvn -B verify: aprovado, preservando a suíte Java.
+- GitHub Actions run 37000403678: jobs frontend e backend-java aprovados.
 - Auditoria estática: cliente Axios único, contratos camelCase, datas YYYY-MM-DD/ISO-8601 e ausência das rotas legadas dos módulos migrados.
 
 Ainda é obrigatório homologar em ambiente integrado: registro/login/me/logout, perfis, CRUD/arquivamento de criança, token/QR, preview/consentimento, metas, progresso, sessões, conexões e dashboards de ambas as roles. A indisponibilidade de uma infraestrutura local completa não deve ser confundida com aprovação E2E.

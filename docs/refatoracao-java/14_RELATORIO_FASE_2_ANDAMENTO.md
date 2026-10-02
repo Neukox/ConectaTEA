@@ -61,4 +61,4 @@ O frontend React existente foi preservado e sua camada de integração foi migra
 
 Foram alinhados profissionais/usuários, crianças e tokens, confirmação de vínculo, metas, progresso, sessões, conexões, dashboard profissional e um dashboard próprio do responsável. Recursos profissionais acessórios sem contrato Java continuam conscientemente no NestJS e não são enviados a /profissionais/me.
 
-Evidências locais: instalação reprodutível com npm ci; ESLint com zero erros e cinco avisos preexistentes de Fast Refresh; TypeScript/Vite build aprovado; Maven verify aprovado. Não houve migração real de banco. A homologação continua pendente porque os fluxos não foram executados de ponta a ponta contra banco/backend local e o CI do SHA final ainda precisa ser registrado após o push.
+Evidências: instalação reprodutível com npm ci; ESLint com zero erros e cinco avisos preexistentes de Fast Refresh; TypeScript/Vite build aprovado; Maven verify aprovado; GitHub Actions run 37000403678 com frontend e backend-java em success. Não houve migração real de banco. A homologação continua pendente porque os fluxos não foram executados de ponta a ponta contra banco/backend local.

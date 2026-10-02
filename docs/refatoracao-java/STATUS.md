@@ -59,5 +59,5 @@ O backend está **estabilizado para migração do frontend**, mas a Fase 2 conti
 - Auth usa cookie HttpOnly e restaura a sessão por /auth/me; registro exige senha mínima de 8 caracteres.
 - Profissionais, usuários, crianças, tokens/QR, vínculos, metas, progresso, sessões, conexões e dashboards usam rotas e JSON canônicos Java em camelCase.
 - O dashboard do responsável e a listagem/desvinculação de suas crianças agora são próprios; o fluxo simulado de vínculo foi substituído por preview e confirmação reais.
-- Validação local: npm run lint sem erros (5 avisos preexistentes de Fast Refresh em arquivos não alterados), npm run build aprovado e mvn -B verify aprovado. O CI do SHA final deve ser registrado após o push.
+- Validação local: npm run lint sem erros (5 avisos preexistentes de Fast Refresh em arquivos não alterados), npm run build aprovado e mvn -B verify aprovado. No GitHub Actions, o run 37000403678 aprovou os jobs frontend e backend-java.
 - Permanecem sem homologação: E2E com banco/backend em execução, leitura de QR em navegadores sem BarcodeDetector (entrada manual continua disponível) e recursos legados LocalAtendimento, RedeSocial, AreaAtuacao e AreaAtuacaoProfissional.
