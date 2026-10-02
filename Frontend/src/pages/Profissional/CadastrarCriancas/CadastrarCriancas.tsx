@@ -347,7 +347,10 @@ export default function CadastrarCriancas() {
       <CadastrarCriancaDialog
         open={showModal}
         onOpenChange={setShowModal}
-        onSuccess={() => setShowModal(false)}
+        onSuccess={() => {
+          setShowModal(false)
+          void fetchCriancas()
+        }}
       />
 
       {/* Modal com código de vínculo e QR code */}
