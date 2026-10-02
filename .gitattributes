@@ -1,0 +1,8 @@
+# O GitHub Linguist usa este repositório para destacar a implementação backend.
+# Frontend e testes E2E continuam versionados, mas não entram na porcentagem.
+/Frontend/** linguist-detectable=false
+/E2E/** linguist-detectable=false
+
+# Especificações e documentação não representam código executável do projeto.
+/docs/** linguist-documentation
+/*.md linguist-documentation
