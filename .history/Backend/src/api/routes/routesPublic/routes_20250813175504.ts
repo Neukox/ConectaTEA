@@ -1,2 +1,0 @@
-//Algoritmo de rotas publicas.
-

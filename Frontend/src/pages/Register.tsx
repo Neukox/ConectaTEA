@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { register } from "../api/authApi";
+import { register, type UserRole } from "../api/authApi";
 import { useNotificacoesContext } from "../api/barraNotificacao";
 
 export default function Cadastro() {
@@ -50,10 +50,10 @@ export default function Cadastro() {
       return;
     }
 
-    if (form.senha.length < 6) {
+    if (form.senha.length < 8) {
       notificarAlerta(
         "Senha muito curta",
-        "A senha deve ter pelo menos 6 caracteres.",
+        "A senha deve ter pelo menos 8 caracteres.",
         { duration: 4000 }
       );
       return;
@@ -83,7 +83,7 @@ export default function Cadastro() {
         form.nome,
         form.email,
         form.senha,
-        form.tipoUsuario
+        form.tipoUsuario.toUpperCase() as UserRole
       );
       notificarSucesso(
         "Conta criada!",
@@ -233,24 +233,7 @@ export default function Cadastro() {
         {/* Já tenho uma conta */}
         <button
           type="button"
-          style={{
-            width: "100%",
-            backgroundColor: "white",
-            color: "#374151",
-            padding: "12px",
-            borderRadius: "8px",
-            fontWeight: "600",
-            border: "1px solid #d1d5db",
-            cursor: "pointer",
-            transition: "background-color 0.2s",
-            marginTop: "16px",
-          }}
-          onMouseEnter={(e) =>
-            ((e.target as HTMLElement).style.backgroundColor = "#f9fafb")
-          }
-          onMouseLeave={(e) =>
-            ((e.target as HTMLElement).style.backgroundColor = "white")
-          }
+          className="mt-4 w-full rounded-lg border border-gray-300 bg-white p-3 font-semibold text-gray-700 transition hover:bg-gray-50"
           onClick={() => navigate("/login")}
         >
           Já tenho uma conta

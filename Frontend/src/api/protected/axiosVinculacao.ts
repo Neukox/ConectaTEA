@@ -1,25 +1,19 @@
 import { api } from '../apiClient'
+import type { CriancaListagem } from './axiosCadastroCrianca'
 
-interface ValidarCodigoResponse {
-  crianca_id: number
+export interface ValidarCodigoResponse {
+  id: number
   nome: string
-  data_nascimento: string
-  diagnostico: string
-  status: string
+  dataNascimento: string
+  genero?: string
 }
 
 interface ConfirmarVinculoRequest {
-  crianca_id: number
-  consentimento_aceito: boolean
+  codigo: string
+  consentimentoAceito: boolean
 }
 
-interface ConfirmarVinculoResponse {
-  id: number
-  crianca_id: number
-  responsavel_id: number
-  status: string
-  data_vinculo: string
-}
+type ConfirmarVinculoResponse = ValidarCodigoResponse
 
 export const vinculacaoAPI = {
   /**
@@ -29,7 +23,7 @@ export const vinculacaoAPI = {
    */
   async validarCodigo(codigo: string): Promise<ValidarCodigoResponse> {
     const response = await api.get<ValidarCodigoResponse>(
-      `/vinculacao/validar/${codigo}`,
+      `/vinculos/tokens/${encodeURIComponent(codigo)}/preview`,
     )
     return response.data
   },
@@ -43,7 +37,7 @@ export const vinculacaoAPI = {
     dados: ConfirmarVinculoRequest,
   ): Promise<ConfirmarVinculoResponse> {
     const response = await api.post<ConfirmarVinculoResponse>(
-      '/vinculacao/confirmar',
+      '/vinculos/confirmar',
       dados,
     )
     return response.data
@@ -53,17 +47,16 @@ export const vinculacaoAPI = {
    * Obtém os vínculos do responsável
    * @returns Lista de crianças vinculadas
    */
-  async obterVinculos() {
-    const response = await api.get('/vinculacao/meus-vinculos')
+  async obterVinculos(): Promise<CriancaListagem[]> {
+    const response = await api.get<CriancaListagem[]>('/vinculos/me')
     return response.data
   },
 
   /**
    * Desvincula uma criança
-   * @param crianca_id - ID da criança a desvincular
+   * @param criancaId - ID da criança a desvincular
    */
-  async desvincularCrianca(crianca_id: number) {
-    const response = await api.delete(`/vinculacao/crianca/${crianca_id}`)
-    return response.data
+  async desvincularCrianca(criancaId: number): Promise<void> {
+    await api.delete(`/vinculos/criancas/${criancaId}`)
   },
 }

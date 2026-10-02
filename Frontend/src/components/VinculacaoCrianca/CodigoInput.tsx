@@ -71,7 +71,7 @@ export default function CodigoInput({ onSubmit, loading }: CodigoInputProps) {
         <ul className="list-disc list-inside space-y-1">
           <li>O código é sensível a maiúsculas/minúsculas</li>
           <li>Verifique se copiou corretamente todos os caracteres</li>
-          <li>O código é válido por 30 dias a partir da geração</li>
+          <li>O código é válido por 7 dias a partir da geração</li>
         </ul>
       </div>
 

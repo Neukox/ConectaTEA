@@ -42,28 +42,28 @@ export const ResumoSessoes: React.FC = () => {
       <SummaryCard
         icon={IoTodayOutline}
         sub='Hoje'
-        value={data?.sessoes_hoje}
+        value={data?.sessoesHoje ?? 0}
         color='blue'
         iconColor='blue'
       />
       <SummaryCard
         icon={BsCalendar2Check}
         sub='Concluídas'
-        value={data?.sessoes_concluidas}
+        value={data?.sessoesConcluidas ?? 0}
         color='green'
         iconColor='green'
       />
       <SummaryCard
         icon={BsCalendar4Week}
         sub='Esta Semana'
-        value={data?.sessoes_esta_semana}
+        value={data?.sessoesEstaSemana ?? 0}
         color='violet'
         iconColor='violet'
       />
       <SummaryCard
         icon={LuCalendarClock}
         sub='Pendentes'
-        value={data?.sessoes_pendentes}
+        value={data?.sessoesPendentes ?? 0}
         color='orange'
         iconColor='orange'
       />

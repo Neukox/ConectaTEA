@@ -1,6 +1,4 @@
-import { cn } from '~/lib/utils'
 import type { DadosCriancasDashboard } from '~/features/Dashboard/types'
-import { StatusVinculoProfissionalCrianca } from '~/features/Criancas/types'
 import { HiOutlineDotsHorizontal } from 'react-icons/hi'
 
 interface DashboardCriancaCardProps {
@@ -32,23 +30,9 @@ export default function DashboardCriancaCard({
             <p className='text-xs text-gray-500'>
               {crianca.idade + ' anos'} · {crianca.diagnostico}
             </p>
-            <p className='text-xs text-gray-400'>
-              Profissional: {crianca.profissional}
-            </p>
           </div>
         </div>
         <div className='flex items-center gap-2'>
-          <span
-            className={cn(
-              'rounded-full px-3 py-1 text-xs font-bold',
-              crianca.status === 'AGUARDANDO' && 'bg-gray-200 text-gray-600',
-              crianca.status === 'VINCULADO' && 'bg-green-100 text-green-600',
-              crianca.status === 'SUSPENSO' && 'bg-yellow-100 text-yellow-600',
-              crianca.status === 'DESVINCULADO' && 'bg-red-100 text-red-600',
-            )}
-          >
-            {StatusVinculoProfissionalCrianca[crianca.status]}
-          </span>
           <button className='absolute top-2 right-2 rounded p-1 hover:bg-gray-200 @sm:relative @sm:top-0 @sm:right-0'>
             <HiOutlineDotsHorizontal className='h-5 w-5 text-gray-600' />
           </button>

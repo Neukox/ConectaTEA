@@ -11,10 +11,7 @@ export const UpdateSessaoSchema = z.object({
   }),
   data: z
     .string()
-    .nonempty('Data é obrigatória')
-    .refine((date) => new Date(date) >= new Date(), {
-      message: 'A data não pode ser uma data anterior a hoje',
-    }),
+    .nonempty('Data é obrigatória'),
   horario: z.string().nonempty('Horário é obrigatório'),
   duracao: z
     .number({ error: 'Duração é obrigatória' })

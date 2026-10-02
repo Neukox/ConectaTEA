@@ -12,7 +12,7 @@ import {
   type CadastroCriancaFormData,
 } from '../../api/protected/axiosCadastroCrianca'
 import { useNotificacoesContext } from '../../api/barraNotificacao'
-import { parseDateToString } from '~/lib/date.utils'
+import { queryClient, QUERY_KEYS } from '~/api/query-client'
 
 interface CadastrarCriancaDialogProps {
   open: boolean
@@ -26,6 +26,7 @@ export function CadastrarCriancaDialog({
   onSuccess,
 }: CadastrarCriancaDialogProps) {
   const { notificarSucesso, notificarErro } = useNotificacoesContext()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Função para criar um estado inicial limpo do formulário
   const getInitialFormData = (): CadastroCriancaFormData => ({
@@ -55,12 +56,13 @@ export function CadastrarCriancaDialog({
   // Cadastrar nova criança
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
     try {
       // Criar uma cópia profunda dos dados para evitar referências
       const dadosParaEnvio = {
         nomeCompleto: String(formData.nomeCompleto).trim(),
         idade: Number(formData.idade) || 0,
-        dataNascimento: parseDateToString(formData.dataNascimento).toDateString(),
+        dataNascimento: formData.dataNascimento,
         genero: formData.genero,
         diagnostico: String(formData.diagnostico).trim(),
         diagnosticoOutro: String(formData.diagnosticoOutro || '').trim(),
@@ -72,10 +74,13 @@ export function CadastrarCriancaDialog({
         observacoes: String(formData.observacoes || '').trim(),
       }
 
-      console.log('Dados para envio:', dadosParaEnvio)
-
       // Usar a função de cadastro com tipagem correta
       await cadastrarCrianca(dadosParaEnvio)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_CRIANCAS] }),
+      ])
 
       // Limpar formulário e fechar modal
       setFormData(getInitialFormData())
@@ -115,6 +120,8 @@ export function CadastrarCriancaDialog({
         errorMessage = error.message
       }
       notificarErro('Erro no cadastro', errorMessage, { duration: 6000 })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -434,9 +441,10 @@ export function CadastrarCriancaDialog({
             </Button>
             <Button
               type='submit'
+              disabled={isSubmitting}
               className='flex-1 bg-green-600 hover:bg-green-700'
             >
-              Cadastrar Criança
+              {isSubmitting ? 'Cadastrando...' : 'Cadastrar Criança'}
             </Button>
           </div>
         </form>

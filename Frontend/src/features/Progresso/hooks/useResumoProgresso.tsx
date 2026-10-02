@@ -8,7 +8,7 @@ import type { ResponseError } from '~/api/types'
 export default function useResumoProgresso() {
   return useQuery<ProgressoStats, AxiosError<ResponseError>>({
     queryKey: [QUERY_KEYS.PROGRESSO_RESUMO],
-    queryFn: getProgressoResumo,
+    queryFn: () => getProgressoResumo(),
     staleTime: 1 * 60 * 1000, // 1 minuto
   })
 }

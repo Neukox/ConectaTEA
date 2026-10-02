@@ -6,6 +6,7 @@ interface ModalCodigoVinculoProps {
   codigoVinculo: string
   qrcodeUrl: string
   nomeCrianca: string
+  expiraEm?: string
   onClose: () => void
 }
 
@@ -14,6 +15,7 @@ export default function ModalCodigoVinculo({
   codigoVinculo,
   qrcodeUrl,
   nomeCrianca,
+  expiraEm,
   onClose,
 }: ModalCodigoVinculoProps) {
   const [codigoCopiado, setCodigoCopiado] = useState(false)
@@ -104,6 +106,11 @@ export default function ModalCodigoVinculo({
               </button>
             </div>
           </div>
+          {expiraEm && (
+            <p className='text-center text-sm text-gray-600'>
+              Válido até {new Date(expiraEm).toLocaleString('pt-BR')}
+            </p>
+          )}
 
           {/* Instruções */}
           <div className='space-y-3 rounded-lg bg-blue-50 p-4'>

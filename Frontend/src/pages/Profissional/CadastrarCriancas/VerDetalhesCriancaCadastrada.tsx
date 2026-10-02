@@ -261,7 +261,7 @@ export default function VerDetalhesCriancaCadastrada() {
                     Nome do Responsável
                   </label>
                   <p className='font-medium text-gray-900'>
-                    {crianca.responsavel.nome}
+                    Não fornecido por este endpoint
                   </p>
                 </div>
 
@@ -270,10 +270,7 @@ export default function VerDetalhesCriancaCadastrada() {
                     Parentesco
                   </label>
                   <p className='font-medium text-gray-900'>
-                    {crianca.parentesco
-                      ? crianca.parentesco.charAt(0) +
-                        crianca.parentesco.slice(1).toLowerCase()
-                      : 'Não informado'}
+                    Não fornecido por este endpoint
                   </p>
                 </div>
 
@@ -282,7 +279,7 @@ export default function VerDetalhesCriancaCadastrada() {
                     Telefone
                   </label>
                   <p className='font-medium text-gray-900'>
-                    {crianca.responsavel.telefone || 'Não informado'}
+                    Não fornecido por este endpoint
                   </p>
                 </div>
 
@@ -291,7 +288,7 @@ export default function VerDetalhesCriancaCadastrada() {
                     E-mail
                   </label>
                   <p className='font-medium text-gray-900'>
-                    {crianca.responsavel.email || 'Não informado'}
+                    Não fornecido por este endpoint
                   </p>
                 </div>
 
@@ -300,7 +297,7 @@ export default function VerDetalhesCriancaCadastrada() {
                     Endereço
                   </label>
                   <p className='font-medium text-gray-900'>
-                    {crianca.responsavel.endereco || 'Não informado'}
+                    Não fornecido por este endpoint
                   </p>
                 </div>
               </div>

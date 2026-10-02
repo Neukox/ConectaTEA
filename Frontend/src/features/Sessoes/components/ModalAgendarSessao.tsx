@@ -23,11 +23,12 @@ import {
 } from '../schemas/create-sessao.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import ErrorField from '~/components/common/ErrorField'
-import { TipoSessao } from '../types'
+import { TipoSessao, type TipoSessao as TipoSessaoValue } from '../types'
 import useAgendarSessao from '../hooks/useAgendarSessao'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
 import useCriancas from '~/features/Criancas/hooks/useCriancas'
 import type { CreateSessaoRequest } from '../services'
+import { toOffsetDateTime } from '../utils'
 
 interface ModalAgendarSessaoProps {
   isOpen: boolean
@@ -77,15 +78,11 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
   })
 
   const submitForm = (data: CreateSessaoData) => {
-    const [hours, minutes] = data.horario.split(':').map(Number)
-    const sessionDate = parseISO(data.data)
-    sessionDate.setHours(hours, minutes, 0, 0)
-
     const formattedData: CreateSessaoRequest = {
       descricao: data.descricao,
-      tipoSessao: data.tipoSessao,
+      tipo: data.tipoSessao as TipoSessaoValue,
       criancaId: data.criancaId,
-      data: sessionDate,
+      dataHora: toOffsetDateTime(data.data, data.horario),
       duracao: data.duracao,
       observacoes: data.observacoes,
     }
@@ -138,7 +135,7 @@ const ModalAgendarSessao: React.FC<ModalAgendarSessaoProps> = ({
               required
             >
               <option value=''>Selecione uma criança</option>
-              {dataCriancas?.criancas.map((child) => (
+              {dataCriancas?.items.map((child) => (
                 <option
                   key={child.id}
                   value={child.id}

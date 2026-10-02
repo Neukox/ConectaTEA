@@ -1,0 +1,49 @@
+server:
+  port: ${SERVER_PORT:3000}
+  servlet:
+    context-path: /api
+spring:
+  application:
+    name: conectatea
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+springdoc:
+  swagger-ui:
+    path: /docs
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:PT8H}
+  cors:
+    origins: ${FRONTEND_ORIGINS:http://localhost:5173}
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Lax}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    login-per-minute: ${RATE_LIMIT_LOGIN_PER_MINUTE:10}
+    token-per-minute: ${RATE_LIMIT_TOKEN_PER_MINUTE:30}
+  consent:
+    version: ${CONSENT_TERM_VERSION:1.0}
+    purpose: ${CONSENT_PURPOSE:Acompanhamento terapêutico da criança}

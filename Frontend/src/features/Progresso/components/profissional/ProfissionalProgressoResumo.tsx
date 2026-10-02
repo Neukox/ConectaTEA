@@ -40,28 +40,28 @@ export function ProfissionalProgressoResumo() {
     <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
       <SummaryCard
         sub='Progresso Médio'
-        value={`${data?.media_progresso}%`}
+        value={`${data?.mediaProgresso ?? 0}%`}
         icon={IoMdTrendingUp}
         iconColor='green'
         color='green'
       />
       <SummaryCard
         sub='Metas Ativas'
-        value={data?.metas_ativas}
+        value={data?.metasAtivas ?? 0}
         icon={LuGoal}
         iconColor='blue'
         color='blue'
       />
       <SummaryCard
         sub='Metas Concluídas'
-        value={data?.metas_concluidas}
+        value={data?.metasConcluidas ?? 0}
         icon={LuCircleCheckBig}
         iconColor='violet'
         color='violet'
       />
       <SummaryCard
         sub='Crianças Ativas'
-        value={data?.criancas_ativas}
+        value={data?.criancasAtivas ?? 0}
         icon={FaChild}
         iconColor='orange'
         color='orange'

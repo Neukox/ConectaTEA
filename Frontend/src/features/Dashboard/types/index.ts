@@ -1,4 +1,3 @@
-import type { StatusVinculoProfissionalCrianca } from "~/features/Criancas/types"
 import type { StatusMeta } from "~/features/Metas/types"
 
 export interface DadosDashboard {
@@ -16,9 +15,7 @@ export interface DadosCriancasDashboard {
   id: number
   nome: string
   idade: number
-  status: StatusVinculoProfissionalCrianca
-  diagnostico: string
-  profissional: string
+  diagnostico?: string | null
 }
 
 export interface DadosMetasDashboard {
@@ -27,4 +24,11 @@ export interface DadosMetasDashboard {
   status: StatusMeta
   progresso: number
   crianca: string
+}
+
+export interface DadosDashboardResponsavel {
+  totalCriancas: number
+  totalMetas: number
+  sessoesProximas: number
+  taxaProgresso: number
 }

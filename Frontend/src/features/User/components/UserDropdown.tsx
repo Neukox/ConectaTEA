@@ -10,14 +10,19 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { Button } from '~/components/ui'
+import { logout } from '~/api/authApi'
 
 export function UserDropdown() {
-  const { user } = useAuth()
+  const { user, setUser } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    localStorage.clear()
-    window.location.href = '/login'
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } finally {
+      setUser(null)
+      navigate('/login', { replace: true })
+    }
   }
 
   return (
@@ -51,21 +56,25 @@ export function UserDropdown() {
       >
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => navigate('/profissional/perfil')}
-          className='cursor-pointer'
-        >
-          <User className='mr-2 h-4 w-4' />
-          <span>Meu Perfil</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => navigate('/profissional/configuracoes')}
-          className='cursor-pointer'
-        >
-          <Settings className='mr-2 h-4 w-4' />
-          <span>Configurações</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        {user?.tipo === 'PROFISSIONAL' && (
+          <>
+            <DropdownMenuItem
+              onClick={() => navigate('/profissional/perfil')}
+              className='cursor-pointer'
+            >
+              <User className='mr-2 h-4 w-4' />
+              <span>Meu Perfil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate('/profissional/configuracoes')}
+              className='cursor-pointer'
+            >
+              <Settings className='mr-2 h-4 w-4' />
+              <span>Configurações</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem
           onClick={handleLogout}
           className='cursor-pointer text-red-600 focus:text-red-600'

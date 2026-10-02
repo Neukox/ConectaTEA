@@ -7,9 +7,9 @@ import ModalCalendarioCompleto from '../../../features/Sessoes/components/ModalC
 import { PageLayout } from '~/components/layout/PageLayout'
 import Header from '~/components/layout/Header'
 import useSessoesModal from '~/features/Sessoes/hooks/useSessoesModal'
-import { nextSessions, sessions } from '~/features/Sessoes/mock'
 import { SessoesListContainer } from '~/features/Sessoes/components/SessoesListContainer'
 import useSessoesFilters from '~/features/Sessoes/hooks/useSessoesFilters'
+import useSessoes from '~/features/Sessoes/hooks/useSessoes'
 
 const Sessoes: React.FC = () => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
@@ -17,6 +17,7 @@ const Sessoes: React.FC = () => {
   const { openAgendarSessaoModal } = useSessoesModal()
 
   const { filters, aplicarFiltros, limparFiltros } = useSessoesFilters()
+  const { data: sessions = [] } = useSessoes(filters)
 
   return (
     <PageLayout>
@@ -50,7 +51,7 @@ const Sessoes: React.FC = () => {
 
           {/* Sidebar Content */}
           <div className='space-y-8'>
-            <NextSessions sessions={nextSessions} />
+            <NextSessions />
             <QuickActions
               onScheduleClick={() => openAgendarSessaoModal()}
               onCalendarClick={() => setIsCalendarModalOpen(true)}
@@ -62,7 +63,7 @@ const Sessoes: React.FC = () => {
       <ModalCalendarioCompleto
         isOpen={isCalendarModalOpen}
         onClose={() => setIsCalendarModalOpen(false)}
-        sessions={sessions} // Pass the list of sessions
+        sessions={sessions}
       />
     </PageLayout>
   )

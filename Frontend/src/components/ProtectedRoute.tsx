@@ -1,56 +1,19 @@
-// src/components/ProtectedRoute.tsx
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getDefaultRoute } from '../config/routes';
+import type { ReactNode } from 'react'
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import type { UserRole } from '../api/authApi'
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-  allowedRoles: string[]; // Ex: ['PROFISSIONAL'] ou ['RESPONSAVEL']
+type ProtectedRouteProps = {
+  children: ReactNode
+  allowedRoles: UserRole[]
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const navigate = useNavigate();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-
-    if (!token || !userData) {
-      // Usuário não logado
-      navigate("/login");
-      return;
-    }
-
-    try {
-      const user = JSON.parse(userData);
-      
-      if (allowedRoles.includes(user.tipo)) {
-        setIsAuthorized(true);
-      } else {
-        // Usuário logado mas sem permissão para esta rota
-        // Redireciona para o dashboard correto do seu tipo
-        const redirectTo = getDefaultRoute(user.tipo);
-        navigate(redirectTo);
-      }
-    } catch (error) {
-      console.error("Erro ao verificar autorização:", error);
-      navigate("/login");
-    }
-  }, [navigate, allowedRoles]);
-
-  if (isAuthorized === null) {
-    // Loading state
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Verificando permissões...</p>
-        </div>
-      </div>
-    );
+  const { user, isLoading } = useAuth()
+  if (isLoading) return <div className='flex min-h-screen items-center justify-center'>Verificando permissões...</div>
+  if (!user) return <Navigate to='/login' replace />
+  if (!allowedRoles.includes(user.tipo)) {
+    return <Navigate to={user.tipo === 'PROFISSIONAL' ? '/profissional/dashboard' : '/responsavel/dashboard'} replace />
   }
-
-  return isAuthorized ? <>{children}</> : null;
+  return <>{children}</>
 }

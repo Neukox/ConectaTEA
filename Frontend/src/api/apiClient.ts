@@ -1,25 +1,28 @@
-//Cliente HTTP para conexão com API - NOVA VERSÃO SEM CACHE
-
 import axios from 'axios'
 
-// Configuração da API com URL completa
 export const api = axios.create({
   baseURL: import.meta.env?.VITE_API_URL || 'http://localhost:3000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Habilita envio de cookies
+  withCredentials: true,
+  withXSRFToken: true,
 })
 
-// Interceptor para token JWT
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const publicPaths = ['/', '/login', '/register']
+    if (
+      error.response?.status === 401 &&
+      !publicPaths.includes(window.location.pathname) &&
+      error.config?.url !== '/auth/me'
+    ) {
+      window.location.assign('/login')
     }
-    return config
+    return Promise.reject(error)
   },
-  (error) => Promise.reject(error),
 )
+
+export default api

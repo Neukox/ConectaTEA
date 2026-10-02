@@ -1,4 +1,4 @@
-import { api } from '~/api/httpClient'
+import { api } from '~/api/apiClient'
 import type {
   SessoesSummary,
   SessaoToEdit,
@@ -7,22 +7,21 @@ import type {
 } from '../types'
 
 export interface CreateSessaoRequest {
-  descricao: string
-  tipoSessao: string
+  descricao?: string
+  tipo: Sessao['tipo']
   criancaId: number
-  data: Date
+  dataHora: string
   duracao: number
   observacoes?: string
 }
 
-// Função para obter o resumo das sessões (Mock)
-export async function getSessoesSummary() {
+export async function getSessoesSummary(): Promise<SessoesSummary> {
   const response = await api.get<SessoesSummary>('/sessoes/resumo')
   return response.data
 }
 
-export async function createSessao(data: CreateSessaoRequest) {
-  const response = await api.post('/sessoes', data)
+export async function createSessao(data: CreateSessaoRequest): Promise<Sessao> {
+  const response = await api.post<Sessao>('/sessoes', data)
   return response.data
 }
 
@@ -33,13 +32,25 @@ export async function getSessoes(filters: SessoesFilters) {
 
 export interface UpdateSessaoRequest {
   descricao?: string
-  tipoSessao?: string
-  data?: Date
-  duracao?: number
+  tipo: Sessao['tipo']
+  dataHora: string
+  duracao: number
   observacoes?: string | null
 } 
 
-export async function updateSessao(id: number, data: UpdateSessaoRequest) {
-  const response = await api.put(`/sessoes/${id}`, data)
+export async function updateSessao(id: number, data: UpdateSessaoRequest): Promise<Sessao> {
+  const response = await api.put<Sessao>(`/sessoes/${id}`, data)
   return response.data
+}
+
+export async function updateSessaoStatus(
+  id: number,
+  status: Sessao['status'],
+): Promise<Sessao> {
+  const response = await api.patch<Sessao>(`/sessoes/${id}/status`, { status })
+  return response.data
+}
+
+export async function deleteSessao(id: number): Promise<void> {
+  await api.delete(`/sessoes/${id}`)
 }

@@ -20,12 +20,7 @@ import { useConfirmacao } from '../../../hooks/useConfirmacao'
 import { PageLayout } from '~/components/layout'
 import LayoutCriancaCadastrada from './LayoutCriancaCadastrada'
 import { CadastrarCriancaDialog } from '~/features/CadastrarCrianca'
-
-// Tipo para dados do profissional (pode ser expandido conforme necessário)
-interface ProfissionalInfo {
-  nome: string
-  email: string
-}
+import { queryClient, QUERY_KEYS } from '~/api/query-client'
 
 export default function CadastrarCriancas() {
   const navigate = useNavigate()
@@ -41,29 +36,8 @@ export default function CadastrarCriancas() {
   const [codigoVinculo, setCodigoVinculo] = useState('')
   const [qrcodeVinculo, setQrcodeVinculo] = useState('')
   const [nomeCriancaVinculo, setNomeCriancaVinculo] = useState('')
+  const [expiracaoVinculo, setExpiracaoVinculo] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
-
-  // Obter dados do profissional logado do localStorage
-  const getProfissionalInfo = (): ProfissionalInfo => {
-    const userData = localStorage.getItem('user')
-    if (userData) {
-      try {
-        const user = JSON.parse(userData)
-        return {
-          nome: user.name || 'Profissional',
-          email: user.email || '',
-        }
-      } catch (error) {
-        console.error('Erro ao parsear dados do usuário:', error)
-      }
-    }
-    return {
-      nome: 'Dr. Maria Silva', // Fallback
-      email: 'maria@conectatea.com',
-    }
-  }
-
-  const [profissional] = useState<ProfissionalInfo>(getProfissionalInfo())
 
   // Função para criar um estado inicial limpo do formulário
   const getInitialFormData = (): CadastroCriancaFormData => ({
@@ -102,13 +76,7 @@ export default function CadastrarCriancas() {
       setIsLoading(true)
       const response = await listarCriancas()
 
-      console.log('Resposta da API:', response) // Debug
-
-      // A API retorna: { message, criancas: [...], total }
-      // A função listarCriancas já retorna response.data, então acessamos diretamente
-      const criancasData = response.criancas || []
-
-      console.log('Crianças carregadas:', criancasData) // Debug
+      const criancasData = response.items
       setCriancas(criancasData)
       setCriancasFiltradas(criancasData)
     } catch (error) {
@@ -130,8 +98,7 @@ export default function CadastrarCriancas() {
     const filtered = criancas.filter(
       (crianca) =>
         crianca.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        crianca.diagnostico.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        crianca.responsavel.nome
+        (crianca.diagnostico ?? '')
           .toLowerCase()
           .includes(searchTerm.toLowerCase()),
     )
@@ -158,6 +125,11 @@ export default function CadastrarCriancas() {
       async () => {
         try {
           await excluirCrianca(criancaId)
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] }),
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_CRIANCAS] }),
+          ])
 
           // Atualizar lista local removendo a criança excluída
           const novasCriancas = criancas.filter((c) => c.id !== criancaId)
@@ -186,9 +158,10 @@ export default function CadastrarCriancas() {
 
     try {
       const response = await obterCodigoVinculo(criancaId)
-      setCodigoVinculo(response.codigoParaVinculo)
-      setQrcodeVinculo(response.qrcodeParaVinculo)
+      setCodigoVinculo(response.codigo)
+      setQrcodeVinculo(response.qrCodeDataUrl)
       setNomeCriancaVinculo(crianca.nome)
+      setExpiracaoVinculo(response.expiraEm)
       setShowModalCodigoVinculo(true)
     } catch (error) {
       console.error('Erro ao obter código de vínculo:', error)
@@ -204,9 +177,6 @@ export default function CadastrarCriancas() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      // Debug: verificar dados antes do envio
-      console.log('Dados do formulário antes do envio:', formData)
-
       // Criar uma cópia profunda dos dados para evitar referências
       const dadosParaEnvio = {
         nomeCompleto: String(formData.nomeCompleto).trim(),
@@ -223,25 +193,20 @@ export default function CadastrarCriancas() {
         observacoes: String(formData.observacoes || '').trim(),
       }
 
-      console.log('Dados processados para envio:', dadosParaEnvio)
-
       // Usar a função de cadastro com tipagem correta
-      const response = await cadastrarCrianca(dadosParaEnvio)
+      await cadastrarCrianca(dadosParaEnvio)
 
       // Limpar formulário e fechar modal de cadastro IMEDIATAMENTE
       setFormData(getInitialFormData())
       fecharModal()
 
-      // Exibir modal com código de vínculo AUTOMATICAMENTE
-      if (response.codigoParaVinculo && response.qrcodeParaVinculo) {
-        setCodigoVinculo(response.codigoParaVinculo)
-        setQrcodeVinculo(response.qrcodeParaVinculo)
-        setNomeCriancaVinculo(formData.nomeCompleto)
-        setShowModalCodigoVinculo(true)
-      }
-
       // Recarregar lista
-      fetchCriancas()
+      await Promise.all([
+        fetchCriancas(),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_CRIANCAS] }),
+      ])
 
       // Mostrar mensagem de sucesso
       notificarSucesso(
@@ -352,7 +317,6 @@ export default function CadastrarCriancas() {
                 <LayoutCriancaCadastrada
                   key={crianca.id}
                   crianca={crianca}
-                  profissional={profissional}
                   onVerDetalhes={(criancaId) => {
                     navigate(`/profissional/criancas/detalhes/${criancaId}`)
                   }}
@@ -383,7 +347,10 @@ export default function CadastrarCriancas() {
       <CadastrarCriancaDialog
         open={showModal}
         onOpenChange={setShowModal}
-        onSuccess={() => setShowModal(false)}
+        onSuccess={() => {
+          setShowModal(false)
+          void fetchCriancas()
+        }}
       />
 
       {/* Modal com código de vínculo e QR code */}
@@ -392,6 +359,7 @@ export default function CadastrarCriancas() {
         codigoVinculo={codigoVinculo}
         qrcodeUrl={qrcodeVinculo}
         nomeCrianca={nomeCriancaVinculo}
+        expiraEm={expiracaoVinculo}
         onClose={() => setShowModalCodigoVinculo(false)}
       />
     </>

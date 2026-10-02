@@ -1,22 +1,16 @@
 import { Search, Filter } from 'lucide-react'
-import { Periodo } from '~/api/types'
 import useDebounce from '~/hooks/useDebounce'
 import { StatusSessao, TipoSessao } from '../types'
 import type { SessoesFilters } from '../types'
 import { useEffect, useState } from 'react'
 import { Button } from '~/components/ui/button'
+import useCriancas from '~/features/Criancas/hooks/useCriancas'
+import type { PeriodoSessao } from '../types'
 import {
   PopoverTrigger,
   PopoverContent,
   Popover,
 } from '@radix-ui/react-popover'
-
-// Mock data for children
-const criancas = [
-  { id: '1', name: 'Ana Silva' },
-  { id: '2', name: 'Pedro Costa' },
-  { id: '3', name: 'Sofia Oliveira' },
-]
 
 export interface SessoesFiltersProps {
   filters: SessoesFilters
@@ -31,11 +25,12 @@ export function SessoesFilters({
 }: SessoesFiltersProps) {
   const [search, setSearch] = useState(filters.search || '')
   const [openPopover, setOpenPopover] = useState(false)
+  const { data: criancas } = useCriancas()
 
   const debouncedSearch = useDebounce(search, 500)
 
   useEffect(() => {
-    onAplicarFiltros({ ...filters, search: debouncedSearch })
+    onAplicarFiltros({ search: debouncedSearch })
   }, [debouncedSearch, onAplicarFiltros])
 
   const handleLimpar = () => {
@@ -60,13 +55,14 @@ export function SessoesFilters({
           <select
             className='flex-1 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 focus:border-green-500 focus:outline-none'
             onChange={(e) =>
-              onAplicarFiltros({ periodo: e.target.value as Periodo })
+              onAplicarFiltros({ ...filters, periodo: e.target.value as PeriodoSessao })
             }
             value={filters.periodo}
           >
-            <option value='HOJE'>{Periodo.HOJE}</option>
-            <option value='SEMANAL'>{Periodo.SEMANAL}</option>
-            <option value='MENSAL'>{Periodo.MENSAL}</option>
+            <option value='TODOS'>Todos</option>
+            <option value='HOJE'>Hoje</option>
+            <option value='SEMANA'>Semana</option>
+            <option value='MES'>Mês</option>
           </select>
         </div>
         <div>
@@ -96,17 +92,17 @@ export function SessoesFilters({
                   <select
                     value={filters.criancaId || ''}
                     onChange={(e) =>
-                      onAplicarFiltros({ criancaId: Number(e.target.value) })
+                      onAplicarFiltros({ ...filters, criancaId: e.target.value ? Number(e.target.value) : undefined })
                     }
                     className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100 focus:outline-none'
                   >
                     <option value=''>Todas</option>
-                    {criancas.map((child) => (
+                    {criancas?.items.map((child) => (
                       <option
                         key={child.id}
                         value={child.id}
                       >
-                        {child.name}
+                        {child.nome}
                       </option>
                     ))}
                   </select>
@@ -120,7 +116,7 @@ export function SessoesFilters({
                   <select
                     value={filters.tipo || ''}
                     onChange={(e) =>
-                      onAplicarFiltros({ tipo: e.target.value as TipoSessao })
+                      onAplicarFiltros({ ...filters, tipo: e.target.value as TipoSessao || undefined })
                     }
                     className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100 focus:outline-none'
                   >
@@ -145,7 +141,8 @@ export function SessoesFilters({
                     value={filters.status || ''}
                     onChange={(e) =>
                       onAplicarFiltros({
-                        status: e.target.value as StatusSessao,
+                        ...filters,
+                        status: e.target.value as StatusSessao || undefined,
                       })
                     }
                     className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100 focus:outline-none'

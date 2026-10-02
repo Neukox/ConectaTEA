@@ -6,6 +6,7 @@ import {
   Calendar,
   dateFnsLocalizer,
   type View,
+  type ToolbarProps,
   Views,
 } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
@@ -41,7 +42,7 @@ interface FullCalendarProps {
   onSelectEvent?: (event: CalendarEvent) => void
 }
 
-const CustomToolbar = (toolbar: any) => {
+const CustomToolbar = (toolbar: ToolbarProps<CalendarEvent>) => {
   const goToBack = () => {
     toolbar.onNavigate('PREV')
   }
@@ -90,7 +91,7 @@ const CustomToolbar = (toolbar: any) => {
       </div>
 
       <div className='flex rounded-lg bg-gray-100 p-1'>
-        {['month', 'week', 'day'].map((view) => (
+        {([Views.MONTH, Views.WEEK, Views.DAY] as View[]).map((view) => (
           <button
             key={view}
             onClick={() => toolbar.onView(view)}

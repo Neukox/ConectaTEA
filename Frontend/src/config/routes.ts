@@ -12,18 +12,14 @@ export const ROUTES = {
     METAS: '/profissional/metas',
     SESSOES: '/profissional/sessoes',
     PROGRESSO: '/profissional/progresso',
-    CHAT: '/profissional/chat',
     CONFIGURACOES: '/profissional/configuracoes',
   },
   
   // Rotas do Responsável
   RESPONSAVEL: {
     DASHBOARD: '/responsavel/dashboard',
-    CRIANCA: '/responsavel/crianca',
-    PROGRESSO: '/responsavel/progresso',
-    CHAT: '/responsavel/chat',
-    AGENDA: '/responsavel/agenda',
-    CONFIGURACOES: '/responsavel/configuracoes',
+    CRIANCAS: '/responsavel/criancas',
+    VINCULAR_CRIANCA: '/responsavel/vincular-crianca',
   },
   
   // Rotas de compatibilidade

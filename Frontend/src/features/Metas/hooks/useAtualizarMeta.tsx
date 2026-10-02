@@ -4,6 +4,7 @@ import { atualizarMeta } from '~/api/protected/axiosMetas'
 import { queryClient, QUERY_KEYS } from '~/api/query-client'
 import type { ResponseError } from '~/api/types'
 import type { UpdateMetaData } from '../schemas/update-meta.schema'
+import type { Meta } from '../types'
 
 export default function useCadastrarMeta(
   id: number,
@@ -12,13 +13,16 @@ export default function useCadastrarMeta(
     error?: (error?: AxiosError<ResponseError> | Error) => void
   },
 ) {
-  return useMutation<void, AxiosError<ResponseError>, UpdateMetaData>({
+  return useMutation<Meta, AxiosError<ResponseError>, UpdateMetaData>({
     mutationFn: (data) => atualizarMeta(id, data),
     onSuccess: (_, data) => {
       actions.success?.(data)
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METAS] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METAS_RESUMO] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.META, id] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_METAS] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_RESPONSAVEL] })
     },
     onError: (error) => {
       actions.error?.(error)

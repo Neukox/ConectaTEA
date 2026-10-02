@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '~/components/ui'
-import { TipoSessao, type SessaoToEdit } from '../types'
+import { TipoSessao, type SessaoToEdit, type TipoSessao as TipoSessaoValue } from '../types'
 import {
   UpdateSessaoSchema,
   type UpdateSessaoData,
@@ -27,6 +27,7 @@ import useEditarSessao from '../hooks/useEditarSessao'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
 import ErrorField from '~/components/common/ErrorField'
 import type { UpdateSessaoRequest } from '../services'
+import { toOffsetDateTime } from '../utils'
 
 interface ModalEditarSessaoProps {
   isOpen: boolean
@@ -74,16 +75,12 @@ const ModalEditarSessao: React.FC<ModalEditarSessaoProps> = ({
   })
 
   const submitForm = (data: UpdateSessaoData) => {
-    const [hours, minutes] = data.horario.split(':').map(Number)
-    const sessionDate = parseISO(data.data)
-    sessionDate.setHours(hours, minutes, 0, 0)
-
     const formattedData: UpdateSessaoRequest = {
       descricao: data.descricao,
-      tipoSessao: data.tipoSessao,
+      tipo: data.tipoSessao as TipoSessaoValue,
       duracao: data.duracao,
       observacoes: data.observacoes,
-      data: sessionDate,
+      dataHora: toOffsetDateTime(data.data, data.horario),
     }
 
     mutation.mutate({ id: session?.id || 0, ...formattedData })

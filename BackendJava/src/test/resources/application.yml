@@ -1,0 +1,14 @@
+app:
+  jwt:
+    secret: test-only-secret-test-only-secret-test-only-secret-123456
+    expiration: PT1H
+  cors:
+    origins: http://localhost:5173
+  cookie:
+    secure: false
+    same-site: Lax
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate

@@ -29,6 +29,8 @@ import { useIsMobile } from '~/hooks/use-mobile'
 import type { IconType } from 'react-icons/lib'
 import { IoCloseOutline } from 'react-icons/io5'
 import { Button } from '../ui/button'
+import { useAuth } from '~/hooks/useAuth'
+import { logout } from '~/api/authApi'
 
 type AppSidebarNavItem = {
   title: string
@@ -41,8 +43,9 @@ const AppSidebar: React.FC = () => {
 
   const isMobile = useIsMobile()
   const { setOpenMobile } = useSidebar()
+  const { user, setUser } = useAuth()
 
-  const menuItems: AppSidebarNavItem[] = [
+  const professionalMenuItems: AppSidebarNavItem[] = [
     {
       title: 'Visão Geral',
       icon: Grid,
@@ -70,7 +73,15 @@ const AppSidebar: React.FC = () => {
     },
   ]
 
-  const accountItems = [
+  const responsibleMenuItems: AppSidebarNavItem[] = [
+    { title: 'Visão Geral', icon: Grid, path: '/responsavel/dashboard' },
+    { title: 'Minhas crianças', icon: User, path: '/responsavel/criancas' },
+    { title: 'Vincular criança', icon: Smile, path: '/responsavel/vincular-crianca' },
+  ]
+
+  const menuItems = user?.tipo === 'RESPONSAVEL' ? responsibleMenuItems : professionalMenuItems
+
+  const accountItems = user?.tipo === 'PROFISSIONAL' ? [
     {
       title: 'Perfil',
       icon: User,
@@ -81,11 +92,15 @@ const AppSidebar: React.FC = () => {
       icon: Settings,
       path: '/profissional/configuracoes',
     },
-  ]
+  ] : []
 
-  const handleLogout = () => {
-    localStorage.clear()
-    window.location.href = '/login'
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } finally {
+      setUser(null)
+      window.location.assign('/login')
+    }
   }
 
   return (

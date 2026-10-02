@@ -1,4 +1,5 @@
 import z from 'zod'
+import { format } from 'date-fns'
 import { TipoSessao } from '../types'
 
 export const CreateSessaoSchema = z.object({
@@ -13,7 +14,7 @@ export const CreateSessaoSchema = z.object({
   data: z
     .string()
     .nonempty('Data é obrigatória')
-    .refine((date) => new Date(date) >= new Date(), {
+    .refine((date) => date >= format(new Date(), 'yyyy-MM-dd'), {
       message: 'A data não pode ser uma data anterior a hoje',
     }),
   horario: z.string().nonempty('Horário é obrigatório'),

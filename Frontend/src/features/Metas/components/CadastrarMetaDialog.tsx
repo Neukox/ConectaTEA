@@ -175,11 +175,11 @@ export function CadastrarMetaDialog({
               </label>
               <select
                 required
-                {...register('crianca_id', { valueAsNumber: true })}
+                {...register('criancaId', { valueAsNumber: true })}
                 className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
               >
                 <option value=''>Selecione a criança...</option>
-                {criancas?.criancas.map((c) => (
+                {criancas?.items.map((c) => (
                   <option
                     key={c.id}
                     value={c.id}

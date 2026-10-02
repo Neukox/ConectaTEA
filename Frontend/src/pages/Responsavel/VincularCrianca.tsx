@@ -6,6 +6,10 @@ import CodigoInput from '~/components/VinculacaoCrianca/CodigoInput'
 import ConfirmacaoVinculo from '~/components/VinculacaoCrianca/ConfirmacaoVinculo'
 import TermoConsentimento from '~/components/VinculacaoCrianca/TermoConsentimento'
 import Stepper from '~/components/VinculacaoCrianca/Stepper'
+import { vinculacaoAPI, type ValidarCodigoResponse } from '~/api/protected/axiosVinculacao'
+import { useNotificacoesContext } from '~/api/barraNotificacao'
+import { getApiErrorMessage } from '~/api/errors'
+import { queryClient, QUERY_KEYS } from '~/api/query-client'
 
 type Step =
   | 'selecao'
@@ -14,14 +18,6 @@ type Step =
   | 'confirmacao'
   | 'consentimento'
   | 'sucesso'
-
-interface CriancaData {
-  id: number
-  nome: string
-  data_nascimento: string
-  diagnostico: string
-  status: string
-}
 
 const STEPS = [
   'Selecionar Método',
@@ -45,74 +41,56 @@ const getStepIndex = (step: Step): number => {
 
 export default function VincularCrianca() {
   const navigate = useNavigate()
+  const { notificarErro, notificarSucesso } = useNotificacoesContext()
   const [step, setStep] = useState<Step>('selecao')
-  const [criancaData, setCriancaData] = useState<CriancaData | null>(null)
+  const [criancaData, setCriancaData] = useState<ValidarCodigoResponse | null>(null)
+  const [codigoValidado, setCodigoValidado] = useState<string | null>(null)
   const [consentimentoAceito, setConsentimentoAceito] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const handleQRCodeDetected = async (_codigo: string) => {
+  const validarCodigo = async (codigo: string) => {
     setLoading(true)
     try {
-      // Aqui você chamaria a API para buscar dados da criança
-      // const response = await vinculacaoAPI.validarCodigo(codigo)
-      // setCriancaData(response)
-      // Por enquanto, simulamos:
-      setCriancaData({
-        id: 1,
-        nome: 'João Silva',
-        data_nascimento: '2018-05-15',
-        diagnostico: 'TEA Nível 2',
-        status: 'Aguardando Vínculo Familiar',
-      })
+      const codigoNormalizado = codigo.trim()
+      const response = await vinculacaoAPI.validarCodigo(codigoNormalizado)
+      setCriancaData(response)
+      setCodigoValidado(codigoNormalizado)
       setStep('confirmacao')
     } catch (error) {
-      console.error('Erro ao validar código:', error)
-      alert('Código inválido. Tente novamente.')
+      notificarErro(
+        'Não foi possível validar o código',
+        getApiErrorMessage(error, 'O código é inválido, expirou ou já foi utilizado.'),
+      )
     } finally {
       setLoading(false)
     }
   }
 
-  const handleCodigoSubmit = async (_codigo: string) => {
-    setLoading(true)
-    try {
-      // Aqui você chamaria a API para buscar dados da criança
-      // const response = await vinculacaoAPI.validarCodigo(codigo)
-      // setCriancaData(response)
-      setCriancaData({
-        id: 1,
-        nome: 'João Silva',
-        data_nascimento: '2018-05-15',
-        diagnostico: 'TEA Nível 2',
-        status: 'Aguardando Vínculo Familiar',
-      })
-      setStep('confirmacao')
-    } catch (error) {
-      console.error('Erro ao validar código:', error)
-      alert('Código inválido. Tente novamente.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleQRCodeDetected = validarCodigo
+  const handleCodigoSubmit = validarCodigo
 
   const handleConfirmacao = () => {
     setStep('consentimento')
   }
 
   const handleConsentimentoAceito = async () => {
-    if (!criancaData) return
+    if (!criancaData || !codigoValidado || !consentimentoAceito) return
 
     setLoading(true)
     try {
-      // Aqui você chamaria a API para criar o vínculo
-      // await vinculacaoAPI.confirmarVinculo({
-      //   crianca_id: criancaData.id,
-      //   consentimento_aceito: true
-      // })
+      await vinculacaoAPI.confirmarVinculo({
+        codigo: codigoValidado,
+        consentimentoAceito: true,
+      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.VINCULOS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_RESPONSAVEL] }),
+      ])
+      notificarSucesso('Vínculo criado', `${criancaData.nome} foi vinculado(a) à sua conta.`)
       setStep('sucesso')
     } catch (error) {
-      console.error('Erro ao confirmar vínculo:', error)
-      alert('Erro ao confirmar vínculo. Tente novamente.')
+      notificarErro('Erro ao confirmar vínculo', getApiErrorMessage(error))
     } finally {
       setLoading(false)
     }

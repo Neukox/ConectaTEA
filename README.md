@@ -60,7 +60,18 @@ Plataforma para acompanhamento de crianças com TEA, conectando responsáveis e 
 - PostgreSQL (v12+) (local ou Docker)
 - Docker (opcional, para execução do banco, e outros serviços)
 
-### Backend (NestJS)
+### Backend principal (Java/Spring Boot)
+
+```bash
+cd BackendJava
+./mvnw spring-boot:run
+# API em http://localhost:3000/api
+# Swagger em http://localhost:3000/api/docs
+```
+
+Variáveis obrigatórias e instruções completas estão em `BackendJava/.env.example` e `BackendJava/README.md`. O NestJS permanece temporariamente como referência para homologação.
+
+### Backend legado (NestJS)
 
 ```bash
 cd Backend

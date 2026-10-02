@@ -104,29 +104,29 @@ export default function ModalVerDetalhesCriancaCadastrada({
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Nome:</span>
-                <span className="text-gray-900">{crianca.responsavel.nome}</span>
+                <span className="text-gray-900">Não fornecido por este endpoint</span>
               </div>
 
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Parentesco:</span>
                 <span className="text-gray-900">
-                  {crianca.parentesco ? crianca.parentesco.charAt(0) + crianca.parentesco.slice(1).toLowerCase() : 'Não informado'}
+                  Não fornecido por este endpoint
                 </span>
               </div>
               
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Telefone:</span>
-                <span className="text-gray-900">{crianca.responsavel.telefone || 'Não informado'}</span>
+                <span className="text-gray-900">Não fornecido por este endpoint</span>
               </div>
               
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">E-mail:</span>
-                <span className="text-gray-900">{crianca.responsavel.email || 'Não informado'}</span>
+                <span className="text-gray-900">Não fornecido por este endpoint</span>
               </div>
 
               <div className="flex justify-between items-start py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Endereço:</span>
-                <span className="text-gray-900 text-right ml-4">{crianca.responsavel.endereco || 'Não informado'}</span>
+                <span className="text-gray-900 text-right ml-4">Não fornecido por este endpoint</span>
               </div>
             </div>
           </div>

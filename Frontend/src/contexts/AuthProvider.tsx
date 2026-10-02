@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshAuth = async () => {
     try {
       const userData = await checkAuth();
-      setUser(userData as User);
+      setUser(userData)
     } catch {
       setUser(null);
     } finally {

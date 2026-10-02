@@ -1,0 +1,10 @@
+.history/
+**/.env
+!**/.env.example
+**/target/
+**/node_modules/
+Frontend/dist/
+.idea/
+.vscode/
+*.log
+

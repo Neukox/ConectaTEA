@@ -12,7 +12,7 @@ import Register from '../pages/Register'
 import CadastrarCriancas from '../pages/Profissional/CadastrarCriancas/CadastrarCriancas'
 import EditarCriancaCadastrada from '../pages/Profissional/CadastrarCriancas/EditarCriancaCadastrada'
 import VerDetalhesCriancaCadastrada from '../pages/Profissional/CadastrarCriancas/VerDetalhesCriancaCadastrada'
-import Dashboard from '../pages/Profissional/Dashboard/Dashboard'
+import DashboardProfissional from '../pages/Profissional/Dashboard/Dashboard'
 import PerfilEdit from '../pages/Profissional/Perfil/EditarPerfil'
 import PerfilProfissional from '../pages/Profissional/Perfil/VerPerfil'
 import Profissionais from '../pages/Profissional/Profissionais/Profissionais'
@@ -22,6 +22,9 @@ import Configuracoes from '../pages/Profissional/Configuracoes/Configuracoes'
 
 // Páginas do Responsável
 import VincularCrianca from '../pages/Responsavel/VincularCrianca'
+import DashboardResponsavel from '../pages/Responsavel/Dashboard'
+import DashboardRedirect from '../components/DashboardRedirect'
+import MeusVinculos from '../pages/Responsavel/MeusVinculos'
 
 export default function AppRoutes() {
   return (
@@ -45,7 +48,7 @@ export default function AppRoutes() {
         path='/profissional/dashboard'
         element={
           <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
-            <Dashboard />
+            <DashboardProfissional />
           </ProtectedRoute>
         }
       />
@@ -74,26 +77,17 @@ export default function AppRoutes() {
         }
       />
 
-      {/* <Route
+      <Route
         path='/profissional/profissionais'
         element={
           <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
             <Profissionais />
           </ProtectedRoute>
         }
-      /> */}
-
-      <Route
-        path='/profissional/perfil'
-        element={
-          <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
-            <PerfilProfissional />
-          </ProtectedRoute>
-        }
       />
 
       <Route
-        path='/profissional/perfil/:id'
+        path='/profissional/perfil'
         element={
           <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
             <PerfilProfissional />
@@ -169,7 +163,7 @@ export default function AppRoutes() {
         path='/responsavel/dashboard'
         element={
           <ProtectedRoute allowedRoles={['RESPONSAVEL']}>
-            <Dashboard />
+            <DashboardResponsavel />
           </ProtectedRoute>
         }
       />
@@ -182,16 +176,17 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Rota de compatibilidade */}
       <Route
-        path='/dashboard'
+        path='/responsavel/criancas'
         element={
-          <ProtectedRoute allowedRoles={['PROFISSIONAL', 'RESPONSAVEL']}>
-            <Dashboard />
+          <ProtectedRoute allowedRoles={['RESPONSAVEL']}>
+            <MeusVinculos />
           </ProtectedRoute>
         }
       />
+
+      {/* Rota de compatibilidade */}
+      <Route path='/dashboard' element={<DashboardRedirect />} />
     </Routes>
   )
 }

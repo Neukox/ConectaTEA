@@ -16,6 +16,7 @@ import {
 } from '../schemas/update-meta.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CategoriaMeta, PrioridadeMeta, type MetaToEdit } from '../types'
+import { QUERY_KEYS, queryClient } from '~/api/query-client'
 
 interface AtualizarMetaDialogProps {
   open: boolean
@@ -44,9 +45,17 @@ export function AtualizarMetaDialog({
 
   const mutation = useMutation({
     mutationFn: async (data: UpdateMetaData) => {
-      atualizarMeta(metaToEdit?.id as number, data)
+      if (!metaToEdit) throw new Error('Meta não selecionada')
+      return atualizarMeta(metaToEdit.id, data)
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METAS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.METAS_RESUMO] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.META, metaToEdit?.id] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_PROFISSIONAL_METAS] }),
+      ])
       notificarSucesso(
         'Meta atualizada!',
         `A meta "${variables.titulo}" foi atualizada com sucesso.`,
