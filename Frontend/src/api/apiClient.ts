@@ -13,7 +13,7 @@ export const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const publicPaths = ['/', '/login', '/register']
+    const publicPaths = ['/', '/login', '/register', '/redefinir-senha']
     if (
       error.response?.status === 401 &&
       !publicPaths.includes(window.location.pathname) &&
