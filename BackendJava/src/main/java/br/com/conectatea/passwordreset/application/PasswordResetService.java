@@ -16,6 +16,7 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Locale;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -26,15 +27,15 @@ public class PasswordResetService {
     private final UsuarioRepository users;
     private final PasswordResetTokenRepository tokens;
     private final PasswordEncoder passwords;
-    private final PasswordResetNotifier notifier;
+    private final ApplicationEventPublisher events;
     private final PasswordResetProperties properties;
     private final AuditLogService audits;
     private final Clock clock;
 
     public PasswordResetService(UsuarioRepository users, PasswordResetTokenRepository tokens,
-            PasswordEncoder passwords, PasswordResetNotifier notifier,
+            PasswordEncoder passwords, ApplicationEventPublisher events,
             PasswordResetProperties properties, AuditLogService audits, Clock clock) {
-        this.users=users;this.tokens=tokens;this.passwords=passwords;this.notifier=notifier;
+        this.users=users;this.tokens=tokens;this.passwords=passwords;this.events=events;
         this.properties=properties;this.audits=audits;this.clock=clock;
     }
 
@@ -45,8 +46,7 @@ public class PasswordResetService {
             tokens.invalidateActiveByUser(user.getId(),now);
             var rawToken=generateToken();
             tokens.save(new PasswordResetToken(user,hash(rawToken),now.plus(properties.tokenTtl()),now));
-            notifier.sendPasswordReset(user.getEmail(),buildResetUrl(rawToken));
-            audits.record(user.getId(),"PASSWORD_RESET_REQUESTED","USUARIO",user.getId(),null,null,"SUCESSO",null);
+            events.publishEvent(new PasswordResetRequestedEvent(user.getId(),user.getEmail(),buildResetUrl(rawToken)));
         });
     }
 
@@ -55,7 +55,7 @@ public class PasswordResetService {
         var now=Instant.now(clock);
         var token=tokens.findByHashForUpdate(hash(rawToken)).orElseThrow(InvalidPasswordResetTokenException::new);
         if(!token.isUsableAt(now)||!token.getUsuario().isAtivo())throw new InvalidPasswordResetTokenException();
-        token.getUsuario().atualizarSenha(passwords.encode(newPassword));
+        token.getUsuario().atualizarSenha(passwords.encode(newPassword),now);
         token.consume(now);
         audits.record(token.getUsuario().getId(),"PASSWORD_RESET_COMPLETED","USUARIO",token.getUsuario().getId(),null,null,"SUCESSO",null);
     }

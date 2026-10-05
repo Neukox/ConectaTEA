@@ -24,7 +24,7 @@ public class PasswordResetController {
     private final PasswordResetService service;
     public PasswordResetController(PasswordResetService service){this.service=service;}
 
-    @Operation(summary="Solicitar recuperação de senha",description="Endpoint público e sem CSRF. Sempre retorna resposta neutra para impedir enumeração de contas. Limitado a 5 solicitações por minuto por IP nesta instância.")
+    @Operation(summary="Solicitar recuperação de senha",description="Endpoint público e sem CSRF. Sempre retorna resposta neutra para impedir enumeração de contas. A notificação é processada de forma desacoplada após a persistência. Limitado a 5 solicitações por minuto por IP nesta instância.")
     @SecurityRequirements
     @ApiResponses({@ApiResponse(responseCode="200",description="Solicitação recebida, exista ou não uma conta"),@ApiResponse(responseCode="400",description="E-mail inválido",content=@Content),@ApiResponse(responseCode="429",description="Limite local de solicitações excedido",content=@Content)})
     @PostMapping("/forgot")

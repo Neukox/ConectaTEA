@@ -51,6 +51,10 @@ app:
   password-reset:
     token-ttl: ${PASSWORD_RESET_TOKEN_TTL:PT30M}
     frontend-url: ${FRONTEND_PASSWORD_RESET_URL:http://localhost:5173/redefinir-senha}
+    async:
+      core-pool-size: ${PASSWORD_RESET_ASYNC_CORE_POOL_SIZE:1}
+      max-pool-size: ${PASSWORD_RESET_ASYNC_MAX_POOL_SIZE:2}
+      queue-capacity: ${PASSWORD_RESET_ASYNC_QUEUE_CAPACITY:100}
   consent:
     version: ${CONSENT_TERM_VERSION:1.0}
     purpose: ${CONSENT_PURPOSE:Acompanhamento terapêutico da criança}
