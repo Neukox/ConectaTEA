@@ -1,25 +1,34 @@
-import { useState, useEffect, type ReactNode } from "react";
-import { checkAuth } from "../api/authApi";
-import { AuthContext, type User, type AuthContextType } from "./AuthContext";
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { checkAuth } from '../api/authApi'
+import { getDevAuthUser } from '../config/devAuth'
+import { AuthContext, type AuthContextType, type User } from './AuthContext'
+
+const DEV_AUTH_USER = getDevAuthUser()
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(DEV_AUTH_USER)
+  const [isLoading, setIsLoading] = useState(!DEV_AUTH_USER)
 
-  const refreshAuth = async () => {
+  const refreshAuth = useCallback(async () => {
+    if (DEV_AUTH_USER) {
+      setUser(DEV_AUTH_USER)
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const userData = await checkAuth();
+      const userData = await checkAuth()
       setUser(userData)
     } catch {
-      setUser(null);
+      setUser(null)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }, [])
 
   useEffect(() => {
-    refreshAuth();
-  }, []);
+    void refreshAuth()
+  }, [refreshAuth])
 
   const value: AuthContextType = {
     user,
@@ -27,9 +36,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated: !!user,
     setUser,
     refreshAuth,
-  };
+  }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
 
-export default AuthProvider;
+export default AuthProvider

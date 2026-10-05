@@ -75,6 +75,38 @@ Na mesma branch `feat/anotacoes`, implementar persistência, autorização relac
 
 Swagger/OpenAPI permanece pendente até o backend real. Nessa fase, documentar a tag `Anotações`, segurança, papéis, autoria, visibilidades, vínculo com criança, requests, responses, paginação e filtros implementados, exemplos e erros 400, 401, 403, 404 e 409 quando aplicável. O contrato publicado deve refletir apenas comportamento implementado e testado.
 
+## Bypass local de autenticação para teste visual
+
+O frontend possui um bypass estritamente local para abrir rotas protegidas durante testes visuais sem depender de uma sessão real. A configuração é centralizada em `Frontend/src/config/devAuth.ts` e somente é aceita quando o Vite informa `import.meta.env.DEV === true`, o bypass está explicitamente habilitado e o papel pertence à lista permitida.
+
+Crie um arquivo local não versionado, como `Frontend/.env.local`, com:
+
+```env
+VITE_DEV_BYPASS_AUTH=true
+VITE_DEV_USER_ROLE=PROFISSIONAL
+```
+
+Depois execute:
+
+```bash
+npm run dev
+```
+
+E acesse `http://localhost:5173/profissional/anotacoes`.
+
+Para visualizar a experiência do responsável, altere o papel e reinicie o Vite:
+
+```env
+VITE_DEV_BYPASS_AUTH=true
+VITE_DEV_USER_ROLE=RESPONSAVEL
+```
+
+Acesse `http://localhost:5173/responsavel/anotacoes`.
+
+O usuário mock é mínimo, usa identificador negativo e dados locais fictícios. `ProtectedRoute` continua ativo e aplica `allowedRoles`; portanto, um profissional mock não acessa uma rota exclusiva de responsável e vice-versa. Um papel ausente ou inválido desativa o bypass e preserva o fluxo normal de autenticação.
+
+Nunca habilite o bypass em produção. Além da variável explícita, a condição `import.meta.env.DEV` impede sua ativação em builds normais. Não versione arquivos `.env` locais.
+
 ## Documentação viva
 
 Na próxima revisão de `Documentacao_Tecnica_Viva_ConectaTEA.docx`, atualizar Anotações de `Não iniciado` para `Em desenvolvimento — frontend`. A feature só poderá ser marcada como concluída após frontend, backend, banco, notificações, testes, OpenAPI, documentação, CI e homologação.
