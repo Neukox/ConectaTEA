@@ -18,6 +18,11 @@ Swagger expõe metadados da API quando habilitado; em produção sua exposição
   módulo ainda precisa ser ampliada nesta fase.
 - Tokens de vínculo são armazenados como SHA-256, expiram e usam bloqueio
   pessimista durante o consumo.
+- Tokens de recuperação têm 256 bits, somente o SHA-256 é persistido, expiram,
+  são invalidados por novo pedido e usam bloqueio pessimista para consumo único.
+- A solicitação de recuperação responde de forma neutra e tem rate limit local
+  por IP. Em múltiplas réplicas, gateway ou armazenamento compartilhado ainda
+  é necessário para um limite global.
 
 ## Evidências automatizadas da Fase 2.3
 
@@ -27,6 +32,20 @@ Swagger expõe metadados da API quando habilitado; em produção sua exposição
 - POST protegido sem CSRF retorna 403; com token CSRF no header prossegue.
 - Login gera cookie JWT HttpOnly.
 
+## Revogação lógica de sessões
+
+`usuarios.credentials_updated_at` registra a última mudança relevante de credenciais. O reset atualiza senha, timestamp e consumo do token na mesma transação. O filtro compara o `iat` do JWT, normalizado à precisão de segundos usada pelo NumericDate, e rejeita tokens emitidos antes de `credentialsUpdatedAt`. Tokens não são apagados fisicamente: deixam de ser aceitos porque toda autenticação continua consultando o estado atual do usuário no banco. Um novo login emite JWT válido sem autenticação automática no reset.
+
+Usuários migrados recebem inicialmente o `created_at` truncado para segundos, preservando sessões posteriores à criação. A estratégia cobre revogação por alteração de credenciais sem criar blacklist de JWT; continua dependente da consulta ao banco já existente.
+
+## Password reset pós-commit
+
+O pedido válido invalida tokens anteriores, persiste somente o novo hash, publica evento interno e conclui a transação. Apenas após o commit, `PasswordResetNotificationListener` agenda o `PasswordResetNotifier` em executor pequeno, configurável e com fila limitada. Assim uma futura chamada à Brevo não mantém lock ou conexão transacional, e sua latência não integra o caminho normal da resposta HTTP.
+
+Rollback impede o listener. Falha posterior do notifier é registrada sem destinatário, URL ou token e não desfaz o token já persistido; retry durável/outbox permanece decisão futura. E-mails inexistentes continuam sem token ou evento, portanto a mitigação reduz principalmente a diferença causada pelo provedor, não promete eliminar todo side-channel de banco/processamento.
+
+Quando habilitado, `BrevoPasswordResetNotifier` chama a API REST transacional com timeouts de conexão e leitura, sem expor chave, destinatário, payload ou URL em logs de erro. A ativação exige chave e remetente por configuração externa; desabilitada, usa adaptador `noop`. O modo sandbox usa `X-Sib-Sandbox: drop` no payload aceito pela Brevo para validar a chamada sem entrega. Não há retry automático nesta fase, evitando repetição indiscriminada de falhas 4xx; credenciais ficam exclusivamente em secret/variável de ambiente. O remetente Gmail do exemplo serve ao desenvolvimento verificado, enquanto produção deve usar domínio próprio autenticado.
+
 ## Pendências antes de produção
 
 O backend agora aplica rate limit local em memória, configurável, no login e nos fluxos de token. Em implantação com múltiplas réplicas ele não fornece limite global; centralização por Redis ou gateway continua pendente. Também permanecem revisão jurídica, rotação de todos os segredos
@@ -34,7 +53,7 @@ históricos, threat model, pentest e conclusão dos testes relacionais/IDOR.
 
 ## Auditoria técnica
 
-Login bem-sucedido, logout, geração/cancelamento/expiração/consumo de token, criação/reativação/encerramento de vínculo e envio/aceite/recusa/remoção de conexão são auditados. Os registros contêm apenas IDs e metadados operacionais mínimos; token bruto, JWT, cookies, senha/hash, CSRF e payload clínico são proibidos. O histórico de vínculo é atômico com a mudança de negócio; auditoria operacional usa transação independente e falha secundária não cancela a operação.
+Login bem-sucedido, logout, solicitação/conclusão de recuperação de senha, geração/cancelamento/expiração/consumo de token, criação/reativação/encerramento de vínculo e envio/aceite/recusa/remoção de conexão são auditados. Os registros contêm apenas IDs e metadados operacionais mínimos; token bruto, hash de token, JWT, cookies, senha/hash, CSRF e payload clínico são proibidos. O histórico de vínculo é atômico com a mudança de negócio; auditoria operacional usa transação independente e falha secundária não cancela a operação.
 
 ## Consentimento
 

@@ -7,6 +7,7 @@ import VerDetalhesMeta from '../pages/Profissional/Metas/VerDetalhesMeta'
 import Home from '../pages/Home'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
+import ResetPasswordPage from '../pages/ResetPassword/ResetPasswordPage'
 
 // Páginas do Profissional
 import CadastrarCriancas from '../pages/Profissional/CadastrarCriancas/CadastrarCriancas'
@@ -41,6 +42,10 @@ export default function AppRoutes() {
       <Route
         path='/register'
         element={<Register />}
+      />
+      <Route
+        path='/redefinir-senha'
+        element={<ResetPasswordPage />}
       />
 
       {/* Rotas do Profissional */}

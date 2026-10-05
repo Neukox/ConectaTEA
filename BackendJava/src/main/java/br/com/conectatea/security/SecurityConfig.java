@@ -32,8 +32,9 @@ public class SecurityConfig {
     RateLimitFilter rateLimitFilter(ObjectMapper mapper,
             @Value("${app.rate-limit.enabled:true}") boolean enabled,
             @Value("${app.rate-limit.login-per-minute:10}") int loginLimit,
-            @Value("${app.rate-limit.token-per-minute:30}") int tokenLimit) {
-        return new RateLimitFilter(mapper, enabled, loginLimit, tokenLimit);
+            @Value("${app.rate-limit.token-per-minute:30}") int tokenLimit,
+            @Value("${app.rate-limit.password-reset-per-minute:5}") int passwordResetLimit) {
+        return new RateLimitFilter(mapper, enabled, loginLimit, tokenLimit, passwordResetLimit);
     }
 
     @Bean
@@ -71,7 +72,7 @@ public class SecurityConfig {
                 .csrf(configurer -> configurer
                         .csrfTokenRepository(csrf)
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-                        .ignoringRequestMatchers("/auth/login", "/users/register"))
+                        .ignoringRequestMatchers("/auth/login", "/users/register", "/auth/password/**"))
                 .sessionManagement(configurer -> configurer
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(errors -> errors
@@ -84,6 +85,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/auth/login",
+                                "/auth/password/**",
                                 "/users/register",
                                 "/docs/**",
                                 "/swagger-ui.html",
