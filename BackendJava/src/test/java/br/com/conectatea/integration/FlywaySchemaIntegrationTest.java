@@ -30,6 +30,7 @@ class FlywaySchemaIntegrationTest extends PostgresIntegrationTest {
                 "metas", "progressos", "sessoes", "audit_logs",
                 "locais_atendimento", "redes_sociais", "areas_atuacao",
                 "areas_atuacao_profissionais", "password_reset_tokens");
+        assertThat(tables).contains("anotacoes");
 
         List<String> userColumns=jdbc.queryForList(
                 "select column_name from information_schema.columns where table_schema='public' and table_name='usuarios'",

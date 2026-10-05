@@ -41,6 +41,9 @@ public class OpenApiConfig {
                         tag("Metas", "Metas terapêuticas e atualização de progresso"),
                         tag("Progresso", "Consultas consolidadas de progresso"),
                         tag("Sessões", "Agenda e sessões de atendimento"),
+                        tag("Anotações", "Anotações com autorização relacional por criança. PRIVADA é exclusiva "
+                                + "do profissional autor; COMPARTILHADA é visível a membros com vínculo ativo. "
+                                + "Responsáveis nunca recebem privadas e isAutor não é mecanismo de segurança."),
                         tag("Conexões", "Conexões entre profissionais"),
                         tag("Dashboards", "Visões resumidas por papel")));
     }
