@@ -17,6 +17,7 @@ public class Usuario extends AuditableEntity {
     public Usuario(String nome,String email,String passwordHash,String telefone,String endereco,TipoUsuario tipo){this.nome=nome;this.email=email.trim().toLowerCase();this.passwordHash=passwordHash;this.telefone=telefone;this.endereco=endereco;this.tipo=tipo;}
     public Long getId(){return id;} public String getNome(){return nome;} public String getEmail(){return email;} public String getPasswordHash(){return passwordHash;} public String getTelefone(){return telefone;} public String getEndereco(){return endereco;} public TipoUsuario getTipo(){return tipo;} public boolean isAtivo(){return ativo;}
     public void atualizar(String nome,String telefone,String endereco){this.nome=nome;this.telefone=telefone;this.endereco=endereco;}
+    public void atualizarSenha(String passwordHash){this.passwordHash=passwordHash;}
     public void desativar(){ativo=false;}
 }
 

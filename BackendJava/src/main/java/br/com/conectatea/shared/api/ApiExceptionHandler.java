@@ -15,9 +15,18 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import br.com.conectatea.passwordreset.application.InvalidPasswordResetTokenException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(InvalidPasswordResetTokenException.class)
+    ResponseEntity<ApiError> invalidPasswordResetToken(
+            InvalidPasswordResetTokenException exception,
+            HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD_RESET_TOKEN",
+                "Token de redefinição inválido ou expirado.", request, null);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> validation(
