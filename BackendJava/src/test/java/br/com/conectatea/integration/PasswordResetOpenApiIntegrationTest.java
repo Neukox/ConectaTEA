@@ -19,8 +19,10 @@ class PasswordResetOpenApiIntegrationTest extends PostgresIntegrationTest {
                 .andExpect(jsonPath("$.openapi").exists())
                 .andExpect(jsonPath("$.paths['/auth/password/forgot'].post").exists())
                 .andExpect(jsonPath("$.paths['/auth/password/forgot'].post.security").isArray())
+                .andExpect(jsonPath("$.paths['/auth/password/forgot'].post.security").isEmpty())
                 .andExpect(jsonPath("$.paths['/auth/password/reset'].post").exists())
                 .andExpect(jsonPath("$.paths['/auth/password/reset'].post.security").isArray())
+                .andExpect(jsonPath("$.paths['/auth/password/reset'].post.security").isEmpty())
                 .andExpect(jsonPath("$.components.securitySchemes.cookieAuth").exists());
     }
 }

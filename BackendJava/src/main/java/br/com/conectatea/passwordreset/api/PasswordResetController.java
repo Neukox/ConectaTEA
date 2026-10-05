@@ -3,10 +3,10 @@ package br.com.conectatea.passwordreset.api;
 import br.com.conectatea.passwordreset.application.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,12 +24,14 @@ public class PasswordResetController {
     private final PasswordResetService service;
     public PasswordResetController(PasswordResetService service){this.service=service;}
 
-    @Operation(summary="Solicitar recuperação de senha",description="Endpoint público e sem CSRF. Sempre retorna resposta neutra para impedir enumeração de contas. Limitado a 5 solicitações por minuto por IP nesta instância.",security={})
+    @Operation(summary="Solicitar recuperação de senha",description="Endpoint público e sem CSRF. Sempre retorna resposta neutra para impedir enumeração de contas. Limitado a 5 solicitações por minuto por IP nesta instância.")
+    @SecurityRequirements
     @ApiResponses({@ApiResponse(responseCode="200",description="Solicitação recebida, exista ou não uma conta"),@ApiResponse(responseCode="400",description="E-mail inválido",content=@Content),@ApiResponse(responseCode="429",description="Limite local de solicitações excedido",content=@Content)})
     @PostMapping("/forgot")
     public MessageResponse forgot(@Valid @RequestBody ForgotRequest request){service.requestPasswordReset(request.email());return new MessageResponse(NEUTRAL_MESSAGE);}
 
-    @Operation(summary="Redefinir senha",description="Endpoint público e sem CSRF. Consome uma única vez um token com validade configurável (30 minutos por padrão). Tokens inexistentes, expirados, usados ou invalidados produzem o mesmo erro.",security={})
+    @Operation(summary="Redefinir senha",description="Endpoint público e sem CSRF. Consome uma única vez um token com validade configurável (30 minutos por padrão). Tokens inexistentes, expirados, usados ou invalidados produzem o mesmo erro.")
+    @SecurityRequirements
     @ApiResponses({@ApiResponse(responseCode="200",description="Senha redefinida"),@ApiResponse(responseCode="400",description="Token inválido/expirado ou senha fora da política",content=@Content)})
     @PostMapping("/reset")
     public MessageResponse reset(@Valid @RequestBody ResetRequest request){service.resetPassword(request.token(),request.newPassword());return new MessageResponse("Senha redefinida com sucesso.");}
