@@ -29,7 +29,7 @@ class FlywaySchemaIntegrationTest extends PostgresIntegrationTest {
                 "usuarios", "profissionais", "criancas", "tokens_vinculo",
                 "metas", "progressos", "sessoes", "audit_logs",
                 "locais_atendimento", "redes_sociais", "areas_atuacao",
-                "areas_atuacao_profissionais");
+                "areas_atuacao_profissionais", "password_reset_tokens");
     }
 
     @Test
