@@ -5,38 +5,40 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   RESET_PASSWORD: '/redefinir-senha',
-  
+
   // Rotas do Profissional
   PROFISSIONAL: {
     DASHBOARD: '/profissional/dashboard',
     CRIANCAS: '/profissional/criancas',
     METAS: '/profissional/metas',
     SESSOES: '/profissional/sessoes',
+    ANOTACOES: '/profissional/anotacoes',
     PROGRESSO: '/profissional/progresso',
     CONFIGURACOES: '/profissional/configuracoes',
   },
-  
+
   // Rotas do Responsável
   RESPONSAVEL: {
     DASHBOARD: '/responsavel/dashboard',
     CRIANCAS: '/responsavel/criancas',
     VINCULAR_CRIANCA: '/responsavel/vincular-crianca',
+    ANOTACOES: '/responsavel/anotacoes',
   },
-  
+
   // Rotas de compatibilidade
   LEGACY: {
     DASHBOARD: '/dashboard',
-  }
-};
+  },
+}
 
 // Função helper para redirecionamento baseado no tipo de usuário
 export const getDefaultRoute = (userType: string): string => {
   switch (userType) {
     case 'PROFISSIONAL':
-      return ROUTES.PROFISSIONAL.DASHBOARD;
+      return ROUTES.PROFISSIONAL.DASHBOARD
     case 'RESPONSAVEL':
-      return ROUTES.RESPONSAVEL.DASHBOARD;
+      return ROUTES.RESPONSAVEL.DASHBOARD
     default:
-      return ROUTES.LOGIN;
+      return ROUTES.LOGIN
   }
-};
+}

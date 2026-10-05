@@ -20,12 +20,14 @@ import Profissionais from '../pages/Profissional/Profissionais/Profissionais'
 import Progresso from '../pages/Profissional/Progresso/Progresso'
 import Sessoes from '../pages/Profissional/Sessoes/Sessoes'
 import Configuracoes from '../pages/Profissional/Configuracoes/Configuracoes'
+import AnotacoesProfissional from '../pages/Profissional/Anotacoes/Anotacoes'
 
 // Páginas do Responsável
 import VincularCrianca from '../pages/Responsavel/VincularCrianca'
 import DashboardResponsavel from '../pages/Responsavel/Dashboard'
 import DashboardRedirect from '../components/DashboardRedirect'
 import MeusVinculos from '../pages/Responsavel/MeusVinculos'
+import AnotacoesResponsavel from '../pages/Responsavel/Anotacoes/Anotacoes'
 
 export default function AppRoutes() {
   return (
@@ -163,6 +165,15 @@ export default function AppRoutes() {
         }
       />
 
+      <Route
+        path='/profissional/anotacoes'
+        element={
+          <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
+            <AnotacoesProfissional />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Rotas do Responsável */}
       <Route
         path='/responsavel/dashboard'
@@ -190,8 +201,20 @@ export default function AppRoutes() {
         }
       />
 
+      <Route
+        path='/responsavel/anotacoes'
+        element={
+          <ProtectedRoute allowedRoles={['RESPONSAVEL']}>
+            <AnotacoesResponsavel />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Rota de compatibilidade */}
-      <Route path='/dashboard' element={<DashboardRedirect />} />
+      <Route
+        path='/dashboard'
+        element={<DashboardRedirect />}
+      />
     </Routes>
   )
 }
