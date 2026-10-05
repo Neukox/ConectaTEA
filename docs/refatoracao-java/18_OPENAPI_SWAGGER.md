@@ -47,7 +47,7 @@ Usuário → POST /auth/password/reset → nova senha BCrypt + consumo do token
 
 `reset` recebe `{token,newPassword}` e também declara `security: []`. O token expira em 30 minutos por padrão, é de uso único e pedidos novos invalidam tokens ativos anteriores. Apenas o hash SHA-256 é armazenado, portanto um vazamento do banco não fornece diretamente o segredo enviado no link. Token ausente, expirado, usado ou invalidado produz o mesmo erro `400` (`INVALID_PASSWORD_RESET_TOKEN`). Após sucesso, sessões JWT anteriores à troca deixam de autenticar e nenhum JWT novo é emitido automaticamente.
 
-`PasswordResetNotifier` é a porta independente de fornecedor. O adaptador atual é silencioso (`noop`) e não registra token ou destinatário; Brevo não foi integrada nesta fase. Uma integração futura implementará a interface e substituirá o bean sem alterar o serviço. A URL base vem de `FRONTEND_PASSWORD_RESET_URL`.
+`PasswordResetNotifier` é a porta independente de fornecedor. Com Brevo desabilitada, o adaptador silencioso (`noop`) não registra token ou destinatário. Quando habilitada por ambiente, a implementação REST da Brevo substitui esse bean sem alterar serviço, evento ou contrato HTTP; o envio continua assíncrono e posterior ao commit. A URL do link vem de `FRONTEND_PASSWORD_RESET_URL`.
 
 ## Controle por ambiente
 

@@ -55,6 +55,15 @@ app:
       core-pool-size: ${PASSWORD_RESET_ASYNC_CORE_POOL_SIZE:1}
       max-pool-size: ${PASSWORD_RESET_ASYNC_MAX_POOL_SIZE:2}
       queue-capacity: ${PASSWORD_RESET_ASYNC_QUEUE_CAPACITY:100}
+  brevo:
+    enabled: ${BREVO_ENABLED:false}
+    sandbox: ${BREVO_SANDBOX:false}
+    base-url: ${BREVO_BASE_URL:https://api.brevo.com}
+    api-key: ${BREVO_API_KEY:}
+    sender-email: ${BREVO_SENDER_EMAIL:}
+    sender-name: ${BREVO_SENDER_NAME:ConectaTEA}
+    connect-timeout: ${BREVO_CONNECT_TIMEOUT:PT3S}
+    read-timeout: ${BREVO_READ_TIMEOUT:PT5S}
   consent:
     version: ${CONSENT_TERM_VERSION:1.0}
     purpose: ${CONSENT_PURPOSE:Acompanhamento terapêutico da criança}

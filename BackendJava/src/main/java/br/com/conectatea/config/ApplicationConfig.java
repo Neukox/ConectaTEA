@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
 
 @Configuration
 @EnableAsync
-@EnableConfigurationProperties({AppProperties.class, PasswordResetProperties.class})
+@EnableConfigurationProperties({AppProperties.class, PasswordResetProperties.class, BrevoProperties.class})
 public class ApplicationConfig {
     @Bean
     Clock clock() {

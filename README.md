@@ -6,7 +6,7 @@ Plataforma para acompanhamento de crianças com TEA, conectando responsáveis e 
 
 O ConectaTEA organiza o acompanhamento terapêutico de crianças com TEA. Responsáveis acompanham as crianças às quais estão vinculados, enquanto profissionais administram atendimentos, metas e evolução com controle relacional de acesso.
 
-O runtime atual usa React 19 e uma API Java 21/Spring Boot 3.5 com PostgreSQL. O backend legado NestJS/Prisma foi removido. A recuperação segura de senha está implementada no backend; as telas e o envio real de e-mail permanecem planejados.
+O runtime atual usa React 19 e uma API Java 21/Spring Boot 3.5 com PostgreSQL. O backend legado NestJS/Prisma foi removido. A recuperação segura de senha e seu adaptador transacional Brevo estão implementados no backend; as telas do fluxo permanecem planejadas.
 
 ## Arquitetura
 
@@ -36,7 +36,7 @@ O antigo backend NestJS/Prisma foi removido após a migração integral para Jav
 
 ## Segurança
 
-A API usa JWT em cookie HttpOnly, CSRF, BCrypt, autorização por papel e vínculo, rate limit e auditoria. Tokens de vínculo e recuperação não são persistidos em texto puro; o token de recuperação expira, é invalidado por nova solicitação e só pode ser consumido uma vez. A troca de senha revoga logicamente JWTs anteriores, e a futura entrega de e-mail já está isolada por evento interno assíncrono pós-commit. Esses controles não representam certificação de segurança ou conformidade legal.
+A API usa JWT em cookie HttpOnly, CSRF, BCrypt, autorização por papel e vínculo, rate limit e auditoria. Tokens de vínculo e recuperação não são persistidos em texto puro; o token de recuperação expira, é invalidado por nova solicitação e só pode ser consumido uma vez. A troca de senha revoga logicamente JWTs anteriores, e a entrega opcional via Brevo fica isolada por evento interno assíncrono pós-commit. Esses controles não representam certificação de segurança ou conformidade legal.
 
 ## Estrutura do projeto
 
@@ -113,4 +113,4 @@ Consulte `docs/refatoracao-java/18_OPENAPI_SWAGGER.md` para testar autenticaçã
 
 - Implementado: runtime Java, módulos atuais, segurança transversal, OpenAPI e backend de recuperação de senha.
 - Em desenvolvimento: homologação contínua dos fluxos React/API.
-- Planejado: provedor real de e-mail e telas de “Esqueci minha senha”/“Redefinir senha”.
+- Planejado: homologação do envio Brevo com domínio próprio e telas de “Esqueci minha senha”/“Redefinir senha”.

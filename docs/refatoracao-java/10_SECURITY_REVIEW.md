@@ -44,6 +44,8 @@ O pedido válido invalida tokens anteriores, persiste somente o novo hash, publi
 
 Rollback impede o listener. Falha posterior do notifier é registrada sem destinatário, URL ou token e não desfaz o token já persistido; retry durável/outbox permanece decisão futura. E-mails inexistentes continuam sem token ou evento, portanto a mitigação reduz principalmente a diferença causada pelo provedor, não promete eliminar todo side-channel de banco/processamento.
 
+Quando habilitado, `BrevoPasswordResetNotifier` chama a API REST transacional com timeouts de conexão e leitura, sem expor chave, destinatário, payload ou URL em logs de erro. A ativação exige chave e remetente por configuração externa; desabilitada, usa adaptador `noop`. O modo sandbox usa `X-Sib-Sandbox: drop` no payload aceito pela Brevo para validar a chamada sem entrega. Não há retry automático nesta fase, evitando repetição indiscriminada de falhas 4xx; credenciais ficam exclusivamente em secret/variável de ambiente. O remetente Gmail do exemplo serve ao desenvolvimento verificado, enquanto produção deve usar domínio próprio autenticado.
+
 ## Pendências antes de produção
 
 O backend agora aplica rate limit local em memória, configurável, no login e nos fluxos de token. Em implantação com múltiplas réplicas ele não fornece limite global; centralização por Redis ou gateway continua pendente. Também permanecem revisão jurídica, rotação de todos os segredos
