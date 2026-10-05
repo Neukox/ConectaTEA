@@ -36,7 +36,7 @@ O antigo backend NestJS/Prisma foi removido após a migração integral para Jav
 
 ## Segurança
 
-A API usa JWT em cookie HttpOnly, CSRF, BCrypt, autorização por papel e vínculo, rate limit e auditoria. Tokens de vínculo e recuperação não são persistidos em texto puro; o token de recuperação expira, é invalidado por nova solicitação e só pode ser consumido uma vez. Esses controles não representam certificação de segurança ou conformidade legal.
+A API usa JWT em cookie HttpOnly, CSRF, BCrypt, autorização por papel e vínculo, rate limit e auditoria. Tokens de vínculo e recuperação não são persistidos em texto puro; o token de recuperação expira, é invalidado por nova solicitação e só pode ser consumido uma vez. A troca de senha revoga logicamente JWTs anteriores, e a futura entrega de e-mail já está isolada por evento interno assíncrono pós-commit. Esses controles não representam certificação de segurança ou conformidade legal.
 
 ## Estrutura do projeto
 

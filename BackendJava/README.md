@@ -40,7 +40,9 @@ Testes de integração usam PostgreSQL via Testcontainers quando Docker está di
 
 Configure `PASSWORD_RESET_TOKEN_TTL` (padrão `PT30M`), `FRONTEND_PASSWORD_RESET_URL` e, se necessário, `PASSWORD_RESET_RATE_LIMIT_PER_MINUTE`. O serviço gera 256 bits aleatórios, persiste apenas SHA-256, invalida tokens ativos anteriores e usa bloqueio pessimista para consumo único.
 
-`PasswordResetNotifier` isola a regra do provedor de e-mail. O adaptador atual é `NoOpPasswordResetNotifier`: mantém aplicação e CI funcionais sem expor o token, mas não envia mensagens. Testes unitários capturam a URL no mock; o teste de integração usa PostgreSQL/Testcontainers para validar concorrência. A integração real com Brevo ainda não foi realizada.
+`PasswordResetNotifier` isola a regra do provedor de e-mail. Após o commit do token, um evento interno aciona o notifier de forma assíncrona em executor limitado; rede e falha do provedor não mantêm transação ou conexão do banco abertas. O adaptador atual é `NoOpPasswordResetNotifier`: mantém aplicação e CI funcionais sem expor o token, mas não envia mensagens. A integração real com Brevo ainda não foi realizada.
+
+Redefinir a senha atualiza `credentialsUpdatedAt`. Como o filtro JWT já consulta o usuário, tokens cujo `iat` seja anterior a esse instante deixam de autenticar; o usuário precisa realizar novo login. A comparação usa segundos, precisão do NumericDate do JWT, para não rejeitar um token novo por diferenças de nanossegundos.
 
 ## Segurança
 

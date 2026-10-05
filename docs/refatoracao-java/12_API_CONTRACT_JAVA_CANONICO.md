@@ -106,7 +106,7 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 - Request: `{email:string}` com formato válido.
 - Response `200`: `{message:"Se existir uma conta associada a este e-mail, enviaremos instruções para redefinição da senha."}` para conta existente, ausente ou inapta.
 - Erros: `400` request inválido; `429` após cinco pedidos por minuto por IP e por instância.
-- Regra/autorização: só conta ativa gera token e aciona o notifier; o cliente nunca recebe indício de existência. Tokens ativos anteriores são invalidados.
+- Regra/autorização: só conta ativa gera token e publica evento; o notifier é executado assincronamente após commit. O cliente nunca recebe indício de existência. Tokens ativos anteriores são invalidados.
 - Consumer: frontend futuro de “Esqueci minha senha”. Testes: service unitário e contrato MockMvc.
 
 ### `POST /auth/password/reset`
@@ -115,7 +115,7 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 - Request: `{token:string,newPassword:string}`; senha entre 8 e 72 caracteres.
 - Response `200`: `{message:"Senha redefinida com sucesso."}`.
 - Erros: `400` validação ou `{code:"INVALID_PASSWORD_RESET_TOKEN",message:"Token de redefinição inválido ou expirado."}` para token ausente, expirado, usado, invalidado ou usuário inativo.
-- Regra/autorização: SHA-256 localiza o registro; bloqueio pessimista torna consumo e troca BCrypt atômicos e single-use. TTL padrão: 30 minutos.
+- Regra/autorização: SHA-256 localiza o registro; bloqueio pessimista torna consumo, troca BCrypt e atualização de `credentialsUpdatedAt` atômicos e single-use. JWTs com `iat` anterior deixam de autenticar; não há login automático. TTL padrão: 30 minutos.
 - Consumer: frontend futuro de “Redefinir senha”. Testes: unitário, MockMvc e integração concorrente com PostgreSQL/Testcontainers.
 
 ### `POST /auth/login`
