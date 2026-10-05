@@ -156,124 +156,127 @@ export function AnotacoesExperience({ papel }: Props) {
 
   return (
     <main className='w-full max-w-full overflow-x-hidden pb-16'>
-      <Header
-        title={isProfissional ? 'Anotações' : 'Anotações compartilhadas'}
-        description={
-          isProfissional
-            ? 'Registre e acompanhe informações importantes das crianças.'
-            : 'Acompanhe informações compartilhadas pelos profissionais que participam do cuidado.'
-        }
-        className='max-w-5xl flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'
-      >
-        {isProfissional && (
-          <Button
-            type='button'
-            onClick={() => {
-              setEditing(undefined)
-              setFormOpen(true)
-            }}
-            className='bg-green-700 text-white hover:bg-green-800'
-          >
-            <Plus aria-hidden='true' />
-            Nova anotação
-          </Button>
-        )}
-      </Header>
-
-      <div className='mx-auto max-w-7xl space-y-8'>
-        <AnotacoesFilters
-          papel={papel}
-          criancas={criancas}
-          autores={autores}
-          criancaId={criancaId}
-          profissionalId={profissionalId}
-          busca={busca}
-          visibilidade={visibilidade}
-          ordenacao={ordenacao}
-          onCriancaChange={setCriancaId}
-          onProfissionalChange={setProfissionalId}
-          onBuscaChange={setBusca}
-          onVisibilidadeChange={setVisibilidade}
-          onOrdenacaoChange={setOrdenacao}
-        />
-
-        {(query.isLoading || baseQuery.isLoading) && (
-          <div
-            className='grid grid-flow-dense grid-cols-12 gap-5'
-            aria-label='Carregando anotações'
-          >
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton
-                key={index}
-                className='col-span-12 h-72 rounded-2xl md:col-span-6'
-              />
-            ))}
-          </div>
-        )}
-
-        {query.isError && (
-          <section
-            role='alert'
-            className='rounded-2xl border border-red-200 bg-red-50 p-8 text-center'
-          >
-            <h2 className='font-semibold text-red-900'>
-              Não foi possível carregar as anotações.
-            </h2>
-            <p className='mt-2 text-sm text-red-700'>
-              Verifique a conexão e tente novamente.
-            </p>
+      <div className='mx-auto max-w-7xl'>
+        <Header
+          title={isProfissional ? 'Anotações' : 'Anotações compartilhadas'}
+          description={
+            isProfissional
+              ? 'Registre e acompanhe informações importantes das crianças.'
+              : 'Acompanhe informações compartilhadas pelos profissionais que participam do cuidado.'
+          }
+          className='flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'
+        >
+          {isProfissional && (
             <Button
               type='button'
-              variant='outline'
-              onClick={() => query.refetch()}
-              className='mt-5 border-red-200 bg-white text-red-800'
+              onClick={() => {
+                setEditing(undefined)
+                setFormOpen(true)
+              }}
+              className='bg-green-700 text-white hover:bg-green-800'
             >
-              <RefreshCw aria-hidden='true' />
-              Tentar novamente
+              <Plus aria-hidden='true' />
+              Nova anotação
             </Button>
-          </section>
-        )}
+          )}
+        </Header>
 
-        {query.data?.length === 0 && (
-          <section className='rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center'>
-            <FileText
-              className='mx-auto h-10 w-10 text-green-700'
-              aria-hidden='true'
-            />
-            <h2 className='mt-4 text-lg font-semibold text-gray-900'>
-              {emptyMessage}
-            </h2>
-            <p className='mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-600'>
-              {isProfissional
-                ? 'Ajuste os filtros ou crie uma nova anotação para iniciar o acompanhamento.'
-                : 'Quando um profissional compartilhar uma anotação autorizada, ela aparecerá aqui.'}
-            </p>
-          </section>
-        )}
+        <div className='space-y-8'>
+          <AnotacoesFilters
+            papel={papel}
+            criancas={criancas}
+            autores={autores}
+            criancaId={criancaId}
+            profissionalId={profissionalId}
+            busca={busca}
+            visibilidade={visibilidade}
+            ordenacao={ordenacao}
+            onCriancaChange={setCriancaId}
+            onProfissionalChange={setProfissionalId}
+            onBuscaChange={setBusca}
+            onVisibilidadeChange={setVisibilidade}
+            onOrdenacaoChange={setOrdenacao}
+          />
 
-        {query.data && query.data.length > 0 && (
-          <div
-            ref={listRef}
-            className='grid grid-flow-dense grid-cols-12 gap-5'
-          >
-            {query.data.map((anotacao) => (
-              <AnotacaoCard
-                key={anotacao.id}
-                anotacao={anotacao}
-                onOpenAi={setAiAnnotationId}
-                onEdit={
-                  isProfissional
-                    ? (item) => {
-                        setEditing(item)
-                        setFormOpen(true)
-                      }
-                    : undefined
-                }
-                onDelete={isProfissional ? setDeleting : undefined}
+          {(query.isLoading || baseQuery.isLoading) && (
+            <div
+              className='grid grid-flow-dense grid-cols-12 gap-5'
+              aria-label='Carregando anotações'
+            >
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton
+                  key={index}
+                  className='col-span-12 h-72 rounded-2xl md:col-span-6'
+                />
+              ))}
+            </div>
+          )}
+
+          {query.isError && (
+            <section
+              role='alert'
+              className='rounded-2xl border border-red-200 bg-red-50 p-8 text-center'
+            >
+              <h2 className='font-semibold text-red-900'>
+                Não foi possível carregar as anotações.
+              </h2>
+              <p className='mt-2 text-sm text-red-700'>
+                Verifique a conexão e tente novamente.
+              </p>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => query.refetch()}
+                className='mt-5 border-red-200 bg-white text-red-800'
+              >
+                <RefreshCw aria-hidden='true' />
+                Tentar novamente
+              </Button>
+            </section>
+          )}
+
+          {query.data?.length === 0 && (
+            <section className='rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center'>
+              <FileText
+                className='mx-auto h-10 w-10 text-green-700'
+                aria-hidden='true'
               />
-            ))}
-          </div>
-        )}
+              <h2 className='mt-4 text-lg font-semibold text-gray-900'>
+                {emptyMessage}
+              </h2>
+              <p className='mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-600'>
+                {isProfissional
+                  ? 'Ajuste os filtros ou crie uma nova anotação para iniciar o acompanhamento.'
+                  : 'Quando um profissional compartilhar uma anotação autorizada, ela aparecerá aqui.'}
+              </p>
+            </section>
+          )}
+
+          {query.data && query.data.length > 0 && (
+            <div
+              ref={listRef}
+              className='grid grid-flow-dense grid-cols-12 gap-5'
+            >
+              {query.data.map((anotacao) => (
+                <AnotacaoCard
+                  key={anotacao.id}
+                  anotacao={anotacao}
+                  papel={papel}
+                  onOpenAi={setAiAnnotationId}
+                  onEdit={
+                    isProfissional
+                      ? (item) => {
+                          setEditing(item)
+                          setFormOpen(true)
+                        }
+                      : undefined
+                  }
+                  onDelete={isProfissional ? setDeleting : undefined}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {isProfissional && (

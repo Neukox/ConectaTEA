@@ -10,6 +10,8 @@ O profissional pode listar as anotações das crianças às quais possui acesso,
 
 O responsável recebe somente itens compartilhados das crianças vinculadas. Sua experiência não contém criação, edição, exclusão, filtros privados, contagens privadas ou qualquer indicação de que conteúdo privado existe.
 
+Na experiência do responsável, autoria não possui significado visual. O campo `isAutor` é ignorado para esse papel, mesmo quando estiver presente no objeto recebido. A indicação `Sua anotação` é exclusiva da experiência profissional e somente aparece quando o profissional atual é o autor.
+
 ## Privada e compartilhada
 
 - `PRIVADA`: visível somente ao profissional autor.

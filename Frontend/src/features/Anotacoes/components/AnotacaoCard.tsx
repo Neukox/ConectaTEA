@@ -1,11 +1,12 @@
 import { LockKeyhole, Pencil, Trash2, Users } from 'lucide-react'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import type { Anotacao } from '../types'
+import type { Anotacao, PapelAnotacoes } from '../types'
 import { AiAnnotationAssistantTrigger } from './AiAnnotationAssistantTrigger'
 
 type Props = {
   anotacao: Anotacao
+  papel: PapelAnotacoes
   onEdit?: (anotacao: Anotacao) => void
   onDelete?: (anotacao: Anotacao) => void
   onOpenAi: (annotationId: number) => void
@@ -16,8 +17,15 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeStyle: 'short',
 })
 
-export function AnotacaoCard({ anotacao, onEdit, onDelete, onOpenAi }: Props) {
+export function AnotacaoCard({
+  anotacao,
+  papel,
+  onEdit,
+  onDelete,
+  onOpenAi,
+}: Props) {
   const isPrivate = anotacao.visibilidade === 'PRIVADA'
+  const podeGerenciar = papel === 'PROFISSIONAL' && anotacao.isAutor
 
   return (
     <article className='annotation-card group col-span-12 flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-[transform,box-shadow,border-color] duration-500 ease-out hover:-translate-y-1 hover:border-green-200 hover:shadow-lg md:col-span-6'>
@@ -32,7 +40,7 @@ export function AnotacaoCard({ anotacao, onEdit, onDelete, onOpenAi }: Props) {
           </p>
         </div>
         <div className='flex flex-wrap items-center justify-end gap-2'>
-          {anotacao.isAutor && (
+          {podeGerenciar && (
             <Badge
               variant='outline'
               className='bg-gray-50 text-gray-700'
@@ -82,7 +90,7 @@ export function AnotacaoCard({ anotacao, onEdit, onDelete, onOpenAi }: Props) {
               onOpen={onOpenAi}
             />
           )}
-          {anotacao.isAutor && onEdit && (
+          {podeGerenciar && onEdit && (
             <Button
               type='button'
               size='sm'
@@ -94,7 +102,7 @@ export function AnotacaoCard({ anotacao, onEdit, onDelete, onOpenAi }: Props) {
               Editar
             </Button>
           )}
-          {anotacao.isAutor && onDelete && (
+          {podeGerenciar && onDelete && (
             <Button
               type='button'
               size='sm'
