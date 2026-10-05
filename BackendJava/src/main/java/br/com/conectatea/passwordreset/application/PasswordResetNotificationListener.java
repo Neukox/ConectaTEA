@@ -21,6 +21,7 @@ public class PasswordResetNotificationListener {
     public void onPasswordResetRequested(PasswordResetRequestedEvent event){
         audits.record(event.userId(),"PASSWORD_RESET_REQUESTED","USUARIO",event.userId(),null,null,"SUCESSO",null);
         try{notifier.sendPasswordReset(event.recipientEmail(),event.resetUrl());}
-        catch(RuntimeException exception){log.error("Falha ao enviar notificação de recuperação de senha");}
+        catch(PasswordResetNotificationException exception){log.error("Falha ao enviar notificação de recuperação de senha: {}",exception.getMessage());}
+        catch(RuntimeException exception){log.error("Falha ao enviar notificação de recuperação de senha (tipo: {})",exception.getClass().getSimpleName());}
     }
 }
