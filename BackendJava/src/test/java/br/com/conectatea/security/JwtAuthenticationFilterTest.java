@@ -9,6 +9,7 @@ import br.com.conectatea.usuario.domain.Usuario;
 import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
 import jakarta.servlet.http.Cookie;
 import java.util.Optional;
+import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -28,7 +29,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void inactiveUserCannotReuseValidJwt() throws Exception {
-        var claims = new AuthenticatedUser(42L, "responsavel@example.com", TipoUsuario.RESPONSAVEL);
+        var claims = new AuthenticatedUser(42L, "responsavel@example.com", TipoUsuario.RESPONSAVEL,Instant.parse("2026-10-05T12:00:00Z"));
         var usuario = user(false);
         when(jwt.parse("valid-token")).thenReturn(claims);
         when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));
@@ -40,8 +41,9 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void activeUserIsLoadedFromDatabaseBeforeAuthentication() throws Exception {
-        var claims = new AuthenticatedUser(42L, "stale@example.com", TipoUsuario.PROFISSIONAL);
+        var claims = new AuthenticatedUser(42L, "stale@example.com", TipoUsuario.PROFISSIONAL,Instant.parse("2026-10-05T12:00:00Z"));
         var usuario = user(true);
+        ReflectionTestUtils.setField(usuario,"credentialsUpdatedAt",Instant.parse("2026-10-05T11:59:59Z"));
         when(jwt.parse("valid-token")).thenReturn(claims);
         when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));
 
@@ -51,6 +53,22 @@ class JwtAuthenticationFilterTest {
                 .getAuthentication().getPrincipal();
         assertThat(principal.email()).isEqualTo("responsavel@example.com");
         assertThat(principal.tipo()).isEqualTo(TipoUsuario.RESPONSAVEL);
+    }
+
+    @Test
+    void jwtIssuedBeforeCredentialsUpdateIsRejected() throws Exception {
+        var claims=new AuthenticatedUser(42L,"responsavel@example.com",TipoUsuario.RESPONSAVEL,Instant.parse("2026-10-05T11:59:59Z"));
+        var usuario=user(true);ReflectionTestUtils.setField(usuario,"credentialsUpdatedAt",Instant.parse("2026-10-05T12:00:00Z"));
+        when(jwt.parse("valid-token")).thenReturn(claims);when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));executeFilter();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void jwtIssuedAtOrAfterCredentialsUpdateIsAccepted() throws Exception {
+        var claims=new AuthenticatedUser(42L,"responsavel@example.com",TipoUsuario.RESPONSAVEL,Instant.parse("2026-10-05T12:00:00Z"));
+        var usuario=user(true);ReflectionTestUtils.setField(usuario,"credentialsUpdatedAt",Instant.parse("2026-10-05T12:00:00Z"));
+        when(jwt.parse("valid-token")).thenReturn(claims);when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));executeFilter();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
     }
 
     private void executeFilter() throws Exception {
