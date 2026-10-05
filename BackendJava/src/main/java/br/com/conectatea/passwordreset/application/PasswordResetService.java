@@ -33,12 +33,6 @@ public class PasswordResetService {
 
     public PasswordResetService(UsuarioRepository users, PasswordResetTokenRepository tokens,
             PasswordEncoder passwords, PasswordResetNotifier notifier,
-            PasswordResetProperties properties, AuditLogService audits) {
-        this(users, tokens, passwords, notifier, properties, audits, Clock.systemUTC());
-    }
-
-    PasswordResetService(UsuarioRepository users, PasswordResetTokenRepository tokens,
-            PasswordEncoder passwords, PasswordResetNotifier notifier,
             PasswordResetProperties properties, AuditLogService audits, Clock clock) {
         this.users=users;this.tokens=tokens;this.passwords=passwords;this.notifier=notifier;
         this.properties=properties;this.audits=audits;this.clock=clock;
