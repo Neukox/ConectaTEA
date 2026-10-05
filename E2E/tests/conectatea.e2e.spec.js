@@ -23,34 +23,32 @@ async function login(page, email, role) {
   await page.getByPlaceholder('seu@email.com').fill(email)
   await page.getByPlaceholder('••••••••').fill(PASSWORD)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
-  await expect(page).toHaveURL(
-    role === 'PROFISSIONAL'
-      ? /\/profissional\/dashboard$/
-      : /\/responsavel\/dashboard$/,
-    { timeout: 15000 },
-  )
+  await expect(page).toHaveURL(role === 'PROFISSIONAL' ? /\/profissional\/dashboard$/ : /\/responsavel\/dashboard$/, { timeout: 15000 })
 }
 
 async function api(page, path, method = 'GET', body) {
-  return page.evaluate(async ({ API, path, method, body }) => {
-    const headers = { 'Content-Type': 'application/json' }
-    const csrf = document.cookie
-      .split('; ')
-      .find((item) => item.startsWith('XSRF-TOKEN='))
-    if (method !== 'GET' && csrf) {
-      headers['X-XSRF-TOKEN'] = decodeURIComponent(csrf.split('=').slice(1).join('='))
-    }
-    const response = await fetch(`${API}${path}`, {
-      method,
-      credentials: 'include',
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    })
-    const text = await response.text()
-    let json = null
-    try { json = text ? JSON.parse(text) : null } catch {}
-    return { status: response.status, json }
-  }, { API, path, method, body })
+  return page.evaluate(
+    async ({ API, path, method, body }) => {
+      const headers = { 'Content-Type': 'application/json' }
+      const csrf = document.cookie.split('; ').find((item) => item.startsWith('XSRF-TOKEN='))
+      if (method !== 'GET' && csrf) {
+        headers['X-XSRF-TOKEN'] = decodeURIComponent(csrf.split('=').slice(1).join('='))
+      }
+      const response = await fetch(`${API}${path}`, {
+        method,
+        credentials: 'include',
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      })
+      const text = await response.text()
+      let json = null
+      try {
+        json = text ? JSON.parse(text) : null
+      } catch {}
+      return { status: response.status, json }
+    },
+    { API, path, method, body },
+  )
 }
 
 function ymd(date) {
@@ -127,9 +125,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   await childDialog.locator('select').nth(2).selectOption('PAI')
   await childDialog.getByPlaceholder('email@exemplo.com').fill(responsavel.email)
 
-  const childCreated = profPage.waitForResponse(
-    (r) => r.url().endsWith('/api/criancas') && r.request().method() === 'POST'
-  )
+  const childCreated = profPage.waitForResponse((r) => r.url().endsWith('/api/criancas') && r.request().method() === 'POST')
   await childDialog.getByRole('button', { name: 'Cadastrar Criança' }).click()
   const childResponse = await childCreated
   expect(childResponse.status()).toBe(201)
@@ -150,14 +146,40 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   await metaDialog.locator('input[type="date"]').nth(1).fill(ymd(fim))
   await metaDialog.getByPlaceholder('Descreva os objetivos específicos e estratégias...').fill('Meta criada pelo E2E.')
 
-  const metaCreated = profPage.waitForResponse(
-    (r) => r.url().endsWith('/api/metas') && r.request().method() === 'POST'
-  )
+  const metaCreated = profPage.waitForResponse((r) => r.url().endsWith('/api/metas') && r.request().method() === 'POST')
   await metaDialog.getByRole('button', { name: 'Salvar Meta' }).click()
   const metaResponse = await metaCreated
   expect(metaResponse.status()).toBe(201)
   const metaBody = await metaResponse.json()
   expect(metaBody.criancaId).toBe(childId)
+
+  const sharedAnnotationText = `Anotacao compartilhada E2E ${run}`
+  const privateAnnotationText = `Anotacao privada E2E ${run}`
+  const sharedAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    conteudo: sharedAnnotationText,
+    visibilidade: 'COMPARTILHADA',
+  })
+  expect(sharedAnnotation.status).toBe(201)
+
+  const privateAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    conteudo: privateAnnotationText,
+    visibilidade: 'PRIVADA',
+  })
+  expect(privateAnnotation.status).toBe(201)
+
+  const temporaryAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    conteudo: `Anotacao temporaria E2E ${run}`,
+    visibilidade: 'PRIVADA',
+  })
+  expect(temporaryAnnotation.status).toBe(201)
+  const updatedAnnotation = await api(profPage, `/criancas/${childId}/anotacoes/${temporaryAnnotation.json.id}`, 'PUT', {
+    conteudo: `Anotacao temporaria atualizada E2E ${run}`,
+    visibilidade: 'COMPARTILHADA',
+  })
+  expect(updatedAnnotation.status).toBe(200)
+  expect(updatedAnnotation.json.visibilidade).toBe('COMPARTILHADA')
+  const deletedAnnotation = await api(profPage, `/criancas/${childId}/anotacoes/${temporaryAnnotation.json.id}`, 'DELETE')
+  expect(deletedAnnotation.status).toBe(204)
 
   const progress = await api(profPage, `/metas/${metaBody.id}/progresso`, 'PATCH', {
     progresso: 50,
@@ -186,13 +208,15 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   await expect(profPage.getByText(descricaoSessao, { exact: true })).toBeVisible()
 
   await profPage.goto('/profissional/criancas')
-  const card = profPage.locator('div').filter({ hasText: nomeCrianca }).filter({
-    has: profPage.getByRole('button', { name: 'Gerar código' })
-  }).first()
+  const card = profPage
+    .locator('div')
+    .filter({ hasText: nomeCrianca })
+    .filter({
+      has: profPage.getByRole('button', { name: 'Gerar código' }),
+    })
+    .first()
 
-  const tokenCreated = profPage.waitForResponse(
-    (r) => r.url().includes(`/api/criancas/${childId}/tokens-vinculo`) && r.request().method() === 'POST'
-  )
+  const tokenCreated = profPage.waitForResponse((r) => r.url().includes(`/api/criancas/${childId}/tokens-vinculo`) && r.request().method() === 'POST')
   await card.getByRole('button', { name: 'Gerar código' }).click()
   const tokenResponse = await tokenCreated
   expect(tokenResponse.status()).toBe(200)
@@ -217,12 +241,20 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   await respPage.getByRole('button', { name: 'Prosseguir com Consentimento' }).click()
   await respPage.locator('input[type="checkbox"]').check()
 
-  const confirm = respPage.waitForResponse(
-    (r) => r.url().endsWith('/api/vinculos/confirmar') && r.request().method() === 'POST'
-  )
+  const confirm = respPage.waitForResponse((r) => r.url().endsWith('/api/vinculos/confirmar') && r.request().method() === 'POST')
   await respPage.getByRole('button', { name: 'Aceitar e Confirmar' }).click()
   expect((await confirm).status()).toBe(200)
   await expect(respPage.getByText('Vínculo Criado com Sucesso!')).toBeVisible()
+
+  const guardianAnnotations = await api(respPage, `/criancas/${childId}/anotacoes`)
+  expect(guardianAnnotations.status).toBe(200)
+  expect(guardianAnnotations.json.map((item) => item.conteudo)).toContain(sharedAnnotationText)
+  expect(guardianAnnotations.json.map((item) => item.conteudo)).not.toContain(privateAnnotationText)
+  expect(guardianAnnotations.json.every((item) => item.isAutor === false)).toBe(true)
+
+  await respPage.goto('/responsavel/anotacoes')
+  await expect(respPage.getByText(sharedAnnotationText, { exact: true })).toBeVisible()
+  await expect(respPage.getByText(privateAnnotationText, { exact: true })).not.toBeVisible()
 
   const dashboardResp = await api(respPage, '/dashboard/responsavel')
   expect(dashboardResp.status).toBe(200)
@@ -253,9 +285,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   const prof2Card = profPage.locator('article').filter({ hasText: outroProfissional.nome }).first()
   await expect(prof2Card).toBeVisible()
 
-  const connectionCreated = profPage.waitForResponse(
-    (r) => r.url().endsWith('/api/conexoes') && r.request().method() === 'POST'
-  )
+  const connectionCreated = profPage.waitForResponse((r) => r.url().endsWith('/api/conexoes') && r.request().method() === 'POST')
   await prof2Card.getByRole('button', { name: 'Conectar' }).click()
   const connectionResponse = await connectionCreated
   expect(connectionResponse.status()).toBe(201)
@@ -273,9 +303,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
 
   await respPage.goto('/responsavel/criancas')
   await expect(respPage.getByText(nomeCrianca, { exact: true })).toBeVisible()
-  const unlink = respPage.waitForResponse(
-    (r) => r.url().endsWith(`/api/vinculos/criancas/${childId}`) && r.request().method() === 'DELETE'
-  )
+  const unlink = respPage.waitForResponse((r) => r.url().endsWith(`/api/vinculos/criancas/${childId}`) && r.request().method() === 'DELETE')
   await respPage.getByRole('button', { name: 'Desvincular' }).click()
   expect((await unlink).status()).toBe(204)
   await expect(respPage.getByText('Nenhuma criança vinculada ainda.')).toBeVisible()

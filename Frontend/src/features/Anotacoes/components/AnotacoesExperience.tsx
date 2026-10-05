@@ -119,6 +119,7 @@ export function AnotacoesExperience({ papel }: Props) {
     try {
       if (editing)
         await updateMutation.mutateAsync({
+          criancaId: editing.criancaId,
           id: editing.id,
           input: { conteudo: data.conteudo, visibilidade: data.visibilidade },
         })
@@ -139,7 +140,10 @@ export function AnotacoesExperience({ papel }: Props) {
   const confirmDelete = async () => {
     if (!deleting) return
     try {
-      await deleteMutation.mutateAsync(deleting.id)
+      await deleteMutation.mutateAsync({
+        criancaId: deleting.criancaId,
+        id: deleting.id,
+      })
       notificarSucesso(
         'Anotação excluída',
         'A anotação foi removida com sucesso.',

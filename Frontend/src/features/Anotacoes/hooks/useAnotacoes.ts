@@ -27,12 +27,14 @@ export function useAtualizarAnotacao() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({
+      criancaId,
       id,
       input,
     }: {
+      criancaId: number
       id: number
       input: AtualizarAnotacaoInput
-    }) => anotacoesGateway.atualizar(id, input),
+    }) => anotacoesGateway.atualizar(criancaId, id, input),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANOTACOES] }),
   })
@@ -41,7 +43,8 @@ export function useAtualizarAnotacao() {
 export function useExcluirAnotacao() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => anotacoesGateway.excluir(id),
+    mutationFn: ({ criancaId, id }: { criancaId: number; id: number }) =>
+      anotacoesGateway.excluir(criancaId, id),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANOTACOES] }),
   })

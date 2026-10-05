@@ -65,17 +65,17 @@ Não há polling, WebSocket, SSE, push ou serviço de notificações nesta fase.
 
 ## Decisões e limitações
 
-- Persistência somente em memória; recarregar a aplicação restaura os mocks.
-- Sem endpoints fictícios e sem alterações em backend, banco ou Swagger/OpenAPI.
+- A implementação padrão usa `ApiAnotacoesGateway`; o mock permanece disponível somente para desenvolvimento visual isolado.
+- O backend real, banco e Swagger/OpenAPI são descritos em `02_BACKEND_ANOTACOES.md`.
 - A autorização visual existe para demonstrar o produto, não como barreira de segurança.
 - O projeto não recebeu framework novo de testes unitários nesta fase.
 - GSAP é usado apenas para entrada progressiva dos cards, respeitando `prefers-reduced-motion`.
 
 ## Próximos passos do backend
 
-Na mesma branch `feat/anotacoes`, implementar persistência, autorização relacional, regras de autoria, eventos após commit, notificações, testes unitários, integração e E2E. Somente quando os endpoints reais existirem, implementar `ApiAnotacoesGateway` e substituir a composição do mock.
+Persistência, autorização relacional, regras de autoria, integração e contrato OpenAPI foram implementados na mesma branch `feat/anotacoes`. Eventos após commit e notificações permanecem para a próxima fase.
 
-Swagger/OpenAPI permanece pendente até o backend real. Nessa fase, documentar a tag `Anotações`, segurança, papéis, autoria, visibilidades, vínculo com criança, requests, responses, paginação e filtros implementados, exemplos e erros 400, 401, 403, 404 e 409 quando aplicável. O contrato publicado deve refletir apenas comportamento implementado e testado.
+Swagger/OpenAPI agora publica a tag `Anotações`, segurança, papéis, autoria, visibilidades, vínculo com criança, requests, responses, filtros implementados, exemplos e erros aplicáveis. O contrato reflete somente os endpoints reais.
 
 ## Bypass local de autenticação para teste visual
 
@@ -111,4 +111,4 @@ Nunca habilite o bypass em produção. Além da variável explícita, a condiç�
 
 ## Documentação viva
 
-Na próxima revisão de `Documentacao_Tecnica_Viva_ConectaTEA.docx`, atualizar Anotações de `Não iniciado` para `Em desenvolvimento — frontend`. A feature só poderá ser marcada como concluída após frontend, backend, banco, notificações, testes, OpenAPI, documentação, CI e homologação.
+Na próxima revisão de `Documentacao_Tecnica_Viva_ConectaTEA.docx`, registrar Anotações como `Em desenvolvimento — frontend + backend implementados`. A feature só poderá ser marcada como concluída após notificções, CI e homologação, além das camadas técnicas já entregues.

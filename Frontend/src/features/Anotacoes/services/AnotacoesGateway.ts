@@ -8,6 +8,10 @@ import type {
 export interface AnotacoesGateway {
   listar(filtros: FiltrosAnotacoes): Promise<Anotacao[]>
   criar(input: CriarAnotacaoInput): Promise<Anotacao>
-  atualizar(id: number, input: AtualizarAnotacaoInput): Promise<Anotacao>
-  excluir(id: number): Promise<void>
+  atualizar(
+    criancaId: number,
+    id: number,
+    input: AtualizarAnotacaoInput,
+  ): Promise<Anotacao>
+  excluir(criancaId: number, id: number): Promise<void>
 }

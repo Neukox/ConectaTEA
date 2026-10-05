@@ -82,13 +82,14 @@ export class MockAnotacoesGateway implements AnotacoesGateway {
   }
 
   async atualizar(
+    criancaId: number,
     id: number,
     input: AtualizarAnotacaoInput,
   ): Promise<Anotacao> {
     await wait()
     const index = this.anotacoes.findIndex((item) => item.id === id)
     const atual = this.anotacoes[index]
-    if (!atual || !atual.isAutor)
+    if (!atual || atual.criancaId !== criancaId || !atual.isAutor)
       throw new Error('Anotação não disponível para edição.')
 
     const atualizada = {
@@ -100,10 +101,10 @@ export class MockAnotacoesGateway implements AnotacoesGateway {
     return { ...atualizada }
   }
 
-  async excluir(id: number): Promise<void> {
+  async excluir(criancaId: number, id: number): Promise<void> {
     await wait()
     const anotacao = this.anotacoes.find((item) => item.id === id)
-    if (!anotacao || !anotacao.isAutor)
+    if (!anotacao || anotacao.criancaId !== criancaId || !anotacao.isAutor)
       throw new Error('Anotação não disponível para exclusão.')
     this.anotacoes = this.anotacoes.filter((item) => item.id !== id)
   }
