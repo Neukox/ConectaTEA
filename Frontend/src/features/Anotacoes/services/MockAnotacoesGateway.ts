@@ -15,7 +15,10 @@ const wait = () =>
 export class MockAnotacoesGateway implements AnotacoesGateway {
   private anotacoes = ANOTACOES_MOCK.map((anotacao) => ({ ...anotacao }))
 
-  async listar(filtros: FiltrosAnotacoes): Promise<Anotacao[]> {
+  async listar(
+    filtros: FiltrosAnotacoes,
+    _criancaIds: readonly number[],
+  ): Promise<Anotacao[]> {
     await wait()
     const busca = filtros.busca?.trim().toLocaleLowerCase('pt-BR')
 

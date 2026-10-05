@@ -155,11 +155,19 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
 
   const sharedAnnotationText = `Anotacao compartilhada E2E ${run}`
   const privateAnnotationText = `Anotacao privada E2E ${run}`
-  const sharedAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
-    conteudo: sharedAnnotationText,
-    visibilidade: 'COMPARTILHADA',
-  })
-  expect(sharedAnnotation.status).toBe(201)
+  await profPage.goto('/profissional/anotacoes')
+  await expect(profPage.locator('#filtro-crianca').getByRole('option', { name: nomeCrianca })).toBeAttached()
+  await profPage.getByRole('button', { name: 'Nova anotação' }).click()
+  const annotationDialog = profPage.getByRole('dialog')
+  await expect(annotationDialog.getByLabel('Criança', { exact: true })).toHaveValue(String(childId))
+  await annotationDialog.getByLabel('Conteúdo').fill(sharedAnnotationText)
+  await annotationDialog.getByLabel('Compartilhada', { exact: false }).check()
+  const sharedAnnotationCreated = profPage.waitForResponse(
+    (r) => r.url().endsWith(`/api/criancas/${childId}/anotacoes`) && r.request().method() === 'POST',
+  )
+  await annotationDialog.getByRole('button', { name: 'Criar anotação' }).click()
+  expect((await sharedAnnotationCreated).status()).toBe(201)
+  await expect(profPage.getByText(sharedAnnotationText, { exact: true })).toBeVisible()
 
   const privateAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
     conteudo: privateAnnotationText,
@@ -253,6 +261,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   expect(guardianAnnotations.json.every((item) => item.isAutor === false)).toBe(true)
 
   await respPage.goto('/responsavel/anotacoes')
+  await expect(respPage.locator('#filtro-crianca').getByRole('option', { name: nomeCrianca })).toBeAttached()
   await expect(respPage.getByText(sharedAnnotationText, { exact: true })).toBeVisible()
   await expect(respPage.getByText(privateAnnotationText, { exact: true })).not.toBeVisible()
 

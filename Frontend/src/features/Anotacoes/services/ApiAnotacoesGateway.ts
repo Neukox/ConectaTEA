@@ -1,5 +1,4 @@
 import { api } from '~/api/apiClient'
-import { listarCriancas } from '~/api/protected/axiosCadastroCrianca'
 import type {
   Anotacao,
   AtualizarAnotacaoInput,
@@ -9,10 +8,13 @@ import type {
 import type { AnotacoesGateway } from './AnotacoesGateway'
 
 export class ApiAnotacoesGateway implements AnotacoesGateway {
-  async listar(filtros: FiltrosAnotacoes): Promise<Anotacao[]> {
+  async listar(
+    filtros: FiltrosAnotacoes,
+    criancaIdsAutorizadas: readonly number[],
+  ): Promise<Anotacao[]> {
     const criancaIds = filtros.criancaId
       ? [filtros.criancaId]
-      : (await listarCriancas()).items.map(({ id }) => id)
+      : criancaIdsAutorizadas
 
     const listas = await Promise.all(
       criancaIds.map(async (criancaId) => {

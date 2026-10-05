@@ -74,7 +74,9 @@ Os documentos ficam disponíveis pelos caminhos configurados pelo projeto:
 
 ## Integração frontend
 
-`ApiAnotacoesGateway` é a composição padrão e usa o `apiClient`. Para a visão agregada, ele obtém as crianças autorizadas e consulta a rota escopada de cada criança, consolidando e ordenando o resultado. O frontend não envia papel como autorização.
+`ApiAnotacoesGateway` é a composição padrão e usa o `apiClient`. A lista de crianças é independente das anotações: profissionais usam `GET /api/criancas` e responsáveis usam `GET /api/vinculos/me`. Assim, uma criança autorizada permanece disponível nos filtros e no formulário mesmo antes de possuir a primeira anotação.
+
+O hook `useCriancasAnotacoes` centraliza a origem por papel. Depois dessa consulta, o gateway recebe os identificadores autorizados, consulta a rota escopada de cada criança e consolida o resultado. O frontend não envia papel como autorização e o backend continua responsável pela decisão final de acesso.
 
 O mock permanece apenas como opção explícita de desenvolvimento visual:
 

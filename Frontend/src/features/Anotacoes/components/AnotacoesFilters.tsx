@@ -11,6 +11,7 @@ import type {
 type Props = {
   papel: PapelAnotacoes
   criancas: CriancaAnotacao[]
+  isLoadingCriancas: boolean
   autores: AutorAnotacao[]
   criancaId?: number
   profissionalId?: number
@@ -63,6 +64,7 @@ export function AnotacoesFilters(props: Props) {
         </label>
         <select
           id='filtro-crianca'
+          disabled={props.isLoadingCriancas}
           value={props.criancaId ?? ''}
           onChange={(event) =>
             props.onCriancaChange(
@@ -71,7 +73,9 @@ export function AnotacoesFilters(props: Props) {
           }
           className={fieldClass}
         >
-          <option value=''>Todas</option>
+          <option value=''>
+            {props.isLoadingCriancas ? 'Carregando...' : 'Todas'}
+          </option>
           {props.criancas.map((crianca) => (
             <option
               key={crianca.id}

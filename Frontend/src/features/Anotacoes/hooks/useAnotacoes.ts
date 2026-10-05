@@ -7,10 +7,15 @@ import type {
   FiltrosAnotacoes,
 } from '../types'
 
-export function useAnotacoes(filtros: FiltrosAnotacoes) {
+export function useAnotacoes(
+  filtros: FiltrosAnotacoes,
+  criancaIds: readonly number[],
+  enabled: boolean,
+) {
   return useQuery({
-    queryKey: [QUERY_KEYS.ANOTACOES, filtros],
-    queryFn: () => anotacoesGateway.listar(filtros),
+    queryKey: [QUERY_KEYS.ANOTACOES, filtros, criancaIds],
+    queryFn: () => anotacoesGateway.listar(filtros, criancaIds),
+    enabled,
   })
 }
 

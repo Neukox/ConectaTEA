@@ -6,7 +6,10 @@ import type {
 } from '../types'
 
 export interface AnotacoesGateway {
-  listar(filtros: FiltrosAnotacoes): Promise<Anotacao[]>
+  listar(
+    filtros: FiltrosAnotacoes,
+    criancaIds: readonly number[],
+  ): Promise<Anotacao[]>
   criar(input: CriarAnotacaoInput): Promise<Anotacao>
   atualizar(
     criancaId: number,

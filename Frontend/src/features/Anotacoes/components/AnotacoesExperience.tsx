@@ -14,6 +14,7 @@ import {
   useCriarAnotacao,
   useExcluirAnotacao,
 } from '../hooks/useAnotacoes'
+import { useCriancasAnotacoes } from '../hooks/useCriancasAnotacoes'
 import type {
   Anotacao,
   FiltroVisibilidade,
@@ -44,31 +45,34 @@ export function AnotacoesExperience({ papel }: Props) {
   const [aiAnnotationId, setAiAnnotationId] = useState<number | null>(null)
   const { notificarSucesso, notificarErro } = useNotificacoesContext()
 
-  const baseQuery = useAnotacoes({ papel, ordenacao: 'RECENTES' })
-  const query = useAnotacoes({
-    papel,
-    criancaId,
-    profissionalId,
-    busca,
-    visibilidade,
-    ordenacao,
-  })
+  const criancasQuery = useCriancasAnotacoes(papel)
+  const criancas = useMemo(
+    () => criancasQuery.data ?? [],
+    [criancasQuery.data],
+  )
+  const criancaIds = useMemo(() => criancas.map(({ id }) => id), [criancas])
+  const podeCarregarAnotacoes = criancasQuery.isSuccess
+  const baseQuery = useAnotacoes(
+    { papel, ordenacao: 'RECENTES' },
+    criancaIds,
+    podeCarregarAnotacoes,
+  )
+  const query = useAnotacoes(
+    {
+      papel,
+      criancaId,
+      profissionalId,
+      busca,
+      visibilidade,
+      ordenacao,
+    },
+    criancaIds,
+    podeCarregarAnotacoes,
+  )
   const createMutation = useCriarAnotacao()
   const updateMutation = useAtualizarAnotacao()
   const deleteMutation = useExcluirAnotacao()
 
-  const criancas = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          (baseQuery.data ?? []).map(({ criancaId: id, criancaNome: nome }) => [
-            id,
-            { id, nome },
-          ]),
-        ).values(),
-      ),
-    [baseQuery.data],
-  )
   const autores = useMemo(
     () =>
       Array.from(
@@ -128,7 +132,7 @@ export function AnotacoesExperience({ papel }: Props) {
         editing ? 'Anotação atualizada' : 'Anotação criada',
         editing
           ? 'As alterações foram salvas.'
-          : 'A anotação já está disponível nesta experiência mock.',
+          : 'A anotação já está disponível para acompanhamento.',
       )
       setFormOpen(false)
       setEditing(undefined)
@@ -173,6 +177,7 @@ export function AnotacoesExperience({ papel }: Props) {
           {isProfissional && (
             <Button
               type='button'
+              disabled={!criancas.length || criancasQuery.isLoading}
               onClick={() => {
                 setEditing(undefined)
                 setFormOpen(true)
@@ -189,6 +194,7 @@ export function AnotacoesExperience({ papel }: Props) {
           <AnotacoesFilters
             papel={papel}
             criancas={criancas}
+            isLoadingCriancas={criancasQuery.isLoading}
             autores={autores}
             criancaId={criancaId}
             profissionalId={profissionalId}
@@ -202,7 +208,42 @@ export function AnotacoesExperience({ papel }: Props) {
             onOrdenacaoChange={setOrdenacao}
           />
 
-          {(query.isLoading || baseQuery.isLoading) && (
+          {criancasQuery.isError && (
+            <section
+              role='alert'
+              className='rounded-2xl border border-red-200 bg-red-50 p-8 text-center'
+            >
+              <h2 className='font-semibold text-red-900'>
+                Não foi possível carregar as crianças.
+              </h2>
+              <p className='mt-2 text-sm text-red-700'>
+                Verifique a conexão e tente novamente.
+              </p>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => criancasQuery.refetch()}
+                className='mt-5 border-red-200 bg-white text-red-800'
+              >
+                <RefreshCw aria-hidden='true' />
+                Tentar novamente
+              </Button>
+            </section>
+          )}
+
+          {criancasQuery.isSuccess && criancas.length === 0 && (
+            <section className='rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center'>
+              <h2 className='font-semibold text-gray-900'>
+                {isProfissional
+                  ? 'Nenhuma criança disponível para criar uma anotação.'
+                  : 'Nenhuma criança vinculada disponível.'}
+              </h2>
+            </section>
+          )}
+
+          {(criancasQuery.isLoading ||
+            query.isLoading ||
+            baseQuery.isLoading) && (
             <div
               className='grid grid-flow-dense grid-cols-12 gap-5'
               aria-label='Carregando anotações'
@@ -216,7 +257,7 @@ export function AnotacoesExperience({ papel }: Props) {
             </div>
           )}
 
-          {query.isError && (
+          {!criancasQuery.isError && query.isError && (
             <section
               role='alert'
               className='rounded-2xl border border-red-200 bg-red-50 p-8 text-center'
@@ -239,7 +280,7 @@ export function AnotacoesExperience({ papel }: Props) {
             </section>
           )}
 
-          {query.data?.length === 0 && (
+          {criancas.length > 0 && query.data?.length === 0 && (
             <section className='rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center'>
               <FileText
                 className='mx-auto h-10 w-10 text-green-700'
