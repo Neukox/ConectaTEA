@@ -25,7 +25,7 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 
 - Requests e responses Java usam propriedades JSON `camelCase`; `LocalDate` é `YYYY-MM-DD` e `Instant`/`OffsetDateTime` são ISO-8601. Enums são strings com o nome do enum.
 - A autenticação é stateless por JWT no cookie `jwt` (HttpOnly). O principal autenticado é a fonte do ID/tipo do ator; rotas próprias não recebem o ID do usuário no body.
-- É pública a autenticação de `POST /auth/login`, `POST /users/register`, documentação, health e `OPTIONS`. As demais rotas requerem autenticação. `POST`, `PUT`, `PATCH` e `DELETE` exigem CSRF via cookie `XSRF-TOKEN` e header `X-XSRF-TOKEN`, exceto login/registro. CORS aceita credenciais e origens configuradas.
+- São públicos `POST /auth/login`, `POST /auth/password/forgot`, `POST /auth/password/reset`, `POST /users/register`, documentação, health e `OPTIONS`. As demais rotas requerem autenticação. `POST`, `PUT`, `PATCH` e `DELETE` exigem CSRF via cookie `XSRF-TOKEN` e header `X-XSRF-TOKEN`, exceto login, registro e recuperação de senha. CORS aceita credenciais e origens configuradas.
 - Resposta de erro da infraestrutura de segurança: `{timestamp,status,error,code,message,path}`. Erros de validação podem também conter `fields`. Status usados pelos endpoints: `400` request inválido/filtro inválido, `401` não autenticado/credenciais inválidas/conta inativa, `403` role ou autorização relacional negada, `404` recurso/perfil ausente, `409` conflito de unicidade/concorrência, `410` token indisponível/expirado. Não se deve tratar entidades JPA como contrato HTTP; os controllers abaixo expõem records/DTOs, com exceções descritas.
 - As respostas não têm envelope global. Algumas rotas retornam `{message,...}`, enquanto outras retornam DTO, lista ou mapa diretamente.
 - Autorização relacional padrão: profissional/responsável só acessam criança não arquivada com vínculo ativo apropriado. Ausência de vínculo e criança arquivada são negadas. Listas padrão excluem arquivadas.
@@ -40,6 +40,8 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 | Módulo | Método e rota completa | Role | Aut./CSRF | Autorização relacional | Sucesso | Situação/evidência |
 |---|---|---|---|---|---:|---|
 | Auth | `POST /api/auth/login` | pública | não / dispensado | não se aplica | 200 | implementado; MockMvc de login/cookie; não homologado |
+| Auth | `POST /api/auth/password/forgot` | pública | não / dispensado | não se aplica | 200 | implementado; unitário e MockMvc; frontend futuro |
+| Auth | `POST /api/auth/password/reset` | pública | não / dispensado | token de uso único | 200 | implementado; unitário, MockMvc e concorrência PostgreSQL; frontend futuro |
 | Auth | `POST /api/auth/logout` | qualquer autenticado | sim / sim | principal da sessão | 200 | implementado; sem teste dedicado conhecido; não homologado |
 | Auth | `GET /api/auth/me` | qualquer autenticado | sim / não | principal da sessão | 200 | implementado; cobertura de auth parcial; não homologado |
 | Usuários | `POST /api/users/register` | pública | não / dispensado | não se aplica | 201 | implementado e testado por MockMvc; não homologado |
@@ -97,6 +99,24 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 O contrato Java descrito neste documento está **estabilizado para migração do frontend**. Auditoria, histórico e rate limit são transversais e não alteraram os bodies de sucesso existentes; acrescentaram apenas o possível erro `429` nos endpoints sensíveis. Não há pendência funcional conhecida no backend principal que exija mudança relevante de rota, request ou response. Isso não significa homologação: integração React, E2E, cobertura adicional e revisão jurídica/operacional permanecem pendentes.
 
 ## Auth
+
+### `POST /auth/password/forgot`
+
+- Role/autenticação/CSRF: pública, sem JWT e dispensada de CSRF.
+- Request: `{email:string}` com formato válido.
+- Response `200`: `{message:"Se existir uma conta associada a este e-mail, enviaremos instruções para redefinição da senha."}` para conta existente, ausente ou inapta.
+- Erros: `400` request inválido; `429` após cinco pedidos por minuto por IP e por instância.
+- Regra/autorização: só conta ativa gera token e aciona o notifier; o cliente nunca recebe indício de existência. Tokens ativos anteriores são invalidados.
+- Consumer: frontend futuro de “Esqueci minha senha”. Testes: service unitário e contrato MockMvc.
+
+### `POST /auth/password/reset`
+
+- Role/autenticação/CSRF: pública, sem JWT e dispensada de CSRF.
+- Request: `{token:string,newPassword:string}`; senha entre 8 e 72 caracteres.
+- Response `200`: `{message:"Senha redefinida com sucesso."}`.
+- Erros: `400` validação ou `{code:"INVALID_PASSWORD_RESET_TOKEN",message:"Token de redefinição inválido ou expirado."}` para token ausente, expirado, usado, invalidado ou usuário inativo.
+- Regra/autorização: SHA-256 localiza o registro; bloqueio pessimista torna consumo e troca BCrypt atômicos e single-use. TTL padrão: 30 minutos.
+- Consumer: frontend futuro de “Redefinir senha”. Testes: unitário, MockMvc e integração concorrente com PostgreSQL/Testcontainers.
 
 ### `POST /auth/login`
 

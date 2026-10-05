@@ -30,6 +30,25 @@ O `ApiExceptionHandler` padroniza validação 400, autenticação 401, autoriza�
 
 Swagger documenta o contrato, mas não substitui testes E2E, ownership, concorrência ou homologação funcional humana.
 
+## Recuperação de senha
+
+O grupo **Autenticação** expõe duas operações públicas:
+
+```text
+Usuário → POST /auth/password/forgot → token aleatório de 256 bits
+                                      → SHA-256 no PostgreSQL
+                                      → PasswordResetNotifier
+                                      → e-mail (adaptador futuro)
+
+Usuário → POST /auth/password/reset → nova senha BCrypt + consumo do token
+```
+
+`forgot` recebe `{email}` e sempre retorna a mesma mensagem neutra, inclusive para conta ausente ou inativa, evitando enumeração. A rota dispensa JWT e CSRF porque inicia uma recuperação sem sessão; há limite local padrão de cinco pedidos por minuto por IP (`429`, `Retry-After: 60`). Em múltiplas instâncias esse limite não é global.
+
+`reset` recebe `{token,newPassword}`. O token expira em 30 minutos por padrão, é de uso único e pedidos novos invalidam tokens ativos anteriores. Apenas o hash SHA-256 é armazenado, portanto um vazamento do banco não fornece diretamente o segredo enviado no link. Token ausente, expirado, usado ou invalidado produz o mesmo erro `400` (`INVALID_PASSWORD_RESET_TOKEN`).
+
+`PasswordResetNotifier` é a porta independente de fornecedor. O adaptador atual é silencioso (`noop`) e não registra token ou destinatário; Brevo não foi integrada nesta fase. Uma integração futura implementará a interface e substituirá o bean sem alterar o serviço. A URL base vem de `FRONTEND_PASSWORD_RESET_URL`.
+
 ## Controle por ambiente
 
 Desenvolvimento habilita documentação por padrão. Para desativar em produção:

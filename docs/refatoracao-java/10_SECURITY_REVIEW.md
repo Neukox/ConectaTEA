@@ -18,6 +18,11 @@ Swagger expõe metadados da API quando habilitado; em produção sua exposição
   módulo ainda precisa ser ampliada nesta fase.
 - Tokens de vínculo são armazenados como SHA-256, expiram e usam bloqueio
   pessimista durante o consumo.
+- Tokens de recuperação têm 256 bits, somente o SHA-256 é persistido, expiram,
+  são invalidados por novo pedido e usam bloqueio pessimista para consumo único.
+- A solicitação de recuperação responde de forma neutra e tem rate limit local
+  por IP. Em múltiplas réplicas, gateway ou armazenamento compartilhado ainda
+  é necessário para um limite global.
 
 ## Evidências automatizadas da Fase 2.3
 
@@ -34,7 +39,7 @@ históricos, threat model, pentest e conclusão dos testes relacionais/IDOR.
 
 ## Auditoria técnica
 
-Login bem-sucedido, logout, geração/cancelamento/expiração/consumo de token, criação/reativação/encerramento de vínculo e envio/aceite/recusa/remoção de conexão são auditados. Os registros contêm apenas IDs e metadados operacionais mínimos; token bruto, JWT, cookies, senha/hash, CSRF e payload clínico são proibidos. O histórico de vínculo é atômico com a mudança de negócio; auditoria operacional usa transação independente e falha secundária não cancela a operação.
+Login bem-sucedido, logout, solicitação/conclusão de recuperação de senha, geração/cancelamento/expiração/consumo de token, criação/reativação/encerramento de vínculo e envio/aceite/recusa/remoção de conexão são auditados. Os registros contêm apenas IDs e metadados operacionais mínimos; token bruto, hash de token, JWT, cookies, senha/hash, CSRF e payload clínico são proibidos. O histórico de vínculo é atômico com a mudança de negócio; auditoria operacional usa transação independente e falha secundária não cancela a operação.
 
 ## Consentimento
 
