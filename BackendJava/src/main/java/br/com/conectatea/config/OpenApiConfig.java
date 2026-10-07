@@ -44,6 +44,8 @@ public class OpenApiConfig {
                         tag("Anotações", "Anotações com autorização relacional por criança. PRIVADA é exclusiva "
                                 + "do profissional autor; COMPARTILHADA é visível a membros com vínculo ativo. "
                                 + "Responsáveis nunca recebem privadas e isAutor não é mecanismo de segurança."),
+                        tag("Notificações", "Eventos persistentes do usuário autenticado, ordenados do mais recente. "
+                                + "Ownership previne IDOR e uma notificação nunca concede acesso ao recurso relacionado."),
                         tag("Conexões", "Conexões entre profissionais"),
                         tag("Dashboards", "Visões resumidas por papel")));
     }
