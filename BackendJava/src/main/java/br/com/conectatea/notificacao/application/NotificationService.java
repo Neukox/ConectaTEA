@@ -12,6 +12,7 @@ import java.util.NoSuchElementException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 @Service
 public class NotificationService {
@@ -35,6 +36,7 @@ public class NotificationService {
     }
 
     /** Deve ser chamado dentro da transação que altera a anotação. */
+    @Transactional(propagation = Propagation.MANDATORY)
     public void registrarAlteracaoAnotacao(TipoNotificacao tipo, Long criancaId,
             String criancaNome, Long anotacaoId, Long atorUsuarioId, String atorNome) {
         var recipients = recipientsProvider.findActiveRecipients(criancaId, atorUsuarioId);
