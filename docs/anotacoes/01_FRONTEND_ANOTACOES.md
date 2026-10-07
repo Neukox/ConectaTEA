@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Entregar a experiência inicial de anotações para profissionais e responsáveis, com dados em memória e uma fronteira explícita para a futura API Java. A interface demonstra regras de produto, mas não substitui a autorização do backend.
+Entregar a experiência de anotações para profissionais e responsáveis, integrada à API Java. A interface demonstra regras de produto, mas não substitui a autorização do backend.
 
 ## Experiências por papel
 
@@ -15,15 +15,15 @@ Na experiência do responsável, autoria não possui significado visual. O campo
 ## Privada e compartilhada
 
 - `PRIVADA`: visível somente ao profissional autor.
-- `COMPARTILHADA`: futuramente será visível aos membros ativos e autorizados do Círculo de Cuidado da criança.
+- `COMPARTILHADA`: visível aos profissionais e responsáveis autorizados pelos vínculos ativos existentes. O Círculo de Cuidado formal ainda será implementado.
 
-O filtro do mock aplica a projeção por papel antes de pesquisar ou ordenar. Isso evita vazamento visual na demonstração, mas não é uma garantia de segurança. O backend deverá autenticar, verificar autoria e vínculo ativo e retornar somente dados autorizados.
+O filtro do mock aplica a projeção por papel antes de pesquisar ou ordenar. Isso evita vazamento visual na demonstração isolada, mas não é uma garantia de segurança. Na integração real, o backend autentica, verifica autoria e vínculo ativo e retorna somente dados autorizados.
 
 ## Arquitetura frontend
 
 A feature está em `Frontend/src/features/Anotacoes` e separa componentes, hooks, tipos, schemas, constantes, mocks e serviços. As páginas por papel apenas compõem `PageLayout` e a experiência compartilhada.
 
-`AnotacoesGateway` define as operações de listar, criar, atualizar e excluir. `MockAnotacoesGateway` implementa o contrato em memória. Os hooks TanStack Query dependem do contrato exportado em `services`, permitindo trocar a composição por uma futura `ApiAnotacoesGateway` sem reescrever páginas ou componentes.
+`AnotacoesGateway` define as operações de listar, criar, atualizar e excluir. Os hooks TanStack Query dependem do contrato exportado em `services`; a composição padrão usa `ApiAnotacoesGateway`, enquanto `MockAnotacoesGateway` permanece disponível para desenvolvimento visual isolado sem reescrever páginas ou componentes.
 
 Os mocks ficam centralizados e cobrem múltiplas crianças, múltiplos profissionais, anotações próprias privadas e compartilhadas e uma anotação compartilhada de outro profissional. Nenhuma anotação privada de outro profissional faz parte da projeção disponível ao usuário atual.
 
@@ -45,21 +45,23 @@ Usuário
 
 O modelo de IA nunca decidirá autorização e nunca deverá receber um conjunto irrestrito de anotações.
 
-## Preparação para notificações
+## Notificações implementadas
 
-Os modelos preservam `annotationId`, `childId`, `authorId`, `authorName` e `visibility` por meio de `ContextoNotificacaoAnotacao`.
+O backend implementa notificações internas persistentes para alterações relevantes em anotações compartilhadas. Criação, edição e exclusão de uma compartilhada geram notificação. As transições `PRIVADA -> COMPARTILHADA` e `COMPARTILHADA -> PRIVADA` também geram eventos específicos; criação, edição e exclusão de anotações que permanecem privadas não geram notificação.
 
-Fluxo de backend planejado:
+Os destinatários são resolvidos pela abstração `CareRecipientsProvider`. A implementação atual consulta os vínculos ativos de profissionais e responsáveis, exclui o autor da alteração e considera somente usuários ativos. Essa fronteira prepara a arquitetura para o futuro Círculo de Cuidado sem afirmar que esse modelo formal já existe.
+
+Fluxo implementado no backend:
 
 ```text
 Profissional altera anotação compartilhada
   -> backend resolve vínculos ativos por CareRecipientsProvider
   -> persiste anotação e notificações na mesma transação
   -> COMMIT
-  -> listener AFTER_COMMIT envia e-mails externos
+  -> listener AFTER_COMMIT solicita o envio assíncrono de e-mails pela Brevo
 ```
 
-Não há polling, WebSocket, SSE, push ou serviço de notificações nesta fase. Notificações pertencem ao domínio do backend Java; um runtime Python acrescentaria deploy, observabilidade e custo operacional sem benefício atual. Python poderá ser avaliado futuramente para IA, NLP, embeddings, RAG, avaliações de modelo e processamento específico de ML.
+O e-mail é um canal externo complementar e não inclui o conteúdo da anotação nem dados clínicos ou sensíveis; orienta o destinatário a acessar o ConectaTEA conforme suas permissões. Falhas externas não desfazem a alteração já confirmada, mas ainda não existe Outbox/retry durável e, portanto, não há garantia durável de entrega. WhatsApp, push, WebSocket e SSE não foram implementados. Notificações pertencem ao domínio do backend Java; Python poderá ser avaliado futuramente para IA, NLP, embeddings, RAG, avaliações de modelo e processamento específico de ML.
 
 ## Decisões e limitações
 
@@ -71,9 +73,11 @@ Não há polling, WebSocket, SSE, push ou serviço de notificações nesta fase.
 
 ## Próximos passos do backend
 
-Persistência, autorização relacional, regras de autoria, integração e contrato OpenAPI foram implementados na mesma branch `feat/anotacoes`. Eventos após commit e notificações permanecem para a próxima fase.
+Persistência, autorização relacional, regras de autoria, integração e contrato OpenAPI do módulo de Anotações estão implementados. Na branch `feat/notificacoes-anotacoes`, também estão implementadas as notificações internas persistentes e o envio externo por e-mail após commit via Brevo.
 
 Swagger/OpenAPI agora publica a tag `Anotações`, segurança, papéis, autoria, visibilidades, vínculo com criança, requests, responses, filtros implementados, exemplos e erros aplicáveis. O contrato reflete somente os endpoints reais.
+
+Os próximos passos relacionados são implementar o Círculo de Cuidado formal, adotar Outbox/retry durável para entrega externa e avaliar WhatsApp e push como novos canais. IA contextual e hardening adicional permanecem como evoluções futuras.
 
 ## Bypass local de autenticação para teste visual
 
@@ -109,4 +113,4 @@ Nunca habilite o bypass em produção. Além da variável explícita, a condiç�
 
 ## Documentação viva
 
-Na próxima revisão de `Documentacao_Tecnica_Viva_ConectaTEA.docx`, registrar Anotações como `Em desenvolvimento — frontend + backend implementados`. A feature só poderá ser marcada como concluída após notificções, CI e homologação, além das camadas técnicas já entregues.
+O módulo de Anotações está implementado. Na branch `feat/notificacoes-anotacoes`, as notificações persistentes e o envio de e-mail também estão implementados, e o conjunto encontra-se em validação e revisão para merge. A documentação viva deve registrar o estado definitivo de `concluído na main` somente depois de PR, revisão, CI e merge.
