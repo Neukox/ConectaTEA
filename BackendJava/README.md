@@ -60,3 +60,9 @@ Swagger documenta o cookie HttpOnly `jwt` e mantém CSRF ativo. Use `GET /api/au
 
 Antes do uso com dados reais, o texto e a trilha de consentimento precisam de revisão jurídica.
 
+## Notificações de anotações
+
+Notificações internas de alterações compartilhadas são persistidas na mesma transação da anotação. E-mails são enviados somente após o commit e são habilitados com `NOTIFICATION_EMAIL_ENABLED=true`, reutilizando as credenciais `BREVO_*`. `NOTIFICATION_FRONTEND_URL` define o CTA.
+
+O e-mail nunca contém o conteúdo da anotação. Falhas do provedor não desfazem operações confirmadas. O MVP não possui Outbox/retry durável; consulte `docs/notificacoes` para arquitetura, segurança e limitações.
+

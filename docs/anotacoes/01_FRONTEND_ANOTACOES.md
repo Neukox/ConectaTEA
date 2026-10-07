@@ -52,13 +52,11 @@ Os modelos preservam `annotationId`, `childId`, `authorId`, `authorName` e `visi
 Fluxo de backend planejado:
 
 ```text
-Profissional cria anotação COMPARTILHADA
-  -> backend persiste
+Profissional altera anotação compartilhada
+  -> backend resolve vínculos ativos por CareRecipientsProvider
+  -> persiste anotação e notificações na mesma transação
   -> COMMIT
-  -> AnotacaoCompartilhadaCriadaEvent
-  -> listener AFTER_COMMIT
-  -> Círculo de Cuidado
-  -> notificações persistentes
+  -> listener AFTER_COMMIT envia e-mails externos
 ```
 
 Não há polling, WebSocket, SSE, push ou serviço de notificações nesta fase. Notificações pertencem ao domínio do backend Java; um runtime Python acrescentaria deploy, observabilidade e custo operacional sem benefício atual. Python poderá ser avaliado futuramente para IA, NLP, embeddings, RAG, avaliações de modelo e processamento específico de ML.
