@@ -64,6 +64,14 @@ app:
     sender-name: ${BREVO_SENDER_NAME:ConectaTEA}
     connect-timeout: ${BREVO_CONNECT_TIMEOUT:PT3S}
     read-timeout: ${BREVO_READ_TIMEOUT:PT5S}
+  notification:
+    email:
+      enabled: ${NOTIFICATION_EMAIL_ENABLED:false}
+      frontend-url: ${NOTIFICATION_FRONTEND_URL:http://localhost:5173}
+      async:
+        core-pool-size: ${NOTIFICATION_EMAIL_ASYNC_CORE_POOL_SIZE:1}
+        max-pool-size: ${NOTIFICATION_EMAIL_ASYNC_MAX_POOL_SIZE:2}
+        queue-capacity: ${NOTIFICATION_EMAIL_ASYNC_QUEUE_CAPACITY:200}
   consent:
     version: ${CONSENT_TERM_VERSION:1.0}
     purpose: ${CONSENT_PURPOSE:Acompanhamento terapêutico da criança}
