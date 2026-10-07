@@ -2,7 +2,7 @@ import { IoMdMenu } from 'react-icons/io'
 import { Button } from '../ui'
 import { useSidebar } from '../ui/sidebar'
 import { UserDropdown } from '~/features/User'
-import { Bell } from 'lucide-react'
+import { NotificationCenter } from '~/features/Notificacoes'
 
 export default function AppHeader() {
   const { setOpenMobile } = useSidebar()
@@ -29,10 +29,7 @@ export default function AppHeader() {
         </div>
       </div>
       <div className='flex items-center gap-2'>
-        <button className='relative rounded-full p-2 hover:bg-gray-100'>
-          <Bell className='h-6 w-6 text-gray-500' />
-          <span className='absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500'></span>
-        </button>
+        <NotificationCenter />
 
         <UserDropdown />
       </div>
