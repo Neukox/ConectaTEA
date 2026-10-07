@@ -1,1 +1,13 @@
-package br.com.conectatea.vinculo.infrastructure; import br.com.conectatea.vinculo.domain.*; import java.util.Optional; import org.springframework.data.jpa.repository.JpaRepository; public interface VinculoResponsavelRepository extends JpaRepository<VinculoResponsavelCrianca,Long>{boolean existsByResponsavelIdAndCriancaIdAndStatus(Long r,Long c,StatusVinculo s);Optional<VinculoResponsavelCrianca> findByResponsavelIdAndCriancaId(Long r,Long c);}
+package br.com.conectatea.vinculo.infrastructure;
+
+import br.com.conectatea.vinculo.domain.StatusVinculo;
+import br.com.conectatea.vinculo.domain.VinculoResponsavelCrianca;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface VinculoResponsavelRepository extends JpaRepository<VinculoResponsavelCrianca, Long> {
+    boolean existsByResponsavelIdAndCriancaIdAndStatus(Long responsavelId, Long criancaId, StatusVinculo status);
+    Optional<VinculoResponsavelCrianca> findByResponsavelIdAndCriancaId(Long responsavelId, Long criancaId);
+    List<VinculoResponsavelCrianca> findAllByCriancaIdAndStatus(Long criancaId, StatusVinculo status);
+}
