@@ -8,6 +8,7 @@ import {
   Calendar,
   User,
   Settings,
+  NotebookPen,
   LogOut,
   type LucideIcon,
 } from 'lucide-react'
@@ -71,28 +72,42 @@ const AppSidebar: React.FC = () => {
       icon: Calendar,
       path: '/profissional/sessoes',
     },
+    {
+      title: 'Anotações',
+      icon: NotebookPen,
+      path: '/profissional/anotacoes',
+    },
   ]
 
   const responsibleMenuItems: AppSidebarNavItem[] = [
     { title: 'Visão Geral', icon: Grid, path: '/responsavel/dashboard' },
     { title: 'Minhas crianças', icon: User, path: '/responsavel/criancas' },
-    { title: 'Vincular criança', icon: Smile, path: '/responsavel/vincular-crianca' },
+    {
+      title: 'Vincular criança',
+      icon: Smile,
+      path: '/responsavel/vincular-crianca',
+    },
+    { title: 'Anotações', icon: NotebookPen, path: '/responsavel/anotacoes' },
   ]
 
-  const menuItems = user?.tipo === 'RESPONSAVEL' ? responsibleMenuItems : professionalMenuItems
+  const menuItems =
+    user?.tipo === 'RESPONSAVEL' ? responsibleMenuItems : professionalMenuItems
 
-  const accountItems = user?.tipo === 'PROFISSIONAL' ? [
-    {
-      title: 'Perfil',
-      icon: User,
-      path: '/profissional/perfil',
-    },
-    {
-      title: 'Configurações',
-      icon: Settings,
-      path: '/profissional/configuracoes',
-    },
-  ] : []
+  const accountItems =
+    user?.tipo === 'PROFISSIONAL'
+      ? [
+          {
+            title: 'Perfil',
+            icon: User,
+            path: '/profissional/perfil',
+          },
+          {
+            title: 'Configurações',
+            icon: Settings,
+            path: '/profissional/configuracoes',
+          },
+        ]
+      : []
 
   const handleLogout = async () => {
     try {

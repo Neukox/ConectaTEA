@@ -29,4 +29,5 @@ export const QUERY_KEYS = {
   PROGRESSOS_RECENTES: 'progressos-recentes',
   SESSOES_RESUMO: 'sessoes-resumo',
   SESSOES: 'sessoes',
+  ANOTACOES: 'anotacoes',
 }
