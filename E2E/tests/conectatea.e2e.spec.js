@@ -59,6 +59,7 @@ function ymd(date) {
 }
 
 test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
+  test.setTimeout(180_000)
   const run = id()
   const profissional = {
     nome: `Profissional E2E ${run}`,
@@ -253,6 +254,61 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   await respPage.getByRole('button', { name: 'Aceitar e Confirmar' }).click()
   expect((await confirm).status()).toBe(200)
   await expect(respPage.getByText('Vínculo Criado com Sucesso!')).toBeVisible()
+
+  await login(profPage, profissional.email, 'PROFISSIONAL')
+  const notificationAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    conteudo: `Atualizacao compartilhada para notificacao ${run}`,
+    visibilidade: 'COMPARTILHADA',
+  })
+  expect(notificationAnnotation.status).toBe(201)
+
+  const authorNotificationCount = await api(profPage, '/notificacoes/nao-lidas/count')
+  expect(authorNotificationCount.status).toBe(200)
+  expect(authorNotificationCount.json.count).toBe(0)
+
+  const guardianNotificationCount = await api(respPage, '/notificacoes/nao-lidas/count')
+  expect(guardianNotificationCount.status).toBe(200)
+  expect(guardianNotificationCount.json.count).toBe(1)
+  await respPage.goto('/responsavel/dashboard')
+  await respPage.getByRole('button', { name: /Notificações, 1 não lidas/ }).click()
+  await expect(respPage.getByText(/adicionou uma nova anotação compartilhada/)).toBeVisible()
+  await respPage.getByText(/adicionou uma nova anotação compartilhada/).click()
+  await expect(respPage).toHaveURL(/\/responsavel\/anotacoes$/)
+  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(0)
+
+  const editedShared = await api(profPage,
+    `/criancas/${childId}/anotacoes/${notificationAnnotation.json.id}`, 'PUT', {
+      conteudo: `Atualizacao compartilhada editada ${run}`,
+      visibilidade: 'COMPARTILHADA',
+    })
+  expect(editedShared.status).toBe(200)
+
+  const privateToSharedBase = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    conteudo: `Base privada para compartilhar ${run}`,
+    visibilidade: 'PRIVADA',
+  })
+  expect(privateToSharedBase.status).toBe(201)
+  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(1)
+  const privateToShared = await api(profPage,
+    `/criancas/${childId}/anotacoes/${privateToSharedBase.json.id}`, 'PUT', {
+      conteudo: `Agora compartilhada com cuidado ${run}`,
+      visibilidade: 'COMPARTILHADA',
+    })
+  expect(privateToShared.status).toBe(200)
+  const sharedToPrivate = await api(profPage,
+    `/criancas/${childId}/anotacoes/${privateToSharedBase.json.id}`, 'PUT', {
+      conteudo: `Agora privada novamente ${run}`,
+      visibilidade: 'PRIVADA',
+    })
+  expect(sharedToPrivate.status).toBe(200)
+  const deleteSharedNotification = await api(profPage,
+    `/criancas/${childId}/anotacoes/${notificationAnnotation.json.id}`, 'DELETE')
+  expect(deleteSharedNotification.status).toBe(204)
+  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(4)
+  const readAllNotifications = await api(respPage, '/notificacoes/lidas', 'PATCH')
+  expect(readAllNotifications.status).toBe(200)
+  expect(readAllNotifications.json.updated).toBe(4)
+  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(0)
 
   const guardianAnnotations = await api(respPage, `/criancas/${childId}/anotacoes`)
   expect(guardianAnnotations.status).toBe(200)

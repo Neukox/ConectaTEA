@@ -30,4 +30,6 @@ export const QUERY_KEYS = {
   SESSOES_RESUMO: 'sessoes-resumo',
   SESSOES: 'sessoes',
   ANOTACOES: 'anotacoes',
+  NOTIFICACOES: 'notificacoes',
+  NOTIFICACOES_NAO_LIDAS: 'notificacoes-nao-lidas',
 }

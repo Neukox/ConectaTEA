@@ -11,7 +11,8 @@ import java.util.concurrent.Executor;
 
 @Configuration
 @EnableAsync
-@EnableConfigurationProperties({AppProperties.class, PasswordResetProperties.class, BrevoProperties.class})
+@EnableConfigurationProperties({AppProperties.class, PasswordResetProperties.class,
+        BrevoProperties.class, NotificationProperties.class})
 public class ApplicationConfig {
     @Bean
     Clock clock() {
@@ -28,6 +29,20 @@ public class ApplicationConfig {
         executor.setMaxPoolSize(maxPoolSize);
         executor.setQueueCapacity(queueCapacity);
         executor.setThreadNamePrefix("password-reset-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean(name="notificationEmailExecutor")
+    Executor notificationEmailExecutor(
+            @Value("${app.notification.email.async.core-pool-size:1}") int corePoolSize,
+            @Value("${app.notification.email.async.max-pool-size:2}") int maxPoolSize,
+            @Value("${app.notification.email.async.queue-capacity:200}") int queueCapacity) {
+        var executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(corePoolSize);
+        executor.setMaxPoolSize(maxPoolSize);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setThreadNamePrefix("notification-email-");
         executor.initialize();
         return executor;
     }

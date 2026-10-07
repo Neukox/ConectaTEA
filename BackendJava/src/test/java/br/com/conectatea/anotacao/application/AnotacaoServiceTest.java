@@ -16,6 +16,8 @@ import br.com.conectatea.anotacao.infrastructure.AnotacaoRepository;
 import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.crianca.domain.Crianca;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
+import br.com.conectatea.notificacao.application.NotificationService;
+import br.com.conectatea.notificacao.domain.TipoNotificacao;
 import br.com.conectatea.profissional.domain.Profissional;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.security.AuthenticatedUser;
@@ -46,6 +48,7 @@ class AnotacaoServiceTest {
     @Mock UsuarioRepository usuarios;
     @Mock AuthorizationService autorizacaoCrianca;
     @Mock AuditLogService auditoria;
+    @Mock NotificationService notificacoes;
 
     private final AnotacaoAuthorizationService autorizacaoAnotacao =
             new AnotacaoAuthorizationService();
@@ -59,7 +62,7 @@ class AnotacaoServiceTest {
     void setup() {
         service = new AnotacaoService(
                 anotacoes, criancas, profissionais, usuarios,
-                autorizacaoCrianca, autorizacaoAnotacao, auditoria);
+                autorizacaoCrianca, autorizacaoAnotacao, auditoria, notificacoes);
         crianca = child(10L);
         autor = professional(20L, 1L);
         outro = professional(21L, 2L);
@@ -84,6 +87,12 @@ class AnotacaoServiceTest {
         assertThat(response.isAutor()).isTrue();
         verify(auditoria).record(1L, "ANNOTATION_CREATED", "ANOTACAO", 30L,
                 10L, 20L, "SUCESSO", "visibilidade=" + visibilidade);
+        if (visibilidade == COMPARTILHADA) {
+            verify(notificacoes).registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_CRIADA,
+                    10L, "Lia", 30L, 1L, "Dra. Autora");
+        } else {
+            verifyNoNotification();
+        }
     }
 
     @Test
@@ -105,6 +114,32 @@ class AnotacaoServiceTest {
 
         assertThat(response.visibilidade()).isEqualTo(visibilidade);
         assertThat(anotacao.getConteudo()).isEqualTo("Conteúdo alterado com sucesso");
+        if (visibilidade == COMPARTILHADA) {
+            verify(notificacoes).registrarAlteracaoAnotacao(
+                    TipoNotificacao.ANOTACAO_COMPARTILHADA, 10L, "Lia", 30L,
+                    1L, "Dra. Autora");
+        } else {
+            verifyNoNotification();
+        }
+    }
+
+    @Test
+    void editarCompartilhadaGeraNotificacaoDeEdicao() {
+        ownedSetup(annotation(30L, autor, COMPARTILHADA));
+        service.atualizar(professionalUser(1L), 10L, 30L,
+                "Conteúdo compartilhado atualizado", COMPARTILHADA);
+        verify(notificacoes).registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_EDITADA,
+                10L, "Lia", 30L, 1L, "Dra. Autora");
+    }
+
+    @Test
+    void tornarCompartilhadaPrivadaInformaAntigosDestinatarios() {
+        ownedSetup(annotation(30L, autor, COMPARTILHADA));
+        service.atualizar(professionalUser(1L), 10L, 30L,
+                "Conteúdo agora privado e protegido", PRIVADA);
+        verify(notificacoes).registrarAlteracaoAnotacao(
+                TipoNotificacao.ANOTACAO_TORNADA_PRIVADA, 10L, "Lia", 30L,
+                1L, "Dra. Autora");
     }
 
     @Test
@@ -140,6 +175,20 @@ class AnotacaoServiceTest {
         verify(anotacoes).delete(anotacao);
         verify(auditoria).record(1L, "ANNOTATION_DELETED", "ANOTACAO", 30L,
                 10L, 20L, "SUCESSO", "visibilidade=PRIVADA");
+        verifyNoNotification();
+    }
+
+    @Test
+    void excluirCompartilhadaGeraNotificacao() {
+        var anotacao = annotation(30L, autor, COMPARTILHADA);
+        when(profissionais.findByUsuarioId(1L)).thenReturn(Optional.of(autor));
+        when(anotacoes.findByIdAndCriancaId(30L, 10L)).thenReturn(Optional.of(anotacao));
+        when(usuarios.findById(1L)).thenReturn(Optional.of(autorUsuario));
+
+        service.excluir(professionalUser(1L), 10L, 30L);
+
+        verify(notificacoes).registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_EXCLUIDA,
+                10L, "Lia", 30L, 1L, "Dra. Autora");
     }
 
     @Test
@@ -265,5 +314,10 @@ class AnotacaoServiceTest {
 
     private AuthenticatedUser guardianUser(Long id) {
         return new AuthenticatedUser(id, "resp@test.local", TipoUsuario.RESPONSAVEL);
+    }
+
+    private void verifyNoNotification() {
+        verify(notificacoes, never()).registrarAlteracaoAnotacao(
+                any(), any(), any(), any(), any(), any());
     }
 }

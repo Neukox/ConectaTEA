@@ -5,6 +5,8 @@ import br.com.conectatea.anotacao.domain.VisibilidadeAnotacao;
 import br.com.conectatea.anotacao.infrastructure.AnotacaoRepository;
 import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
+import br.com.conectatea.notificacao.application.NotificationService;
+import br.com.conectatea.notificacao.domain.TipoNotificacao;
 import br.com.conectatea.profissional.domain.Profissional;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.security.AuthenticatedUser;
@@ -32,6 +34,7 @@ public class AnotacaoService {
     private final AuthorizationService autorizacaoCrianca;
     private final AnotacaoAuthorizationService autorizacaoAnotacao;
     private final AuditLogService auditoria;
+    private final NotificationService notificacoes;
 
     public AnotacaoService(
             AnotacaoRepository anotacoes,
@@ -40,7 +43,8 @@ public class AnotacaoService {
             UsuarioRepository usuarios,
             AuthorizationService autorizacaoCrianca,
             AnotacaoAuthorizationService autorizacaoAnotacao,
-            AuditLogService auditoria) {
+            AuditLogService auditoria,
+            NotificationService notificacoes) {
         this.anotacoes = anotacoes;
         this.criancas = criancas;
         this.profissionais = profissionais;
@@ -48,6 +52,7 @@ public class AnotacaoService {
         this.autorizacaoCrianca = autorizacaoCrianca;
         this.autorizacaoAnotacao = autorizacaoAnotacao;
         this.auditoria = auditoria;
+        this.notificacoes = notificacoes;
     }
 
     @Transactional
@@ -64,7 +69,12 @@ public class AnotacaoService {
         auditoria.record(
                 usuario.id(), "ANNOTATION_CREATED", "ANOTACAO", anotacao.getId(), criancaId,
                 profissional.getId(), "SUCESSO", "visibilidade=" + visibilidade);
-        return mapear(anotacao, usuario, profissional.getId(), nomeUsuario(profissional));
+        var atorNome = nomeUsuario(profissional);
+        if (visibilidade == VisibilidadeAnotacao.COMPARTILHADA) {
+            notificacoes.registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_CRIADA,
+                    criancaId, crianca.getNome(), anotacao.getId(), usuario.id(), atorNome);
+        }
+        return mapear(anotacao, usuario, profissional.getId(), atorNome);
     }
 
     @Transactional(readOnly = true)
@@ -123,11 +133,18 @@ public class AnotacaoService {
         var profissional = profissional(usuario);
         var anotacao = anotacaoDaCrianca(criancaId, anotacaoId);
         autorizacaoAnotacao.exigirAutoria(profissional.getId(), anotacao);
+        var visibilidadeAnterior = anotacao.getVisibilidade();
         anotacao.atualizar(conteudo, visibilidade);
         auditoria.record(
                 usuario.id(), "ANNOTATION_UPDATED", "ANOTACAO", anotacaoId, criancaId,
                 profissional.getId(), "SUCESSO", "visibilidade=" + visibilidade);
-        return mapear(anotacao, usuario, profissional.getId(), nomeUsuario(profissional));
+        var atorNome = nomeUsuario(profissional);
+        var tipo = tipoAtualizacao(visibilidadeAnterior, visibilidade);
+        if (tipo != null) {
+            notificacoes.registrarAlteracaoAnotacao(tipo, criancaId,
+                    anotacao.getCrianca().getNome(), anotacaoId, usuario.id(), atorNome);
+        }
+        return mapear(anotacao, usuario, profissional.getId(), atorNome);
     }
 
     @Transactional
@@ -142,6 +159,11 @@ public class AnotacaoService {
         auditoria.record(
                 usuario.id(), "ANNOTATION_DELETED", "ANOTACAO", anotacaoId, criancaId,
                 profissional.getId(), "SUCESSO", "visibilidade=" + visibilidade);
+        if (visibilidade == VisibilidadeAnotacao.COMPARTILHADA) {
+            notificacoes.registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_EXCLUIDA,
+                    criancaId, anotacao.getCrianca().getNome(), anotacaoId,
+                    usuario.id(), nomeUsuario(profissional));
+        }
     }
 
     private Anotacao anotacaoDaCrianca(Long criancaId, Long anotacaoId) {
@@ -175,6 +197,19 @@ public class AnotacaoService {
             return Sort.Direction.ASC;
         }
         throw new IllegalArgumentException("ordenação inválida");
+    }
+
+    private TipoNotificacao tipoAtualizacao(
+            VisibilidadeAnotacao anterior, VisibilidadeAnotacao atual) {
+        if (anterior == VisibilidadeAnotacao.PRIVADA
+                && atual == VisibilidadeAnotacao.PRIVADA) return null;
+        if (anterior == VisibilidadeAnotacao.PRIVADA) {
+            return TipoNotificacao.ANOTACAO_COMPARTILHADA;
+        }
+        if (atual == VisibilidadeAnotacao.PRIVADA) {
+            return TipoNotificacao.ANOTACAO_TORNADA_PRIVADA;
+        }
+        return TipoNotificacao.ANOTACAO_EDITADA;
     }
 
     private Map<Long, String> nomesUsuarios(List<Anotacao> items) {
