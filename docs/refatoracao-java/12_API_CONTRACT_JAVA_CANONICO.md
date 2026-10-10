@@ -60,7 +60,7 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 | Tokens | `POST /api/criancas/{id}/tokens-vinculo` | PROFISSIONAL | sim / sim | vínculo profissional ativo e não arquivada | 200 | implementado; QR/regra unitária; integração PostgreSQL no CI; não homologado |
 | Tokens | `DELETE /api/criancas/{childId}/tokens-vinculo/{tokenId}` | PROFISSIONAL | sim / sim | vínculo ativo e token pertencente ao profissional/criança | 204 | implementado; testes de domínio parciais; não homologado |
 | Vínculos | `GET /api/vinculos/tokens/{codigo}/preview` | qualquer role autenticada | sim / não | valida token; não cria vínculo | 200 | implementado; preview no fluxo frontend, E2E pendente; não homologado |
-| Vínculos | `POST /api/vinculos/confirmar` | RESPONSAVEL | sim / sim | cria/reativa vínculo para o principal responsável | 200 | implementado; replay/concorrência exercitados no PostgreSQL CI; E2E completo pendente |
+| Vínculos | `POST /api/vinculos/confirmar` | RESPONSAVEL | sim / sim | consome código não nominal e cria solicitação pendente; não concede acesso | 200 | implementado; replay/concorrência exercitados com PostgreSQL; E2E completo pendente |
 | Vínculos | `GET /api/vinculos/me` | RESPONSAVEL | sim / não | vínculos ativos do principal; crianças não arquivadas | 200 | implementado; sem homologação frontend/backend |
 | Vínculos | `DELETE /api/vinculos/criancas/{id}` | RESPONSAVEL | sim / sim | encerra apenas vínculo do principal | 204 | implementado; regra parcial; E2E pendente |
 | Metas | `POST /api/metas` | PROFISSIONAL | sim / sim | vínculo ativo com `criancaId` | 201 | implementado; regras de domínio testadas; não homologado |
@@ -96,7 +96,7 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 
 ## Estado de congelamento
 
-O contrato Java descrito neste documento está **estabilizado para migração do frontend**. Auditoria, histórico e rate limit são transversais e não alteraram os bodies de sucesso existentes; acrescentaram apenas o possível erro `429` nos endpoints sensíveis. Não há pendência funcional conhecida no backend principal que exija mudança relevante de rota, request ou response. Isso não significa homologação: integração React, E2E, cobertura adicional e revisão jurídica/operacional permanecem pendentes.
+O contrato Java descrito neste documento registra o que está implementado e as pendências explicitamente marcadas. Auditoria, histórico e rate limit são transversais e acrescentam possíveis erros sem dispensar autorização no recurso. Convites nominais, bootstrap do primeiro gestor, arquivo pós-saída, fórmula agregada de progresso, foto e demais itens indicados como pendentes ainda podem exigir evolução de contrato; integração React, E2E e revisão jurídica/operacional também permanecem pendentes.
 
 ## Auth
 
@@ -234,6 +234,15 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 
 ## Vínculos, tokens e consentimento
 
+### Círculo de Cuidado e solicitações — contrato vigente pós-V11
+
+- `GET /criancas/{criancaId}/circulo/membros`: qualquer membro ativo; lista somente vínculos infantis, nunca conexões sociais, e inclui `vinculoId`, `usuarioId`, `papel`, `tipo` e `acoesPermitidas`.
+- `PATCH /criancas/{criancaId}/circulo/gestao`: responsável gestor; request `{responsavelUsuarioId}`; `204`. Bloqueia alvo inativo ou legado não classificado e serializa a transferência por lock pessimista.
+- `DELETE /criancas/{criancaId}/circulo/membros/me`: membro ativo; `204`. Profissional pode sair; último gestor recebe `409 LAST_MANAGER`.
+- `POST /vinculos/confirmar`: código não nominal não cria vínculo. Response `{solicitacaoId,criancaId,status:"PENDENTE"}`; o token é consumido atomicamente para impedir replay.
+- `PATCH /vinculos/criancas/{childId}/solicitacoes/{requestId}`: gestor decide `{aprovar:boolean}`. Aprovação cria/reativa vínculo como responsável comum e registra consentimento; recusa exige novo convite.
+- Vínculos responsáveis anteriores à V11 permanecem com `papel=null`; isso significa “legado não classificado”, jamais gestor. Convite nominal/email confirmado e bootstrap do primeiro gestor ainda não estão ativos.
+
 ### `GET /vinculos/tokens/{codigo}/preview`
 
 - Role/autenticação: código é somente leitura; apesar de não ter restrição de role no controller, a configuração global exige JWT.
@@ -243,14 +252,14 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 - Regra: token aleatório guardado como SHA-256; expiração é marcada ao ser detectada. A consulta não consome token.
 - Frontend: `src/api/protected/axiosVinculacao.ts` usa a mesma rota e DTO; divergência operacional: cliente/comentário assume validação pública, mas servidor requer usuário autenticado.
 
-### `POST /vinculos/confirmar`
+### `POST /vinculos/confirmar` (vigente após V11)
 
 - Role/autenticação: `RESPONSAVEL`; CSRF requerido.
 - Request: `{codigo,consentimentoAceito:true}`.
-- Response `200`: Preview `{id,nome,dataNascimento,genero}`.
+- Response `200`: `{solicitacaoId,criancaId,status:"PENDENTE"}`.
 - Erros: `400` aceite ausente/request inválido, `401`, `403` role/CSRF, `404` token inválido, `410` token indisponível.
-- Regra: ator é o responsável autenticado. Token é bloqueado para uso único; cria ou reativa vínculo, grava consentimento e consome token transacionalmente. Revinculação é reativada.
-- Frontend: `axiosVinculacao.ts` usa a rota e request compatíveis.
+- Regra: ator é o responsável autenticado. Token é bloqueado e consumido para uso único, mas posse não concede acesso: cria solicitação pendente. Somente decisão posterior de gestor cria/reativa vínculo e grava consentimento.
+- Frontend: `axiosVinculacao.ts` precisa tratar estado pendente e não navegar para dados da criança após a confirmação.
 
 ### `GET /vinculos/me`, `DELETE /vinculos/criancas/{id}`
 
@@ -270,11 +279,11 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 - Regra: código de uso único expira em sete dias; QR é gerado sob demanda, não persistido. Cancelamento é permitido ao profissional proprietário.
 - Frontend: `axiosCadastroCrianca.ts` ainda chama `GET /criancas/{id}/codigo-vinculo` e espera `codigoParaVinculo/qrcodeParaVinculo`; deve migrar para POST e os novos nomes.
 
-### Consentimento (efeito de `POST /vinculos/confirmar`)
+### Consentimento (efeito da aprovação da solicitação)
 
-- Não há endpoint independente de consentimento. O POST de confirmação grava responsável, criança, profissional, instante, IP, User-Agent, versão e finalidade configuradas (`app.consent.version`/`app.consent.purpose`, defaults disponíveis na aplicação).
-- A resposta é o Preview, não um recibo de consentimento. Não há rota de revogação. O registro técnico não representa declaração de conformidade jurídica.
-- Consumidor: `axiosVinculacao.ts`. Não há divergência relevante de request; UI/termo e versão precisam permanecer sincronizados com configuração antes de produção.
+- Não há endpoint independente de consentimento. `POST /vinculos/confirmar` reserva o token e preserva IP/User-Agent na solicitação; somente `PATCH /vinculos/criancas/{childId}/solicitacoes/{requestId}` com aprovação do gestor cria o vínculo e grava o consentimento com versão/finalidade configuradas.
+- A resposta da confirmação é `{solicitacaoId,criancaId,status:"PENDENTE"}`, não Preview nem recibo de consentimento. Não há rota de revogação. O registro técnico não representa declaração de conformidade jurídica.
+- Consumidor: `axiosVinculacao.ts`. Gabriel deve adaptar a navegação para o estado pendente; UI/termo e versão precisam permanecer sincronizados com configuração antes de produção.
 
 ## Metas
 
