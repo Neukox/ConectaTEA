@@ -213,6 +213,23 @@ Classificação 1 não significa tela visual concluída: indica que o contrato b
 - Convite pendente cujo `expiraEm` passou é projetado como `EXPIRADO` e deixa de participar da unicidade lógica de convites utilizáveis. A expiração é calculada, portanto a rejeição do aceite não depende de persistir uma mudança que seria revertida junto com a transação.
 - `V13__nominal_invite_traceability.sql` permite consentimento sem profissional, classifica sua finalidade e adiciona índice parcial para consultas de convites nominais pendentes. A ativação do vínculo, o consentimento aplicável, o histórico e o consumo do convite permanecem na mesma transação.
 - O bootstrap produtivo do primeiro gestor continua indisponível: falta definir a prova de autoridade sobre a criança. Recomendação: validação administrativa verificável, com evidência e decisão auditadas, antes da emissão nominal que concede `RESPONSAVEL_GESTOR`; confirmação de email isolada não atende esse requisito.
+
+## Relatório de continuidade — 10/10/2026 (após `9103c72`)
+
+Concluído nesta rodada:
+
+- eliminado o mapping duplicado de `GET /anotacoes/arquivo-proprio`, mantendo o controller específico;
+- protegido o feed contra textos acima dos limites de `titulo` (200) e `resumo` (500), sem reduzir o resultado original da meta;
+- centralizada a resolução IANA de fuso, removida a inferência ambígua por UF e corrigido o cálculo de `YearMonth` no fuso resolvido;
+- adicionados testes unitários dos limites de apresentação e da resolução de fuso.
+
+Verificações reais:
+
+- `mvnw.cmd -B clean test`: sucesso, 132 testes, 0 falhas/erros e 21 integrações puladas;
+- Docker CLI instalado, mas daemon `desktop-linux` indisponível. Por isso contexto completo, Flyway limpo/upgrade, locks e rollback PostgreSQL não foram revalidados nesta rodada;
+- nenhum recurso AWS foi provisionado e nenhuma decisão de retenção/IA foi criada.
+
+Próximos passos concretos: reexecutar Testcontainers e E2E com Docker ativo; concluir serviço dedicado de série histórica por categoria e testes numéricos/coorte; validar snapshots legados do arquivo próprio; finalizar alinhamentos React ainda apontados na matriz.
 # Execução complementar aprovada — 10/10/2026
 
 As decisões do prompt de execução substituem pendências equivalentes deste documento. A implementação aditiva está em `V14__frontend_contract_completion.sql`: bootstrap administrativo do primeiro gestor sem promoção legada, estados da criança, sessão/meta, versões de anotação, feed e fila de limpeza de fotos. A ordem global de locks de gestão é: (1) vínculos ativos da criança por ID, (2) convite/solicitação por ID, (3) vínculo-alvo. Leituras usam consultas sem lock de escrita.

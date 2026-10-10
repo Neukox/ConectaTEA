@@ -8,6 +8,7 @@ import br.com.conectatea.meta.infrastructure.MetaRepository;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.progresso.infrastructure.ProgressoRepository;
 import br.com.conectatea.security.AuthorizationService;
+import br.com.conectatea.shared.time.LocalTimeZoneResolver;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -32,6 +33,6 @@ class ProgressoControllerPeriodTest {
                 mock(CriancaRepository.class), mock(ProfissionalRepository.class),
                 mock(AuthorizationService.class),
                 mock(br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository.class),
-                Clock.fixed(Instant.parse(instant), ZoneOffset.UTC));
+                Clock.fixed(Instant.parse(instant), ZoneOffset.UTC), new LocalTimeZoneResolver());
     }
 }

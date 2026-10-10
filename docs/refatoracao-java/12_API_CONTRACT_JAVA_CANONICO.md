@@ -485,3 +485,9 @@ O run `37031485540` validou `frontend` e `backend-java` no commit funcional `39a
 - `PUT /profissionais/me` não aceita `fotoPerfilUrl`; foto é mutação separada e serializada pelo mesmo lock pessimista.
 
 Instantes são ISO-8601/UTC; cálculo local usa `America/Bahia` como fallback, sem inferir todos os municípios por UF. Política definitiva de retenção e implantação AWS não integram este contrato funcional.
+
+## Correções de contrato de 10/10/2026
+
+- `GET /anotacoes/arquivo-proprio` possui um único mapping canônico, em `ArquivoProprioController`.
+- `resumoResultado` de conclusão de meta aceita até 2.000 caracteres e permanece integral na meta e no histórico. `eventos_feed.resumo` é somente uma projeção de apresentação de até 500 caracteres; quando reduzida, termina em `…`.
+- `GET /progresso/evolucao-historica` aceita `timezone` IANA opcional. Valor inválido retorna `400 INVALID_ARGUMENT`; ausência usa `America/Bahia`. A API não deduz fuso por UF.

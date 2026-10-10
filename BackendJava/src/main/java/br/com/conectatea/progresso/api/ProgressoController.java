@@ -11,6 +11,7 @@ import br.com.conectatea.progresso.domain.Progresso;
 import br.com.conectatea.progresso.infrastructure.ProgressoRepository;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
+import br.com.conectatea.shared.time.LocalTimeZoneResolver;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import br.com.conectatea.vinculo.domain.StatusVinculo;
 import br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository;
@@ -47,6 +48,7 @@ public class ProgressoController {
     private final EventoMetaRepository events;
     private final VinculoProfissionalRepository professionalLinks;
     private final Clock clock;
+    private final LocalTimeZoneResolver timeZones;
 
     public ProgressoController(
             MetaRepository metas,
@@ -56,7 +58,8 @@ public class ProgressoController {
             ProfissionalRepository professionals,
             AuthorizationService authorization,
             VinculoProfissionalRepository professionalLinks,
-            Clock clock) {
+            Clock clock,
+            LocalTimeZoneResolver timeZones) {
         this.metas = metas;
         this.progress = progress;
         this.events = events;
@@ -65,6 +68,7 @@ public class ProgressoController {
         this.authorization = authorization;
         this.professionalLinks = professionalLinks;
         this.clock = clock;
+        this.timeZones = timeZones;
     }
 
     @GetMapping("/resumo")
@@ -83,25 +87,14 @@ public class ProgressoController {
     public CurrentSummary currentSummary(Authentication authentication,@RequestParam(required=false) Long criancaId){var allowed=allowedMetas(authentication,criancaId);var active=allowed.stream().filter(m->m.getStatus()==StatusMeta.EM_ANDAMENTO).toList();var ids=active.stream().map(Meta::getId).toList();var records=ids.isEmpty()?List.<Progresso>of():progress.findByMetaIdInOrderByDataAsc(ids);var latest=records.stream().collect(Collectors.toMap(Progresso::getMetaId,Function.identity(),(a,b)->b));var categories=new EnumMap<CategoriaMeta,CategoryCurrent>(CategoriaMeta.class);active.stream().collect(Collectors.groupingBy(Meta::getCategoria)).forEach((category,items)->{var known=items.stream().filter(m->latest.containsKey(m.getId())).toList();categories.put(category,new CategoryCurrent(known.isEmpty()?null:known.stream().mapToInt(m->latest.get(m.getId()).getProgressoAtual()).average().orElseThrow(),known.size(),items.size()-known.size()));});return new CurrentSummary(categories,active.size(),allowed.stream().filter(m->m.getStatus()==StatusMeta.PAUSADA).count(),allowed.stream().filter(m->m.getStatus()==StatusMeta.CONCLUIDA).count(),latest.size(),active.size()-latest.size());}
 
     @GetMapping("/evolucao-historica")
-    public HistoricalEvolution historicalEvolution(Authentication authentication,@RequestParam(required=false) Long criancaId,@RequestParam(defaultValue="3") int meses, @RequestParam(required=false, defaultValue="America/Bahia") String timezone){
+    public HistoricalEvolution historicalEvolution(Authentication authentication,@RequestParam(required=false) Long criancaId,@RequestParam(defaultValue="3") int meses, @RequestParam(required=false) String timezone){
         if(meses!=3&&meses!=6&&meses!=12)throw new IllegalArgumentException("meses deve ser 3, 6 ou 12");
         var allowed=allowedMetas(authentication,criancaId);
         var ids=allowed.stream().map(Meta::getId).toList();
         var records=ids.isEmpty()?List.<Progresso>of():progress.findByMetaIdInOrderByDataAsc(ids);
         var eventsList=ids.isEmpty()?List.<br.com.conectatea.meta.domain.EventoMeta>of():events.findByMetaIdInOrderByDataAsc(ids);
-        var zone=ZoneId.of(timezone);
-        if(criancaId!=null && timezone.equals("America/Bahia")){
-            var crianca = children.findById(criancaId).orElse(null);
-            if(crianca!=null && crianca.getUf()!=null) {
-                zone = switch(crianca.getUf().toUpperCase()) {
-                    case "AC" -> ZoneId.of("America/Rio_Branco");
-                    case "AM","RR","RO","MT","MS" -> ZoneId.of("America/Manaus");
-                    case "FN" -> ZoneId.of("America/Noronha");
-                    default -> ZoneId.of("America/Sao_Paulo");
-                };
-            }
-        }
-        var current=YearMonth.now(clock);
+        var zone=timeZones.resolve(timezone);
+        var current=YearMonth.now(clock.withZone(zone));
         var points=new ArrayList<MonthlyPoint>();
         final ZoneId finalZone = zone;
         for(int offset=meses-1;offset>=0;offset--){

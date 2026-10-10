@@ -40,3 +40,10 @@ Atualizada em 10/10/2026 a partir da matriz local não rastreada fornecida no wo
 O frontend deve trocar o rótulo “Novas notificações” por “Notificações não lidas”; tratar `PENDENTE_VALIDACAO_ADMINISTRATIVA`; usar os novos enums; nunca renderizar observação privada; e consumir os contratos de resumo/evolução em vez de inferir médias. Essas mudanças de cliente são contratuais e não reformulam o visual de Alexandre.
 
 Validação desta tranche: `mvn clean test` executou 128 testes, sem falhas ou testes ignorados, com PostgreSQL 16 real via Testcontainers, instalação limpa das 14 migrations e validação Hibernate. Isso não substitui os cenários marcados como pendentes na tabela.
+
+## Continuidade de validação — 10/10/2026
+
+- Arquivo próprio: rota canônica única `GET /anotacoes/arquivo-proprio`; sem permissões de edição no DTO.
+- Conclusão de meta: o cliente pode enviar `resumoResultado` com até 2.000 caracteres. O recurso preserva o texto; cards/feed recebem projeção de no máximo 500 caracteres, com `…` quando reduzida.
+- Histórico de progresso: `timezone` é IANA opcional; omissão usa o fallback documentado. O frontend não deve enviar UF como fuso.
+- Evidência desta continuidade: 132 testes backend passaram em compilação limpa; 21 integrações Testcontainers foram puladas porque o daemon Docker local estava indisponível. Assim, migrations/locks/contexto PostgreSQL permanecem **pendentes de revalidação nesta execução**, sem invalidar a evidência anterior registrada acima.
