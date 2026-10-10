@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.Instant;
 import java.util.List;
@@ -269,7 +270,7 @@ public class MetaController {
     }
 
     public record CreateMetaRequest(
-            @NotBlank String titulo,
+            @NotBlank @Size(max = 160) String titulo,
             String descricao,
             @NotNull CategoriaMeta categoria,
             @NotNull PrioridadeMeta prioridade,
@@ -279,7 +280,7 @@ public class MetaController {
     }
 
     public record UpdateMetaRequest(
-            @NotBlank String titulo,
+            @NotBlank @Size(max = 160) String titulo,
             String descricao,
             @NotNull CategoriaMeta categoria,
             @NotNull PrioridadeMeta prioridade,
@@ -292,8 +293,8 @@ public class MetaController {
             String descricao) {
     }
 
-    public record PauseRequest(@NotBlank String motivo) {}
-    public record ResumeRequest(LocalDate dataFim, String motivo) {}
+    public record PauseRequest(@NotBlank @Size(max = 500) String motivo) {}
+    public record ResumeRequest(LocalDate dataFim, @Size(max = 500) String motivo) {}
 
     public record MetaResponse(
             Long id,

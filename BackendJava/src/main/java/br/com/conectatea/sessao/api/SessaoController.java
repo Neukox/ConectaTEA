@@ -85,7 +85,8 @@ public class SessaoController {
                 .filter(item -> matchesPeriod(item, periodo))
                 .filter(item -> normalized.isBlank()
                         || contains(item.getDescricao(), normalized)
-                        || contains(item.getObservacoes(), normalized))
+                        || (user.tipo() == TipoUsuario.PROFISSIONAL
+                            && contains(item.getObservacoes(), normalized)))
                 .map(item -> SessionResponse.from(item, user.tipo() == TipoUsuario.PROFISSIONAL))
                 .toList();
     }

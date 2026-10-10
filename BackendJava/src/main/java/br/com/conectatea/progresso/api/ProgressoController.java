@@ -12,7 +12,9 @@ import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -35,18 +37,21 @@ public class ProgressoController {
     private final CriancaRepository children;
     private final ProfissionalRepository professionals;
     private final AuthorizationService authorization;
+    private final Clock clock;
 
     public ProgressoController(
             MetaRepository metas,
             ProgressoRepository progress,
             CriancaRepository children,
             ProfissionalRepository professionals,
-            AuthorizationService authorization) {
+            AuthorizationService authorization,
+            Clock clock) {
         this.metas = metas;
         this.progress = progress;
         this.children = children;
         this.professionals = professionals;
         this.authorization = authorization;
+        this.clock = clock;
     }
 
     @GetMapping("/resumo")
@@ -84,10 +89,12 @@ public class ProgressoController {
         }
         var allowed = allowedMetas(authentication, criancaId);
         var byId = allowed.stream().collect(Collectors.toMap(Meta::getId, Function.identity()));
-        var points = historySince(allowed, Instant.now().minus(meses * 31L, ChronoUnit.DAYS)).stream()
+        var inicioInclusivo = periodStart(meses);
+        var points = historySince(allowed, inicioInclusivo).stream()
                 .map(item -> ProgressResponse.from(item, byId.get(item.getMetaId())))
                 .toList();
-        return new ProgressHistory(meses, points, points.size(), points.isEmpty());
+        return new ProgressHistory(meses, inicioInclusivo, Instant.now(clock), "DATA_DESC",
+                points, points.size(), points.size() < 2);
     }
 
     @GetMapping("/distribuicao-categoria")
@@ -148,20 +155,28 @@ public class ProgressoController {
             return List.of();
         }
         var from = switch (period.toUpperCase(Locale.ROOT)) {
-            case "SEMESTRAL" -> Instant.now().minus(183, ChronoUnit.DAYS);
-            case "ANUAL" -> Instant.now().minus(365, ChronoUnit.DAYS);
+            case "SEMESTRAL" -> periodStart(6);
+            case "ANUAL" -> periodStart(12);
             default -> throw new IllegalArgumentException("periodo inválido");
         };
-        return progress.findByMetaIdInAndDataGreaterThanEqualOrderByDataDesc(ids, from);
+        return progress.findByMetaIdInAndDataGreaterThanEqualAndDataLessThanOrderByDataDesc(
+                ids, from, Instant.now(clock));
+    }
+
+    Instant periodStart(int months) {
+        return LocalDate.now(clock).minusMonths(months)
+                .atStartOfDay(ZoneOffset.UTC).toInstant();
     }
 
     private List<Progresso> historySince(List<Meta> allowed, Instant from) {
         var ids = allowed.stream().map(Meta::getId).toList();
         return ids.isEmpty() ? List.of()
-                : progress.findByMetaIdInAndDataGreaterThanEqualOrderByDataDesc(ids, from);
+                : progress.findByMetaIdInAndDataGreaterThanEqualAndDataLessThanOrderByDataDesc(
+                        ids, from, Instant.now(clock));
     }
 
-    public record ProgressHistory(int meses, List<ProgressResponse> pontos,
+    public record ProgressHistory(int meses, Instant inicioInclusivo, Instant fimExclusivo,
+                                  String ordenacao, List<ProgressResponse> pontos,
                                   int tamanhoAmostra, boolean historicoInsuficiente) {}
 
     public record ProgressSummary(
@@ -184,7 +199,8 @@ public class ProgressoController {
             String metaTitulo,
             Long criancaId,
             Long autorProfissionalId,
-            StatusMeta estadoMeta) {
+            StatusMeta estadoMeta,
+            String alertaLegado) {
         static ProgressResponse from(Progresso progress, Meta meta) {
             return new ProgressResponse(
                     progress.getId(),
@@ -194,7 +210,8 @@ public class ProgressoController {
                     progress.getProgressoAtual(),
                     meta.getId(),
                     meta.getTitulo(),
-                    meta.getCriancaId(), progress.getProfissionalId(), progress.getStatus());
+                    meta.getCriancaId(), progress.getProfissionalId(), progress.getStatus(),
+                    progress.getStatusLegado());
         }
     }
 }

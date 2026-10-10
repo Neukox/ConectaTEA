@@ -4,6 +4,7 @@ import br.com.conectatea.shared.domain.AuditableEntity;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.LocalDate;
+import br.com.conectatea.shared.domain.BusinessRuleException;
 
 @Entity
 @Table(name = "metas")
@@ -48,18 +49,18 @@ public class Meta extends AuditableEntity {
     }
 
     public void progress(int value) {
-        if (status == StatusMeta.PAUSADA) throw new IllegalStateException("Meta pausada não aceita progresso");
-        if (status == StatusMeta.CONCLUIDA) throw new IllegalStateException("Meta concluída não aceita progresso");
+        if (status == StatusMeta.PAUSADA) throw new BusinessRuleException("META_PAUSED", "Meta pausada não aceita progresso");
+        if (status == StatusMeta.CONCLUIDA) throw new BusinessRuleException("META_COMPLETED", "Meta concluída não aceita progresso");
         progresso = value;
     }
 
     public void pause(String reason, Instant at) {
-        if (status != StatusMeta.EM_ANDAMENTO) throw new IllegalStateException("Somente meta em andamento pode ser pausada");
+        if (status != StatusMeta.EM_ANDAMENTO) throw new BusinessRuleException("META_CANNOT_PAUSE", "Somente meta em andamento pode ser pausada");
         status = StatusMeta.PAUSADA; motivoPausa = reason; pausadaEm = at;
     }
 
     public void resume(LocalDate deadline) {
-        if (status != StatusMeta.PAUSADA) throw new IllegalStateException("Somente meta pausada pode ser retomada");
+        if (status != StatusMeta.PAUSADA) throw new BusinessRuleException("META_CANNOT_RESUME", "Somente meta pausada pode ser retomada");
         dataFim = deadline; status = StatusMeta.EM_ANDAMENTO; motivoPausa = null; pausadaEm = null;
     }
 }

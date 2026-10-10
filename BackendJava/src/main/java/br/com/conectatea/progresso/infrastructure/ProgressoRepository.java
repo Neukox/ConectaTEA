@@ -7,6 +7,6 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProgressoRepository extends JpaRepository<Progresso, Long> {
-    List<Progresso> findByMetaIdInAndDataGreaterThanEqualOrderByDataDesc(
-            Collection<Long> metaIds, Instant from);
+    List<Progresso> findByMetaIdInAndDataGreaterThanEqualAndDataLessThanOrderByDataDesc(
+            Collection<Long> metaIds, Instant fromInclusive, Instant untilExclusive);
 }

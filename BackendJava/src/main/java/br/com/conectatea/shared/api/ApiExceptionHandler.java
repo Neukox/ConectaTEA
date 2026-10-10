@@ -16,9 +16,17 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 import br.com.conectatea.passwordreset.application.InvalidPasswordResetTokenException;
+import br.com.conectatea.shared.domain.BusinessRuleException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(BusinessRuleException.class)
+    ResponseEntity<ApiError> businessRule(
+            BusinessRuleException exception,
+            HttpServletRequest request) {
+        return response(HttpStatus.CONFLICT, exception.getCode(), exception.getMessage(), request, null);
+    }
 
     @ExceptionHandler(InvalidPasswordResetTokenException.class)
     ResponseEntity<ApiError> invalidPasswordResetToken(
