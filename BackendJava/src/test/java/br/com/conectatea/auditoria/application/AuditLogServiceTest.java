@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.com.conectatea.auditoria.domain.AuditLog;
 import br.com.conectatea.auditoria.infrastructure.AuditLogRepository;
@@ -64,5 +67,18 @@ class AuditLogServiceTest {
         var captor = ArgumentCaptor.forClass(AuditLog.class);
         verify(repository,timeout(1000)).save(captor.capture());
         assertThat(captor.getValue()).extracting("ip","userAgent").containsExactly(null,null);
+    }
+
+    @Test
+    void mandatorySuccessFailureIsNeverSilentlySuppressed() {
+        when(repository.save(any())).thenThrow(new IllegalStateException("database unavailable"));
+        assertThatThrownBy(() -> service.record(1L,"DOMAIN_CHANGED","RESOURCE",2L,null,null,"SUCESSO",null))
+                .isInstanceOf(IllegalStateException.class).hasMessage("database unavailable");
+    }
+
+    @Test
+    void attemptCannotMasqueradeAsCompletedOperation() {
+        assertThatThrownBy(() -> service.recordAttempt(1L,"LOGIN","USER",1L,null,null,"SUCESSO",null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }
