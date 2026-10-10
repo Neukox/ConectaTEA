@@ -79,7 +79,8 @@ public class ProfissionalController {
     public ProfessionalResponse update(
             Authentication authentication,
             @Valid @RequestBody UpdateProfessionalRequest request) {
-        var professional = current(authentication);
+        var principal=(AuthenticatedUser)authentication.getPrincipal();
+        var professional = professionals.findByUsuarioIdForUpdate(principal.id()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Perfil profissional não encontrado"));
         professional.update(
                 request.especialidade(),
                 request.registroProfissional(),

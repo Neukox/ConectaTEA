@@ -24,6 +24,7 @@ public class ProfileImageService {
     public static final long MAX_BYTES = 5L * 1024 * 1024;
     private final ProfileImageStorage storage;
     private final ProfissionalRepository professionals;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private ProfileImageCleanupService cleanupRetries;
 
     public ProfileImageService(ProfileImageStorage storage, ProfissionalRepository professionals) {
         this.storage = storage;
@@ -135,7 +136,7 @@ public class ProfileImageService {
     private void cleanup(String key, String reason) {
         if (key == null) return;
         try { storage.delete(key); }
-        catch (IOException exception) { log.warn("Falha recuperável ao limpar {} ({})", reason, key, exception); }
+        catch (IOException exception) { log.warn("Falha recuperável ao limpar {} ({})", reason, key, exception); if(cleanupRetries!=null)cleanupRetries.enqueue(key,reason); }
     }
 
     private BusinessRuleException invalid() {
