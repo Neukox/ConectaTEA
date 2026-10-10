@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.conectatea.profissional.domain.Profissional;
+import br.com.conectatea.profissional.application.ProfileImageService;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.shared.api.ApiExceptionHandler;
 import br.com.conectatea.usuario.domain.TipoUsuario;
@@ -28,7 +29,8 @@ class ProfissionalControllerWebMvcTest {
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new ProfissionalController(professionals, users))
+                .standaloneSetup(new ProfissionalController(professionals, users,
+                        org.mockito.Mockito.mock(ProfileImageService.class)))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
     }

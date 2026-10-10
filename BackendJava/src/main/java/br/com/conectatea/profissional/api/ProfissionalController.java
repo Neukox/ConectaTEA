@@ -1,6 +1,7 @@
 package br.com.conectatea.profissional.api;
 
 import br.com.conectatea.profissional.domain.Profissional;
+import br.com.conectatea.profissional.application.ProfileImageService;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.usuario.domain.Usuario;
@@ -9,16 +10,22 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -27,12 +34,15 @@ import org.springframework.web.server.ResponseStatusException;
 public class ProfissionalController {
     private final ProfissionalRepository professionals;
     private final UsuarioRepository users;
+    private final ProfileImageService profileImages;
 
     public ProfissionalController(
             ProfissionalRepository professionals,
-            UsuarioRepository users) {
+            UsuarioRepository users,
+            ProfileImageService profileImages) {
         this.professionals = professionals;
         this.users = users;
+        this.profileImages = profileImages;
     }
 
     @GetMapping
@@ -68,8 +78,32 @@ public class ProfissionalController {
                 request.titulo(),
                 request.formacaoAcademica(),
                 request.sobre(),
-                request.fotoPerfilUrl());
+                professional.getFotoPerfilUrl());
         return response(professional);
+    }
+
+    @PostMapping(value = "/me/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('PROFISSIONAL')")
+    public ProfessionalResponse uploadPhoto(Authentication authentication,
+            @RequestPart("file") MultipartFile file) {
+        var professional = current(authentication);
+        profileImages.replace(professional, file);
+        return response(professional);
+    }
+
+    @DeleteMapping("/me/foto")
+    @PreAuthorize("hasRole('PROFISSIONAL')")
+    public ResponseEntity<Void> removePhoto(Authentication authentication) {
+        profileImages.remove(current(authentication));
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/fotos/{key}")
+    public ResponseEntity<byte[]> photo(@PathVariable String key) {
+        var image = profileImages.load(key);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(image.contentType()))
+                .cacheControl(org.springframework.http.CacheControl.maxAge(java.time.Duration.ofDays(30)).cachePublic())
+                .body(image.bytes());
     }
 
     @GetMapping("/{id}")
