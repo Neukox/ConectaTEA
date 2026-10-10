@@ -47,3 +47,13 @@ Validação desta tranche: `mvn clean test` executou 128 testes, sem falhas ou t
 - Conclusão de meta: o cliente pode enviar `resumoResultado` com até 2.000 caracteres. O recurso preserva o texto; cards/feed recebem projeção de no máximo 500 caracteres, com `…` quando reduzida.
 - Histórico de progresso: `timezone` é IANA opcional; omissão usa o fallback documentado. O frontend não deve enviar UF como fuso.
 - Evidência desta continuidade: 132 testes backend passaram em compilação limpa; 21 integrações Testcontainers foram puladas porque o daemon Docker local estava indisponível. Assim, migrations/locks/contexto PostgreSQL permanecem **pendentes de revalidação nesta execução**, sem invalidar a evidência anterior registrada acima.
+
+### Atualização V15
+
+O Docker foi iniciado e a lacuna acima foi revalidada: `mvnw.cmd -B clean test` executou 132 testes, sem falhas, erros ou ignorados, em PostgreSQL 16. Flyway validou instalação limpa V1→V15, upgrade populado V7→V15 e `ddl-auto=validate`.
+
+- P05 Progresso: consumir séries por categoria; não calcular uma média geral no cliente.
+- P07 Anotações: formulário envia `titulo`, `conteudo`, `temas`, `sessaoId` na criação e `motivoCorrecao` ao corrigir compartilhada. Versões: `GET /criancas/{id}/anotacoes/{notaId}/versoes`.
+- P01/R01 Dashboard: feed agregado em `GET /dashboard/feed?size=5`; cursor opcional usa `antes` e `antesId` juntos.
+- P03/R03 Detalhe: feed individual em `GET /criancas/{id}/feed?size=10`; carregar mais repassa ambos os campos do cursor.
+- Arquivo profissional: `GET /anotacoes/arquivo-proprio`, somente leitura. `snapshotHistoricoConfiavel=false` exige sinalização discreta de limitação do legado, sem buscar o nome atual.

@@ -230,6 +230,20 @@ Verificações reais:
 - nenhum recurso AWS foi provisionado e nenhuma decisão de retenção/IA foi criada.
 
 Próximos passos concretos: reexecutar Testcontainers e E2E com Docker ativo; concluir serviço dedicado de série histórica por categoria e testes numéricos/coorte; validar snapshots legados do arquivo próprio; finalizar alinhamentos React ainda apontados na matriz.
+
+## Continuidade V15 — sete áreas
+
+| Área | Implementação | Evidência local | Estado real |
+|---|---|---|---|
+| Gráficos | `ProgressHistoryService`, séries/tendências por categoria, coorte mensal, amostra, ausência, pausas e mudanças | testes 50%, 70%, +20pp, 46,67% e categorias independentes | validado em unidade; casos históricos legados complexos continuam limitados pelo histórico disponível |
+| Arquivo próprio | snapshot mínimo imutável na criação; legado marcado `MIGRACAO_V15` | Flyway limpa/upgrade e Hibernate validate | validado no schema; legado não é declarado snapshot histórico verdadeiro |
+| Anotações | lock pessimista, repositório obrigatório, versões autorizadas, motivo e preservação de campos | serviço + PostgreSQL/contexto | validado; concorrência dedicada de duas correções deve permanecer no conjunto de regressão CI |
+| Feed | `ANOTACAO_CORRIGIDA`, cursor validado, feed individual e agregado `/dashboard/feed` | contexto completo/OpenAPI | parcial: eventos administrativos anteriores não recebem backfill fictício |
+| Dashboards | removido zero artificial; vínculos iniciados no mês, crianças ativas e Clock | compilação e contexto PostgreSQL | validado para os campos existentes; visual segue responsabilidade do frontend |
+| Frontend/E2E | título, temas, sessão e motivo no schema/form/gateway; expectativas E2E locais preservadas | lint e build | build validado; E2E completo depende da orquestração de três processos |
+| Banco | V15 aditiva com snapshot, origem, constraints, índice e visibilidade do feed | V1→V15 limpa e V7→V15 populada em PostgreSQL 16 | validado; rollback é de aplicação, sem remoção destrutiva do histórico |
+
+A coorte de cada ponto histórico usa `[início local do mês, início local do mês seguinte)`; o mês atual termina em `Clock.instant()`. Meta concluída antes do início do ponto fica fora; conclusão dentro do ponto contribui com 100%; pausa no limite exclui contribuição e é contada separadamente. Ausência de progresso permanece `metasSemDados`.
 # Execução complementar aprovada — 10/10/2026
 
 As decisões do prompt de execução substituem pendências equivalentes deste documento. A implementação aditiva está em `V14__frontend_contract_completion.sql`: bootstrap administrativo do primeiro gestor sem promoção legada, estados da criança, sessão/meta, versões de anotação, feed e fila de limpeza de fotos. A ordem global de locks de gestão é: (1) vínculos ativos da criança por ID, (2) convite/solicitação por ID, (3) vínculo-alvo. Leituras usam consultas sem lock de escrita.

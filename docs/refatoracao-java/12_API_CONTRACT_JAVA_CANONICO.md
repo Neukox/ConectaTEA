@@ -491,3 +491,7 @@ Instantes são ISO-8601/UTC; cálculo local usa `America/Bahia` como fallback, s
 - `GET /anotacoes/arquivo-proprio` possui um único mapping canônico, em `ArquivoProprioController`.
 - `resumoResultado` de conclusão de meta aceita até 2.000 caracteres e permanece integral na meta e no histórico. `eventos_feed.resumo` é somente uma projeção de apresentação de até 500 caracteres; quando reduzida, termina em `…`.
 - `GET /progresso/evolucao-historica` aceita `timezone` IANA opcional. Valor inválido retorna `400 INVALID_ARGUMENT`; ausência usa `America/Bahia`. A API não deduz fuso por UF.
+- A resposta de evolução expõe `categorias.{CATEGORIA}.{pontos,tendenciaPontosPercentuais,historicoInsuficiente}`. Cada ponto contém `average`, `amostra`, `metasSemDados`, `metasPausadas`, `alteracoes` e `composicaoAlterada`.
+- `GET /criancas/{criancaId}/anotacoes/{anotacaoId}/versoes` revalida vínculo e visibilidade. Correção compartilhada produz uma versão anterior e `ANOTACAO_CORRIGIDA` atomicamente.
+- `GET /dashboard/feed?size=5&antes=&antesId=` agrega somente eventos `CIRCULO` das crianças atualmente autorizadas. O cursor exige instante e ID juntos.
+- Arquivo próprio inclui `snapshotCapturadoEm`, `snapshotOrigem` e `snapshotHistoricoConfiavel`. `MIGRACAO_V15` informa captura técnica do legado e nunca é apresentada como verdade histórica.
