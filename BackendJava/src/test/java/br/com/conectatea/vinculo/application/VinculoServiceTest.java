@@ -12,7 +12,7 @@ import br.com.conectatea.crianca.domain.Crianca;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.usuario.domain.TipoUsuario;
-import br.com.conectatea.vinculo.domain.Consentimento;
+import br.com.conectatea.vinculo.domain.SolicitacaoTokenVinculo;
 import br.com.conectatea.vinculo.domain.StatusToken;
 import br.com.conectatea.vinculo.domain.StatusVinculo;
 import br.com.conectatea.vinculo.domain.TokenVinculo;
@@ -20,6 +20,7 @@ import br.com.conectatea.vinculo.domain.VinculoResponsavelCrianca;
 import br.com.conectatea.vinculo.infrastructure.ConsentimentoRepository;
 import br.com.conectatea.vinculo.infrastructure.TokenVinculoRepository;
 import br.com.conectatea.vinculo.infrastructure.VinculoResponsavelRepository;
+import br.com.conectatea.vinculo.infrastructure.SolicitacaoTokenVinculoRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -34,24 +35,32 @@ class VinculoServiceTest {
             org.mockito.Mockito.mock(VinculoResponsavelRepository.class);
     private final ConsentimentoRepository consents =
             org.mockito.Mockito.mock(ConsentimentoRepository.class);
+    private final SolicitacaoTokenVinculoRepository requests =
+            org.mockito.Mockito.mock(SolicitacaoTokenVinculoRepository.class);
     private final VinculoService service = new VinculoService(
-            tokens, children, links, consents, "2026-10", "Acompanhamento terapêutico");
+            tokens, children, links, consents, null, null, requests,
+            "2026-10", "Acompanhamento terapêutico");
 
     @Test
-    void reactivatesExistingUnlinkedRelationshipBeforeConsumingToken() {
+    void nonNominalCodeCreatesPendingRequestWithoutGrantingAccess() {
         var token = pendingToken();
         var link = new VinculoResponsavelCrianca(5L, 9L);
         link.desvincular();
         when(tokens.findByHashForUpdate(anyString())).thenReturn(Optional.of(token));
-        when(links.findByResponsavelIdAndCriancaId(5L, 9L)).thenReturn(Optional.of(link));
         when(children.findById(9L)).thenReturn(Optional.of(child()));
+        when(requests.save(any(SolicitacaoTokenVinculo.class))).thenAnswer(invocation -> {
+            var request = invocation.getArgument(0, SolicitacaoTokenVinculo.class);
+            ReflectionTestUtils.setField(request, "id", 33L);
+            return request;
+        });
 
-        service.confirm("code", true, guardian(), "127.0.0.1", "test");
+        var result = service.confirm("code", true, guardian(), "127.0.0.1", "test");
 
-        assertThat(link.getStatus()).isEqualTo(StatusVinculo.VINCULADO);
+        assertThat(result.status()).isEqualTo("PENDENTE");
+        assertThat(link.getStatus()).isEqualTo(StatusVinculo.DESVINCULADO);
         assertThat(token.getStatus()).isEqualTo(StatusToken.USADO);
         verify(links, never()).save(any(VinculoResponsavelCrianca.class));
-        verify(consents).save(any(Consentimento.class));
+        verify(consents, never()).save(any());
     }
 
     @Test

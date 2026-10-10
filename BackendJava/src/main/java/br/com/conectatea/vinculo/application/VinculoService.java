@@ -13,6 +13,9 @@ import br.com.conectatea.vinculo.infrastructure.ConsentimentoRepository;
 import br.com.conectatea.vinculo.infrastructure.HistoricoVinculoRepository;
 import br.com.conectatea.vinculo.infrastructure.TokenVinculoRepository;
 import br.com.conectatea.vinculo.infrastructure.VinculoResponsavelRepository;
+import br.com.conectatea.vinculo.infrastructure.SolicitacaoTokenVinculoRepository;
+import br.com.conectatea.vinculo.domain.SolicitacaoTokenVinculo;
+import br.com.conectatea.shared.domain.BusinessRuleException;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import java.awt.image.BufferedImage;
@@ -43,6 +46,7 @@ public class VinculoService {
     private final ConsentimentoRepository consents;
     private final HistoricoVinculoRepository history;
     private final AuditLogService audits;
+    private final SolicitacaoTokenVinculoRepository requests;
     private final SecureRandom random = new SecureRandom();
     private final String consentVersion;
     private final String consentPurpose;
@@ -55,6 +59,7 @@ public class VinculoService {
             ConsentimentoRepository consents,
             HistoricoVinculoRepository history,
             AuditLogService audits,
+            SolicitacaoTokenVinculoRepository requests,
             @Value("${app.consent.version:1.0}") String consentVersion,
             @Value("${app.consent.purpose:Acompanhamento terapêutico da criança}")
                     String consentPurpose) {
@@ -64,6 +69,7 @@ public class VinculoService {
         this.consents = consents;
         this.history = history;
         this.audits = audits;
+        this.requests = requests;
         this.consentVersion = consentVersion;
         this.consentPurpose = consentPurpose;
     }
@@ -71,7 +77,7 @@ public class VinculoService {
     public VinculoService(TokenVinculoRepository tokens, CriancaRepository children,
             VinculoResponsavelRepository links, ConsentimentoRepository consents,
             String consentVersion, String consentPurpose) {
-        this(tokens, children, links, consents, null, null, consentVersion, consentPurpose);
+        this(tokens, children, links, consents, null, null, null, consentVersion, consentPurpose);
     }
 
     @Transactional
@@ -97,11 +103,15 @@ public class VinculoService {
                         HttpStatus.NOT_FOUND, "Token inválido"));
         validate(token);
         var child = children.findById(token.getCriancaId()).orElseThrow();
+        if (child.isArquivada()) {
+            throw new BusinessRuleException(
+                    "CHILD_ARCHIVED", "Criança arquivada não aceita solicitação");
+        }
         return new Preview(child.getId(), child.getNome(), child.getDataNascimento(), child.getGenero());
     }
 
     @Transactional(noRollbackFor = TokenGoneException.class)
-    public Preview confirm(
+    public LinkRequest confirm(
             String code,
             boolean accepted,
             AuthenticatedUser user,
@@ -120,22 +130,43 @@ public class VinculoService {
                         HttpStatus.NOT_FOUND, "Token inválido"));
         validate(token);
 
-        var existing = links.findByResponsavelIdAndCriancaId(user.id(), token.getCriancaId());
-        var event = existing.isPresent() ? "VINCULO_REATIVADO" : "VINCULO_CRIADO";
-        existing
-                .ifPresentOrElse(
-                        VinculoResponsavelCrianca::vincular,
-                        () -> links.save(new VinculoResponsavelCrianca(
-                                user.id(), token.getCriancaId())));
-        consents.save(new Consentimento(
-                user.id(), token.getCriancaId(), token.getProfissionalId(), ip, agent,
-                consentVersion, consentPurpose));
-        token.consumir(Instant.now());
-        recordHistory(token.getCriancaId(), user.id(), user.id(), token.getProfissionalId(), event, "VINCULADO", null);
-        audit(user.id(), "TOKEN_VINCULO_CONSUMIDO", "TOKEN_VINCULO", token.getId(), token.getCriancaId(), token.getProfissionalId(), event);
-
         var child = children.findById(token.getCriancaId()).orElseThrow();
-        return new Preview(child.getId(), child.getNome(), child.getDataNascimento(), child.getGenero());
+        if (child.isArquivada()) throw new BusinessRuleException("CHILD_ARCHIVED", "Criança arquivada não aceita solicitação");
+        if (requests == null) throw new BusinessRuleException("LINK_FLOW_UNAVAILABLE", "Fluxo seguro de solicitação indisponível");
+        var request = requests.save(new SolicitacaoTokenVinculo(
+                token.getId(), token.getCriancaId(), user.id(), ip, agent));
+        token.consumir(Instant.now());
+        recordHistory(token.getCriancaId(), user.id(), user.id(), token.getProfissionalId(),
+                "SOLICITACAO_VINCULO_CRIADA", "PENDENTE", null);
+        audit(user.id(), "TOKEN_VINCULO_RESERVADO", "TOKEN_VINCULO", token.getId(),
+                token.getCriancaId(), token.getProfissionalId(), "solicitacaoId=" + request.getId());
+        return new LinkRequest(request.getId(), request.getCriancaId(), request.getStatus());
+    }
+
+    @Transactional
+    public LinkRequest decideRequest(Long childId, Long requestId, boolean approve,
+                                     AuthenticatedUser manager) {
+        var active = links.lockActiveByChild(childId, br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO);
+        var managerLink = active.stream().filter(item -> item.getResponsavelId().equals(manager.id())).findFirst()
+                .orElseThrow(() -> new AccessDeniedException("Sem vínculo ativo"));
+        if (!managerLink.isGestor()) throw new AccessDeniedException("Somente gestor decide solicitações");
+        var request = requests.findByIdForUpdate(requestId).orElseThrow();
+        if (!request.getCriancaId().equals(childId)) throw new AccessDeniedException("Solicitação pertence a outra criança");
+        if (!approve) {
+            request.reject(manager.id());
+            return new LinkRequest(request.getId(), childId, request.getStatus());
+        }
+        request.approve(manager.id());
+        var token = tokens.findById(request.getTokenId()).orElseThrow();
+        var existing = links.findByResponsavelIdAndCriancaId(request.getSolicitanteUsuarioId(), childId);
+        existing.ifPresentOrElse(VinculoResponsavelCrianca::vincular,
+                () -> links.save(new VinculoResponsavelCrianca(request.getSolicitanteUsuarioId(), childId)));
+        consents.save(new Consentimento(request.getSolicitanteUsuarioId(), childId,
+                token.getProfissionalId(), request.getIp(), request.getUserAgent(),
+                consentVersion, consentPurpose));
+        recordHistory(childId, manager.id(), request.getSolicitanteUsuarioId(),
+                token.getProfissionalId(), "SOLICITACAO_VINCULO_APROVADA", "VINCULADO", null);
+        return new LinkRequest(request.getId(), childId, request.getStatus());
     }
 
     @Transactional
@@ -220,6 +251,7 @@ public class VinculoService {
 
     public record Preview(Long id, String nome, LocalDate dataNascimento, String genero) {
     }
+    public record LinkRequest(Long solicitacaoId, Long criancaId, String status) {}
 
     static class TokenGoneException extends ResponseStatusException {
         TokenGoneException(String reason) {
