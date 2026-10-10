@@ -68,6 +68,20 @@ public class NotificationService {
         return notificacoes.countByDestinatarioUsuarioIdAndLidaFalse(usuario.id());
     }
 
+    @Transactional(readOnly = true)
+    public List<NotificacaoView> listarSino(AuthenticatedUser usuario) {
+        return notificacoes.findAllByDestinatarioUsuarioIdAndOcultadaSinoFalseOrderByCreatedAtDesc(usuario.id())
+                .stream().map(NotificacaoView::from).toList();
+    }
+
+    @Transactional
+    public int limparSino(AuthenticatedUser usuario) {
+        var updated = notificacoes.limparSino(usuario.id());
+        if (updated > 0) auditoria.record(usuario.id(), "NOTIFICATIONS_BELL_CLEARED",
+                "NOTIFICACAO", null, null, null, "SUCESSO", "quantidade=" + updated);
+        return updated;
+    }
+
     @Transactional
     public NotificacaoView marcarComoLida(AuthenticatedUser usuario, Long notificacaoId) {
         var notificacao = notificacoes.findByIdAndDestinatarioUsuarioId(notificacaoId, usuario.id())

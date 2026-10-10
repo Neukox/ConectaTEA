@@ -41,6 +41,19 @@ public class NotificacaoController {
         return new NotificacaoDtos.CountResponse(service.contarNaoLidas(principal(authentication)));
     }
 
+    @GetMapping("/sino")
+    @Operation(summary = "Listar notificações visíveis no sino", description = "Limpar o sino não altera leitura nem remove o histórico.")
+    public List<NotificacaoDtos.Response> listarSino(Authentication authentication) {
+        return service.listarSino(principal(authentication)).stream()
+                .map(NotificacaoDtos.Response::from).toList();
+    }
+
+    @PatchMapping("/sino/limpar")
+    @Operation(summary = "Limpar o sino", description = "Oculta itens do sino, preservando histórico e estado de leitura.")
+    public NotificacaoDtos.ClearBellResponse limparSino(Authentication authentication) {
+        return new NotificacaoDtos.ClearBellResponse(service.limparSino(principal(authentication)));
+    }
+
     @PatchMapping("/{id}/lida")
     @Operation(summary = "Marcar uma notificação como lida", description = "Aplica ownership pelo usuário autenticado. IDs alheios são tratados como inexistentes para prevenir IDOR.")
     public NotificacaoDtos.Response marcarComoLida(Authentication authentication, @PathVariable Long id) {

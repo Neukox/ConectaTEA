@@ -107,6 +107,17 @@ class NotificationServiceTest {
                 null, null, "SUCESSO", "quantidade=2");
     }
 
+    @Test
+    void limparSinoPreservaLeituraEHistorico() {
+        when(repository.limparSino(2L)).thenReturn(4);
+        assertThat(service.limparSino(user(2L))).isEqualTo(4);
+        verify(repository).limparSino(2L);
+        verify(repository, never()).marcarTodasComoLidas(any(), any());
+        verify(repository, never()).deleteAll(any(Iterable.class));
+        verify(auditoria).record(2L, "NOTIFICATIONS_BELL_CLEARED", "NOTIFICACAO",
+                null, null, null, "SUCESSO", "quantidade=4");
+    }
+
     private AuthenticatedUser user(Long id) {
         return new AuthenticatedUser(id, "user@test.local", TipoUsuario.RESPONSAVEL);
     }

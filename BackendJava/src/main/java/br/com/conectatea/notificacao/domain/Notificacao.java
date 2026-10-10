@@ -43,6 +43,9 @@ public class Notificacao {
     @Column(nullable = false)
     private boolean lida;
 
+    @Column(name = "ocultada_sino", nullable = false)
+    private boolean ocultadaSino;
+
     @Column(name = "lida_em")
     private Instant lidaEm;
 
@@ -80,6 +83,7 @@ public class Notificacao {
     public String getTitulo() { return titulo; }
     public String getMensagem() { return mensagem; }
     public boolean isLida() { return lida; }
+    public boolean isOcultadaSino() { return ocultadaSino; }
     public Instant getLidaEm() { return lidaEm; }
     public Instant getCreatedAt() { return createdAt; }
 }

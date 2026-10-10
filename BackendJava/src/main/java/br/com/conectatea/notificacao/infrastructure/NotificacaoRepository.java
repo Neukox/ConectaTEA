@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> {
     List<Notificacao> findAllByDestinatarioUsuarioIdOrderByCreatedAtDesc(Long usuarioId);
+    List<Notificacao> findAllByDestinatarioUsuarioIdAndOcultadaSinoFalseOrderByCreatedAtDesc(Long usuarioId);
 
     long countByDestinatarioUsuarioIdAndLidaFalse(Long usuarioId);
 
@@ -23,4 +24,8 @@ public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> 
              where n.destinatarioUsuarioId = :usuarioId and n.lida = false
             """)
     int marcarTodasComoLidas(@Param("usuarioId") Long usuarioId, @Param("lidaEm") Instant lidaEm);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update Notificacao n set n.ocultadaSino = true where n.destinatarioUsuarioId = :usuarioId and n.ocultadaSino = false")
+    int limparSino(@Param("usuarioId") Long usuarioId);
 }
