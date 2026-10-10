@@ -4,6 +4,7 @@ import br.com.conectatea.vinculo.domain.StatusVinculo;
 import br.com.conectatea.vinculo.domain.VinculoProfissionalCrianca;
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -26,4 +27,6 @@ public interface VinculoProfissionalRepository extends JpaRepository<VinculoProf
 
     @Query("select count(distinct v.profissionalId) from VinculoProfissionalCrianca v where v.criancaId in :childIds and v.status=:status")
     long countDistinctProfissionaisByCriancaIdInAndStatus(@Param("childIds") List<Long> childIds, @Param("status") StatusVinculo status);
+    @Query("select count(distinct v.profissionalId) from VinculoProfissionalCrianca v where v.criancaId in :childIds and v.status=:status and v.dataVinculo>=:inicio and v.dataVinculo<:fim")
+    long countDistinctProfissionaisVinculadosNoPeriodo(@Param("childIds") List<Long> childIds,@Param("status") StatusVinculo status,@Param("inicio") Instant inicio,@Param("fim") Instant fim);
 }

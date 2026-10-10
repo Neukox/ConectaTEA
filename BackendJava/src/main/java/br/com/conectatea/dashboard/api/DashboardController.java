@@ -14,6 +14,9 @@ import br.com.conectatea.sessao.infrastructure.SessaoRepository;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneOffset;
+import java.time.Clock;
+import br.com.conectatea.shared.time.LocalTimeZoneResolver;
+import br.com.conectatea.crianca.domain.StatusAcompanhamento;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,6 +36,8 @@ public class DashboardController {
     private final ConexaoRepository connections;
 
     private final br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository professionalLinks;
+    private final Clock clock;
+    private final LocalTimeZoneResolver timeZones;
 
     public DashboardController(
             ProfissionalRepository professionals,
@@ -40,27 +45,33 @@ public class DashboardController {
             MetaRepository metas,
             SessaoRepository sessions,
             ConexaoRepository connections,
-            br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository professionalLinks) {
+            br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository professionalLinks,
+            Clock clock, LocalTimeZoneResolver timeZones) {
         this.professionals = professionals;
         this.children = children;
         this.metas = metas;
         this.sessions = sessions;
         this.connections = connections;
         this.professionalLinks = professionalLinks;
+        this.clock=clock; this.timeZones=timeZones;
     }
 
     @GetMapping("/profissional")
     @PreAuthorize("hasRole('PROFISSIONAL')")
     public ProfessionalDashboard professional(Authentication authentication) {
         var professional = currentProfessional(authentication);
-        var linkedChildren = children.findLinkedToProfessional(professional);
+        var linkedChildren = children.findLinkedToProfessional(professional).stream().filter(c->c.getStatusAcompanhamento()==StatusAcompanhamento.EM_ACOMPANHAMENTO).toList();
         var childIds = linkedChildren.stream().map(Crianca::getId).toList();
         var professionalGoals = childIds.isEmpty() ? List.<Meta>of() : metas.findByCriancaIdIn(childIds);
         
         long teamSize = childIds.isEmpty() ? 0 : professionalLinks.countDistinctProfissionaisByCriancaIdInAndStatus(childIds, br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO);
 
-        var monthStart = LocalDate.now().withDayOfMonth(1)
-                .atStartOfDay().toInstant(ZoneOffset.UTC);
+        var zone=timeZones.resolve(null);
+        var now=clock.instant();
+        var localNow=LocalDate.ofInstant(now,zone);
+        var monthStart = localNow.withDayOfMonth(1).atStartOfDay(zone).toInstant();
+        var nextMonth=localNow.withDayOfMonth(1).plusMonths(1).atStartOfDay(zone).toInstant();
+        long teamJoinedThisMonth=childIds.isEmpty()?0:professionalLinks.countDistinctProfissionaisVinculadosNoPeriodo(childIds,br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO,monthStart,nextMonth);
                 
         int activeGoals = (int) professionalGoals.stream().filter(g -> g.getStatus() == StatusMeta.EM_ANDAMENTO).count();
 
@@ -69,7 +80,7 @@ public class DashboardController {
                 linkedChildren.stream().filter(item -> item.getCreatedAt() != null
                         && !item.getCreatedAt().isBefore(monthStart)).count(),
                 teamSize,
-                0, // profissionaisAtivosEsteMes - not needed to be exact if we don't track when they joined the circle in this simple query
+                teamJoinedThisMonth,
                 professionalGoals.size(),
                 activeGoals,
                 professionalGoals.stream().filter(item -> item.getCreatedAt() != null
@@ -84,7 +95,7 @@ public class DashboardController {
     @GetMapping("/profissional/criancas")
     @PreAuthorize("hasRole('PROFISSIONAL')")
     public List<ChildDashboard> professionalChildren(Authentication authentication) {
-        return children.findLinkedToProfessional(currentProfessional(authentication)).stream()
+        return children.findLinkedToProfessional(currentProfessional(authentication)).stream().filter(c->c.getStatusAcompanhamento()==StatusAcompanhamento.EM_ACOMPANHAMENTO)
                 .map(ChildDashboard::from)
                 .toList();
     }
@@ -92,7 +103,7 @@ public class DashboardController {
     @GetMapping("/profissional/metas")
     @PreAuthorize("hasRole('PROFISSIONAL')")
     public List<GoalDashboard> professionalGoals(Authentication authentication) {
-        var linkedChildren = children.findLinkedToProfessional(currentProfessional(authentication));
+        var linkedChildren = children.findLinkedToProfessional(currentProfessional(authentication)).stream().filter(c->c.getStatusAcompanhamento()==StatusAcompanhamento.EM_ACOMPANHAMENTO).toList();
         var childIds = linkedChildren.stream().map(Crianca::getId).toList();
         var goals = childIds.isEmpty() ? List.<Meta>of() : metas.findByCriancaIdIn(childIds);
         var names = children.findAllById(goals.stream().map(Meta::getCriancaId).distinct().toList())
@@ -106,13 +117,13 @@ public class DashboardController {
     @PreAuthorize("hasRole('RESPONSAVEL')")
     public GuardianDashboard guardian(Authentication authentication) {
         var user = (AuthenticatedUser) authentication.getPrincipal();
-        var linkedChildren = children.findLinkedToGuardian(user.id());
+        var linkedChildren = children.findLinkedToGuardian(user.id()).stream().filter(c->c.getStatusAcompanhamento()==StatusAcompanhamento.EM_ACOMPANHAMENTO).toList();
         var ids = linkedChildren.stream().map(Crianca::getId).toList();
         var goals = ids.isEmpty() ? List.<Meta>of() : metas.findByCriancaIdIn(ids);
         var upcomingSessions = (ids.isEmpty() ? List.<br.com.conectatea.sessao.domain.Sessao>of()
                 : sessions.findByCriancaIdIn(ids)).stream()
                 .filter(item -> item.getStatus() == StatusSessao.AGENDADA)
-                .filter(item -> item.getDataHora().isAfter(java.time.OffsetDateTime.now()))
+                .filter(item -> item.getDataHora().toInstant().isAfter(clock.instant()))
                 .count();
         return new GuardianDashboard(
                 linkedChildren.size(), goals.size(), upcomingSessions, averageProgress(goals));

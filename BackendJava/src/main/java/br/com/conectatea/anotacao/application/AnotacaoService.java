@@ -41,7 +41,7 @@ public class AnotacaoService {
     private final NotificationService notificacoes;
     private final SessaoRepository sessoes;
     private final FeedService feedService;
-    @org.springframework.beans.factory.annotation.Autowired(required=false) private VersaoAnotacaoRepository versoes;
+    private final VersaoAnotacaoRepository versoes;
 
     public AnotacaoService(
             AnotacaoRepository anotacoes,
@@ -53,7 +53,8 @@ public class AnotacaoService {
             AuditLogService auditoria,
             NotificationService notificacoes,
             SessaoRepository sessoes,
-            FeedService feedService) {
+            FeedService feedService,
+            VersaoAnotacaoRepository versoes) {
         this.anotacoes = anotacoes;
         this.criancas = criancas;
         this.profissionais = profissionais;
@@ -64,6 +65,7 @@ public class AnotacaoService {
         this.notificacoes = notificacoes;
         this.sessoes = sessoes;
         this.feedService = feedService;
+        this.versoes = versoes;
     }
 
     @Transactional
@@ -161,26 +163,7 @@ public class AnotacaoService {
             Long anotacaoId,
             String conteudo,
             VisibilidadeAnotacao visibilidade) {
-        exigirProfissional(usuario);
-        autorizacaoCrianca.requireCriancaWritable(usuario, criancaId);
-        var profissional = profissional(usuario);
-        var anotacao = anotacaoDaCrianca(criancaId, anotacaoId);
-        autorizacaoAnotacao.exigirAutoria(profissional.getId(), anotacao);
-        var visibilidadeAnterior = anotacao.getVisibilidade();
-        anotacao.atualizar(conteudo, visibilidade);
-        auditoria.record(
-                usuario.id(), "ANNOTATION_UPDATED", "ANOTACAO", anotacaoId, criancaId,
-                profissional.getId(), "SUCESSO", "visibilidade=" + visibilidade);
-        var atorNome = nomeUsuario(profissional);
-        var tipo = tipoAtualizacao(visibilidadeAnterior, visibilidade);
-        if (tipo != null) {
-            notificacoes.registrarAlteracaoAnotacao(tipo, criancaId,
-                    anotacao.getCrianca().getNome(), anotacaoId, usuario.id(), atorNome);
-            if (tipo == TipoNotificacao.ANOTACAO_COMPARTILHADA) {
-                feedService.registrar(criancaId, usuario.id(), "ANOTACAO_COMPARTILHADA", "ANOTACAO", anotacao.getId(), anotacao.getTitulo(), null, true);
-            }
-        }
-        return mapear(anotacao, usuario, profissional.getId(), atorNome);
+        return atualizar(usuario,criancaId,anotacaoId,null,conteudo,visibilidade,null,null);
     }
 
     @Transactional
@@ -191,7 +174,8 @@ public class AnotacaoService {
         exigirProfissional(usuario);
         autorizacaoCrianca.requireCriancaWritable(usuario, criancaId);
         var profissional = profissional(usuario);
-        var anotacao = anotacaoDaCrianca(criancaId, anotacaoId);
+        var anotacao = anotacoes.findByIdAndCriancaIdForUpdate(anotacaoId,criancaId)
+                .orElseThrow(NoSuchElementException::new);
         autorizacaoAnotacao.exigirAutoria(profissional.getId(), anotacao);
         var anterior = anotacao.getVisibilidade();
         // Compartilhada nao volta a privada (regra aprovada - Contexto.md ss8)
@@ -208,15 +192,14 @@ public class AnotacaoService {
                         "CORRECTION_REASON_REQUIRED",
                         "Correcao de anotacao compartilhada exige motivo");
             }
-            if (versoes != null) {
-                versoes.save(new VersaoAnotacao(
+            versoes.save(new VersaoAnotacao(
                         anotacaoId,
-                        (int) versoes.countByNote(anotacaoId) + 1,
+                        versoes.maiorNumero(anotacaoId) + 1,
                         anotacao.getTitulo(), anotacao.getConteudo(),
                         anotacao.getTemas(), motivo, usuario.id()));
-            }
         }
-        anotacao.corrigir(titulo, conteudo, temas);
+        anotacao.corrigir(titulo == null || titulo.isBlank() ? anotacao.getTitulo() : titulo,
+                conteudo, temas == null ? anotacao.getTemas() : temas);
         // Promocao PRIVADA -> COMPARTILHADA
         if (anterior == VisibilidadeAnotacao.PRIVADA
                 && visibilidade == VisibilidadeAnotacao.COMPARTILHADA) {
@@ -236,6 +219,10 @@ public class AnotacaoService {
                 feedService.registrar(criancaId, usuario.id(), "ANOTACAO_COMPARTILHADA", "ANOTACAO", anotacao.getId(), anotacao.getTitulo(), null, true);
             }
         }
+        if (anterior == VisibilidadeAnotacao.COMPARTILHADA) {
+            feedService.registrar(criancaId, usuario.id(), "ANOTACAO_CORRIGIDA", "ANOTACAO",
+                    anotacao.getId(), anotacao.getTitulo(), motivo, true);
+        }
         return mapear(anotacao, usuario, profissional.getId(), atorNome);
     }
 
@@ -245,10 +232,20 @@ public class AnotacaoService {
         var profissional=profissional(usuario);
         var items=anotacoes.findArchiveByAuthorUserId(usuario.id());
         return items.stream().map(a -> new ArquivoProprioView(
-            a.getId(), a.getCrianca().getId(), a.getCrianca().getNome(),
+            a.getId(), a.getSnapshotCriancaId(), a.getSnapshotCriancaNome(),
+            a.getSnapshotCapturadoEm(), a.getSnapshotOrigem(), "CRIACAO".equals(a.getSnapshotOrigem()),
             a.getTitulo(), a.getConteudo(), a.getTemas(), a.getSessaoId(),
             a.getVisibilidade(), a.getCreatedAt(), a.getUpdatedAt()
         )).toList();
+    }
+
+    @Transactional(readOnly=true)
+    public List<VersaoAnotacao> versoes(AuthenticatedUser usuario,Long criancaId,Long anotacaoId){
+        autorizacaoCrianca.requireCrianca(usuario,criancaId);
+        var anotacao=anotacaoDaCrianca(criancaId,anotacaoId);
+        var profissionalAtualId=profissionalAtualId(usuario);
+        autorizacaoAnotacao.exigirVisualizacao(usuario,profissionalAtualId,anotacao);
+        return versoes.findByAnotacaoIdOrderByNumeroDesc(anotacaoId);
     }
 
     @Transactional

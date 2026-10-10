@@ -37,7 +37,6 @@ public final class AnotacaoDtos {
             @Size(max = 500) String temas,
             @Size(max = 500) String motivoCorrecao) {
         public UpdateRequest(String conteudo, VisibilidadeAnotacao visibilidade) { this(null, conteudo, visibilidade, null, null); }
-        public String tituloResolvido() { return (titulo == null || titulo.isBlank()) ? "Anotação" : titulo; }
     }
 
     @Schema(name = "AnotacaoResponse")
@@ -70,6 +69,9 @@ public final class AnotacaoDtos {
             Long id,
             Long criancaId,
             String criancaNome,
+            Instant snapshotCapturadoEm,
+            String snapshotOrigem,
+            boolean snapshotHistoricoConfiavel,
             String titulo,
             String conteudo,
             String temas,
@@ -79,10 +81,16 @@ public final class AnotacaoDtos {
             Instant updatedAt) {
         public static ArquivoResponse from(br.com.conectatea.anotacao.application.ArquivoProprioView view) {
             return new ArquivoResponse(
-                    view.id(), view.criancaId(), view.criancaNome(),
+                    view.id(), view.criancaId(), view.criancaNome(), view.snapshotCapturadoEm(),
+                    view.snapshotOrigem(), view.snapshotHistoricoConfiavel(),
                     view.titulo(), view.conteudo(), view.temas(),
                     view.sessaoId(), view.visibilidade(),
                     view.createdAt(), view.updatedAt());
         }
+    }
+
+    public record VersaoResponse(Long id,int numero,String titulo,String conteudo,String temas,
+                                 String motivoCorrecao,Long autorUsuarioId,Instant criadoEm) {
+        static VersaoResponse from(br.com.conectatea.anotacao.domain.VersaoAnotacao v){return new VersaoResponse(v.getId(),v.getNumero(),v.getTitulo(),v.getConteudo(),v.getTemas(),v.getMotivo(),v.getAutor(),v.getCriadoEm());}
     }
 }

@@ -9,6 +9,7 @@ import br.com.conectatea.meta.infrastructure.EventoMetaRepository;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.progresso.domain.Progresso;
 import br.com.conectatea.progresso.infrastructure.ProgressoRepository;
+import br.com.conectatea.progresso.application.ProgressHistoryService;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.shared.time.LocalTimeZoneResolver;
@@ -49,6 +50,7 @@ public class ProgressoController {
     private final VinculoProfissionalRepository professionalLinks;
     private final Clock clock;
     private final LocalTimeZoneResolver timeZones;
+    private final ProgressHistoryService historyService;
 
     public ProgressoController(
             MetaRepository metas,
@@ -59,7 +61,8 @@ public class ProgressoController {
             AuthorizationService authorization,
             VinculoProfissionalRepository professionalLinks,
             Clock clock,
-            LocalTimeZoneResolver timeZones) {
+            LocalTimeZoneResolver timeZones,
+            ProgressHistoryService historyService) {
         this.metas = metas;
         this.progress = progress;
         this.events = events;
@@ -69,6 +72,7 @@ public class ProgressoController {
         this.professionalLinks = professionalLinks;
         this.clock = clock;
         this.timeZones = timeZones;
+        this.historyService = historyService;
     }
 
     @GetMapping("/resumo")
@@ -87,56 +91,13 @@ public class ProgressoController {
     public CurrentSummary currentSummary(Authentication authentication,@RequestParam(required=false) Long criancaId){var allowed=allowedMetas(authentication,criancaId);var active=allowed.stream().filter(m->m.getStatus()==StatusMeta.EM_ANDAMENTO).toList();var ids=active.stream().map(Meta::getId).toList();var records=ids.isEmpty()?List.<Progresso>of():progress.findByMetaIdInOrderByDataAsc(ids);var latest=records.stream().collect(Collectors.toMap(Progresso::getMetaId,Function.identity(),(a,b)->b));var categories=new EnumMap<CategoriaMeta,CategoryCurrent>(CategoriaMeta.class);active.stream().collect(Collectors.groupingBy(Meta::getCategoria)).forEach((category,items)->{var known=items.stream().filter(m->latest.containsKey(m.getId())).toList();categories.put(category,new CategoryCurrent(known.isEmpty()?null:known.stream().mapToInt(m->latest.get(m.getId()).getProgressoAtual()).average().orElseThrow(),known.size(),items.size()-known.size()));});return new CurrentSummary(categories,active.size(),allowed.stream().filter(m->m.getStatus()==StatusMeta.PAUSADA).count(),allowed.stream().filter(m->m.getStatus()==StatusMeta.CONCLUIDA).count(),latest.size(),active.size()-latest.size());}
 
     @GetMapping("/evolucao-historica")
-    public HistoricalEvolution historicalEvolution(Authentication authentication,@RequestParam(required=false) Long criancaId,@RequestParam(defaultValue="3") int meses, @RequestParam(required=false) String timezone){
-        if(meses!=3&&meses!=6&&meses!=12)throw new IllegalArgumentException("meses deve ser 3, 6 ou 12");
+    public ProgressHistoryService.Evolution historicalEvolution(Authentication authentication,@RequestParam(required=false) Long criancaId,@RequestParam(defaultValue="3") int meses, @RequestParam(required=false) String timezone){
         var allowed=allowedMetas(authentication,criancaId);
         var ids=allowed.stream().map(Meta::getId).toList();
         var records=ids.isEmpty()?List.<Progresso>of():progress.findByMetaIdInOrderByDataAsc(ids);
         var eventsList=ids.isEmpty()?List.<br.com.conectatea.meta.domain.EventoMeta>of():events.findByMetaIdInOrderByDataAsc(ids);
         var zone=timeZones.resolve(timezone);
-        var current=YearMonth.now(clock.withZone(zone));
-        var points=new ArrayList<MonthlyPoint>();
-        final ZoneId finalZone = zone;
-        for(int offset=meses-1;offset>=0;offset--){
-            var month=current.minusMonths(offset);
-            var boundary=offset==0?Instant.now(clock):month.plusMonths(1).atDay(1).atStartOfDay(finalZone).toInstant();
-            var valuesByCategory=new EnumMap<CategoriaMeta, List<Integer>>(CategoriaMeta.class);
-            var missing=0;
-            var numValues=0;
-            var changes=new ArrayList<CompositionChange>();
-            for(var meta:allowed){
-                if(meta.getDataInicio().isAfter(month.atEndOfMonth())) continue;
-                var metaEvents = eventsList.stream().filter(e -> e.getMetaId().equals(meta.getId()) && e.getData().isBefore(boundary)).toList();
-                var estado = StatusMeta.EM_ANDAMENTO;
-                for(var ev : metaEvents) {
-                    switch(ev.getTipo()) {
-                        case "PAUSA" -> estado = StatusMeta.PAUSADA;
-                        case "RETOMADA", "REABERTA" -> estado = StatusMeta.EM_ANDAMENTO;
-                        case "CONCLUIDA" -> estado = StatusMeta.CONCLUIDA;
-                    }
-                }
-                if(estado == StatusMeta.PAUSADA) continue;
-                if(YearMonth.from(meta.getDataInicio()).equals(month)) {
-                    changes.add(new CompositionChange("ENTRADA_META", meta.getId()));
-                } else if (eventsList.stream().anyMatch(e -> e.getMetaId().equals(meta.getId()) && (e.getTipo().equals("RETOMADA") || e.getTipo().equals("REABERTA")) && YearMonth.from(e.getData().atZone(finalZone).toLocalDate()).equals(month) && e.getData().isBefore(boundary))) {
-                    changes.add(new CompositionChange("RETOMADA_META", meta.getId()));
-                }
-                var value=records.stream().filter(p->p.getMetaId().equals(meta.getId())&&p.getData().isBefore(boundary)).reduce((a,b)->b);
-                if(value.isPresent()) {
-                    valuesByCategory.computeIfAbsent(meta.getCategoria(), k -> new ArrayList<>()).add(value.get().getProgressoAtual());
-                    numValues++;
-                }
-                else missing++;
-            }
-            Double average=null;
-            if(!valuesByCategory.isEmpty()){
-                average=valuesByCategory.values().stream().mapToDouble(list->list.stream().mapToInt(Integer::intValue).average().orElseThrow()).average().orElseThrow();
-            }
-            points.add(new MonthlyPoint(month.toString(),average,numValues,missing,changes,!changes.isEmpty()));
-        }
-        var valid=points.stream().filter(p->p.media()!=null).toList();
-        Double trend=valid.size()<2?null:valid.get(valid.size()-1).media()-valid.get(0).media();
-        return new HistoricalEvolution(meses,points,trend,"PONTOS_PERCENTUAIS",valid.size()<2,points.stream().anyMatch(MonthlyPoint::composicaoAlterada),"Indicador operacional; não representa avaliação clínica",records.isEmpty());
+        return historyService.calculate(allowed,records,eventsList,meses,zone);
     }
 
     @GetMapping("/recentes")

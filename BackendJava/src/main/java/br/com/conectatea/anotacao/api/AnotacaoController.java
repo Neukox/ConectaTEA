@@ -95,7 +95,13 @@ public class AnotacaoController {
             @Valid @RequestBody AnotacaoDtos.UpdateRequest request) {
         return AnotacaoDtos.Response.from(service.atualizar(
                 principal(authentication), criancaId, anotacaoId,
-                request.tituloResolvido(), request.conteudo(), request.visibilidade(), request.temas(), request.motivoCorrecao()));
+                request.titulo(), request.conteudo(), request.visibilidade(), request.temas(), request.motivoCorrecao()));
+    }
+
+    @GetMapping("/{anotacaoId}/versoes")
+    @Operation(summary = "Consultar versões autorizadas da anotação")
+    public List<AnotacaoDtos.VersaoResponse> versoes(Authentication authentication,@PathVariable Long criancaId,@PathVariable Long anotacaoId){
+        return service.versoes(principal(authentication),criancaId,anotacaoId).stream().map(AnotacaoDtos.VersaoResponse::from).toList();
     }
 
 

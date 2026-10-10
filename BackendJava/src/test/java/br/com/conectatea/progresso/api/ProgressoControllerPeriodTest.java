@@ -33,6 +33,7 @@ class ProgressoControllerPeriodTest {
                 mock(CriancaRepository.class), mock(ProfissionalRepository.class),
                 mock(AuthorizationService.class),
                 mock(br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository.class),
-                Clock.fixed(Instant.parse(instant), ZoneOffset.UTC), new LocalTimeZoneResolver());
+                Clock.fixed(Instant.parse(instant), ZoneOffset.UTC), new LocalTimeZoneResolver(),
+                new br.com.conectatea.progresso.application.ProgressHistoryService(Clock.fixed(Instant.parse(instant), ZoneOffset.UTC)));
     }
 }

@@ -9,11 +9,12 @@ public class FeedController{
             @RequestParam(required=false) Instant antes,
             @RequestParam(required=false) Long antesId) {
         authorization.requireCrianca((AuthenticatedUser)authentication.getPrincipal(), criancaId);
+        if ((antes == null) != (antesId == null)) throw new IllegalArgumentException("antes e antesId devem ser informados juntos");
         
         String sql = """
             SELECT criado_em instante, id recurso_id, tipo, recurso_tipo, titulo, resumo, id
             FROM eventos_feed 
-            WHERE crianca_id = ? AND compartilhado = true
+            WHERE crianca_id = ? AND compartilhado = true AND visibilidade='CIRCULO'
         """;
         
         List<Object> args = new ArrayList<>();
