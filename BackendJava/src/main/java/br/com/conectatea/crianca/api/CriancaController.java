@@ -23,12 +23,14 @@ import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import java.util.Comparator;
+import br.com.conectatea.crianca.domain.StatusAcompanhamento;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -106,16 +108,16 @@ public class CriancaController {
     }
 
     @GetMapping
-    public ChildListResponse list(Authentication authentication) {
+    public ChildListResponse list(Authentication authentication,@RequestParam(defaultValue="") String busca,@RequestParam(required=false) StatusAcompanhamento status,@RequestParam(defaultValue="false") boolean incluirArquivadas,@RequestParam(defaultValue="0") @Min(0) int pagina,@RequestParam(defaultValue="20") @Min(1) @Max(100) int tamanho,@RequestParam(defaultValue="nome") String ordenarPor) {
         var user = (AuthenticatedUser) authentication.getPrincipal();
         List<Crianca> allowed = user.tipo() == TipoUsuario.PROFISSIONAL
                 ? professionals.findByUsuarioId(user.id())
-                        .map(item -> children.findLinkedToProfessional(item.getId()))
+                        .map(item -> incluirArquivadas?children.findAllLinkedToProfessional(item.getId()):children.findLinkedToProfessional(item.getId()))
                         .orElse(List.of())
-                : children.findLinkedToGuardian(user.id());
-        var items = allowed.stream().map(ChildResponse::from).toList();
-        return new ChildListResponse(items, items.size());
+                : incluirArquivadas?children.findAllLinkedToGuardian(user.id()):children.findLinkedToGuardian(user.id());
+        var normalized=busca.trim().toLowerCase(java.util.Locale.ROOT);var filtered=allowed.stream().filter(c->normalized.isBlank()||c.getNome().toLowerCase(java.util.Locale.ROOT).contains(normalized)).filter(c->status==null||c.getStatusAcompanhamento()==status).sorted("dataNascimento".equals(ordenarPor)?Comparator.comparing(Crianca::getDataNascimento):Comparator.comparing(Crianca::getNome,String.CASE_INSENSITIVE_ORDER)).toList();var from=Math.min(filtered.size(),pagina*tamanho);var to=Math.min(filtered.size(),from+tamanho);return new ChildListResponse(filtered.subList(from,to).stream().map(ChildResponse::from).toList(),filtered.size());
     }
+    public ChildListResponse list(Authentication authentication){return list(authentication,"",null,false,0,20,"nome");}
 
     @GetMapping("/{id}")
     public ChildResponse get(Authentication authentication, @PathVariable Long id) {
@@ -124,13 +126,15 @@ public class CriancaController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PROFISSIONAL')")
+    @PreAuthorize("hasRole('RESPONSAVEL')")
     @Transactional
     public ChildResponse update(
             Authentication authentication,
             @PathVariable Long id,
             @Valid @RequestBody UpdateChildRequest request) {
-        authorization.requireCrianca((AuthenticatedUser) authentication.getPrincipal(), id);
+        var actor = (AuthenticatedUser) authentication.getPrincipal();
+        authorization.requireGestor(actor, id);
+        authorization.requireCriancaWritable(actor, id);
         var child = children.findById(id).orElseThrow();
         child.update(
                 request.nome(), request.dataNascimento(), request.genero(),
@@ -138,15 +142,6 @@ public class CriancaController {
         child.updateStructured(request.escola(), request.escolaridade(), request.cidade(),
                 request.uf(), request.interesses(), request.nivelSuporte());
         return ChildResponse.from(child);
-    }
-
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('PROFISSIONAL')")
-    @Transactional
-    public void archive(Authentication authentication, @PathVariable Long id) {
-        authorization.requireCrianca((AuthenticatedUser) authentication.getPrincipal(), id);
-        children.findById(id).orElseThrow().arquivar();
     }
 
     public record PendingGuardianRequest(
@@ -208,7 +203,8 @@ public class CriancaController {
             String cidade,
             String uf,
             String interesses,
-            Integer nivelSuporte) {
+            Integer nivelSuporte,
+            StatusAcompanhamento statusAcompanhamento) {
         public static ChildResponse from(Crianca child) {
             return new ChildResponse(
                     child.getId(),
@@ -221,7 +217,7 @@ public class CriancaController {
                     child.getObservacoes(),
                     child.isArquivada(),
                     child.getEscola(), child.getEscolaridade(), child.getCidade(), child.getUf(),
-                    child.getInteresses(), child.getNivelSuporte());
+                    child.getInteresses(), child.getNivelSuporte(),child.getStatusAcompanhamento());
         }
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 public interface ConviteCirculoRepository extends JpaRepository<ConviteCirculo,Long>{
  @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select c from ConviteCirculo c where c.codigoHash=:hash") Optional<ConviteCirculo> findByHashForUpdate(@Param("hash") String hash);
+ Optional<ConviteCirculo> findByCodigoHash(String hash);
+ @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select c from ConviteCirculo c where c.id=:id") Optional<ConviteCirculo> findByIdForUpdate(@Param("id") Long id);
  List<ConviteCirculo> findAllByCriancaIdOrderByCreatedAtDesc(Long childId);
  List<ConviteCirculo> findAllByDestinatarioUsuarioIdOrderByCreatedAtDesc(Long userId);
  @Query("select (count(c)>0) from ConviteCirculo c where c.criancaId=:childId and c.destinatarioUsuarioId=:recipient and c.papel=:role and c.status='PENDENTE_ACEITE' and c.expiraEm>:now")

@@ -51,9 +51,6 @@ public class ConviteNominalService {
 
     @Transactional
     public IssuedInvite issue(AuthenticatedUser actor, Long childId, String email, PapelCirculo role) {
-        if (role == PapelCirculo.RESPONSAVEL_GESTOR) throw new BusinessRuleException(
-                "FIRST_MANAGER_AUTHORITY_REQUIRED",
-                "O bootstrap do primeiro gestor exige verificação de autoridade ainda não definida");
         requireManagerForMutation(actor, childId);
         var child=children.findById(childId).orElseThrow();
         if(child.isArquivada()) throw new BusinessRuleException("CHILD_ARCHIVED","Criança arquivada não aceita convite");
@@ -76,14 +73,17 @@ public class ConviteNominalService {
     @Transactional
     public InviteView accept(AuthenticatedUser actor,String raw,String ip,String userAgent) {
         var now=Instant.now(clock);
-        var invite=invites.findByHashForUpdate(hash(raw)).orElseThrow(()->new BusinessRuleException("INVITE_INVALID","Convite inválido"));
+        var tokenHash=hash(raw);
+        var snapshot=invites.findByCodigoHash(tokenHash).orElseThrow(()->new BusinessRuleException("INVITE_INVALID","Convite inválido"));
+        requireManagerByIdForMutation(snapshot.getEmissorUsuarioId(),snapshot.getCriancaId());
+        var invite=invites.findByHashForUpdate(tokenHash).orElseThrow(()->new BusinessRuleException("INVITE_INVALID","Convite inválido"));
         if(!invite.utilizavelEm(now)) throw new BusinessRuleException("INVITE_UNAVAILABLE","Convite expirado, cancelado ou consumido");
         if(!actor.id().equals(invite.getDestinatarioUsuarioId())) throw new AccessDeniedException("Convite destinado a outra conta");
         var user=users.findById(actor.id()).filter(u->u.isAtivo()).orElseThrow();
         if(!user.isEmailConfirmado()||!user.getEmail().equalsIgnoreCase(invite.getDestinatarioEmail())) throw new BusinessRuleException("EMAIL_NOT_CONFIRMED","O email destinatário precisa estar confirmado");
         var child=children.findById(invite.getCriancaId()).orElseThrow();
         if(child.isArquivada()) throw new BusinessRuleException("CHILD_ARCHIVED","Criança arquivada não aceita convite");
-        requireManagerByIdForMutation(invite.getEmissorUsuarioId(),invite.getCriancaId());
+        if(!Objects.equals(snapshot.getId(),invite.getId())) throw new BusinessRuleException("INVITE_INVALID","Convite inválido");
 
         Long professionalId=null;
         if(invite.getPapel()==PapelCirculo.PROFISSIONAL) {
@@ -96,8 +96,8 @@ public class ConviteNominalService {
         } else {
             var existing=guardians.findByResponsavelIdAndCriancaId(actor.id(),invite.getCriancaId());
             if(existing.filter(v->v.getStatus()==StatusVinculo.VINCULADO).isPresent()) throw new BusinessRuleException("ALREADY_LINKED","Destinatário já possui vínculo ativo");
-            existing.ifPresentOrElse(v->v.vincularComo(PapelCirculo.RESPONSAVEL),
-                    ()->guardians.save(new VinculoResponsavelCrianca(actor.id(),invite.getCriancaId())));
+            existing.ifPresentOrElse(v->v.vincularComo(invite.getPapel()),
+                    ()->{var link=new VinculoResponsavelCrianca(actor.id(),invite.getCriancaId());link.vincularComo(invite.getPapel());guardians.save(link);});
             consents.save(new Consentimento(actor.id(),invite.getCriancaId(),null,ip,userAgent,consentVersion,consentPurpose));
         }
         history.save(new HistoricoVinculo(invite.getCriancaId(),actor.id(),invite.getPapel()==PapelCirculo.PROFISSIONAL?null:actor.id(),professionalId,"CONVITE_NOMINAL_ACEITO","VINCULADO",invite.getPapel().name()));
@@ -112,7 +112,7 @@ public class ConviteNominalService {
     @Transactional
     public void cancel(AuthenticatedUser actor,Long childId,Long inviteId) {
         requireManagerForMutation(actor,childId);
-        var invite=invites.findById(inviteId).orElseThrow();
+        var invite=invites.findByIdForUpdate(inviteId).orElseThrow();
         if(!invite.getCriancaId().equals(childId)) throw new AccessDeniedException("Convite pertence a outra criança");
         try{invite.cancelar();}catch(IllegalStateException e){throw new BusinessRuleException("INVITE_UNAVAILABLE","Convite não está pendente");}
         history.save(new HistoricoVinculo(childId,actor.id(),invite.getPapel()==PapelCirculo.PROFISSIONAL?null:invite.getDestinatarioUsuarioId(),null,"CONVITE_NOMINAL_CANCELADO","CANCELADO",invite.getPapel().name()));

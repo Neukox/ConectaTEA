@@ -4,6 +4,7 @@ import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import br.com.conectatea.vinculo.domain.StatusVinculo;
+import br.com.conectatea.vinculo.domain.PapelCirculo;
 import br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository;
 import br.com.conectatea.vinculo.infrastructure.VinculoResponsavelRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -28,7 +29,7 @@ public class AuthorizationService {
     }
 
     public boolean canAccessCrianca(AuthenticatedUser user, Long childId) {
-        if (!children.existsByIdAndArquivadaFalse(childId)) {
+        if (!children.existsById(childId)) {
             return false;
         }
         if (user.tipo() == TipoUsuario.PROFISSIONAL) {
@@ -45,6 +46,14 @@ public class AuthorizationService {
     public void requireCrianca(AuthenticatedUser user, Long childId) {
         if (!canAccessCrianca(user, childId)) {
             throw new AccessDeniedException("Sem vínculo ativo com a criança");
+        }
+    }
+    public void requireCriancaWritable(AuthenticatedUser user,Long childId){requireCrianca(user,childId);if(!children.existsByIdAndArquivadaFalse(childId))throw new AccessDeniedException("Criança arquivada permite somente consulta histórica");}
+
+    public void requireGestor(AuthenticatedUser user, Long childId) {
+        if (!guardianLinks.existsByResponsavelIdAndCriancaIdAndStatusAndPapel(
+                user.id(), childId, StatusVinculo.VINCULADO, PapelCirculo.RESPONSAVEL_GESTOR)) {
+            throw new AccessDeniedException("Somente responsável gestor pode administrar a criança");
         }
     }
 }
