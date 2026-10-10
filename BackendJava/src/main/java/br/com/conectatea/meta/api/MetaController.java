@@ -4,6 +4,8 @@ import br.com.conectatea.meta.domain.CategoriaMeta;
 import br.com.conectatea.meta.domain.Meta;
 import br.com.conectatea.meta.domain.PrioridadeMeta;
 import br.com.conectatea.meta.domain.StatusMeta;
+import br.com.conectatea.meta.domain.EventoMeta;
+import br.com.conectatea.meta.infrastructure.EventoMetaRepository;
 import br.com.conectatea.meta.infrastructure.MetaRepository;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.progresso.domain.Progresso;
@@ -18,6 +20,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Predicate;
@@ -46,16 +49,19 @@ public class MetaController {
     private final ProgressoRepository progress;
     private final ProfissionalRepository professionals;
     private final AuthorizationService authorization;
+    private final EventoMetaRepository events;
 
     public MetaController(
             MetaRepository metas,
             ProgressoRepository progress,
             ProfissionalRepository professionals,
-            AuthorizationService authorization) {
+            AuthorizationService authorization,
+            EventoMetaRepository events) {
         this.metas = metas;
         this.progress = progress;
         this.professionals = professionals;
         this.authorization = authorization;
+        this.events = events;
     }
 
     @PostMapping
@@ -94,7 +100,9 @@ public class MetaController {
         return new MetaSummary(
                 all.size(),
                 count(all, item -> item.getStatus() == StatusMeta.EM_ANDAMENTO),
-                count(all, item -> item.getStatus() == StatusMeta.VENCENDO),
+                count(all, item -> item.getStatus() == StatusMeta.EM_ANDAMENTO
+                        && !item.getDataFim().isBefore(today)
+                        && !item.getDataFim().isAfter(today.plusDays(7))),
                 count(all, item -> item.getStatus() == StatusMeta.CONCLUIDA));
     }
 
@@ -114,8 +122,7 @@ public class MetaController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateMetaRequest request) {
         var meta = metas.findById(id).orElseThrow();
-        authorization.requireCrianca(
-                (AuthenticatedUser) authentication.getPrincipal(), meta.getCriancaId());
+        requireAuthor(authentication, meta);
         validateDates(request.dataInicio(), request.dataFim());
         meta.update(
                 request.titulo(), request.descricao(), request.categoria(), request.prioridade(),
@@ -134,6 +141,9 @@ public class MetaController {
         var user = (AuthenticatedUser) authentication.getPrincipal();
         authorization.requireCrianca(user, meta.getCriancaId());
         var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
+        if (!meta.getProfissionalId().equals(professional.getId())) {
+            throw new AccessDeniedException("Somente o profissional autor pode registrar progresso");
+        }
         var before = meta.getProgresso();
         meta.progress(request.progresso());
         progress.save(new Progresso(
@@ -148,9 +158,50 @@ public class MetaController {
     @Transactional
     public void delete(Authentication authentication, @PathVariable Long id) {
         var meta = metas.findById(id).orElseThrow();
-        authorization.requireCrianca(
-                (AuthenticatedUser) authentication.getPrincipal(), meta.getCriancaId());
+        requireAuthor(authentication, meta);
         metas.delete(meta);
+    }
+
+    @PatchMapping("/{id}/pausa")
+    @PreAuthorize("hasRole('PROFISSIONAL')")
+    @Transactional
+    public MetaResponse pause(Authentication authentication, @PathVariable Long id,
+                              @Valid @RequestBody PauseRequest request) {
+        var meta = metas.findById(id).orElseThrow();
+        var professional = requireAuthor(authentication, meta);
+        meta.pause(request.motivo(), Instant.now());
+        events.save(new EventoMeta(meta.getId(), professional.getId(), "PAUSA",
+                request.motivo(), meta.getDataFim(), meta.getDataFim()));
+        return MetaResponse.from(meta);
+    }
+
+    @PatchMapping("/{id}/retomada")
+    @PreAuthorize("hasRole('PROFISSIONAL')")
+    @Transactional
+    public MetaResponse resume(Authentication authentication, @PathVariable Long id,
+                               @Valid @RequestBody ResumeRequest request) {
+        var meta = metas.findById(id).orElseThrow();
+        var professional = requireAuthor(authentication, meta);
+        var previous = meta.getDataFim();
+        var deadline = request.dataFim() == null ? previous : request.dataFim();
+        if (deadline.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("dataFim da retomada não pode estar no passado");
+        }
+        meta.resume(deadline);
+        events.save(new EventoMeta(meta.getId(), professional.getId(), "RETOMADA",
+                request.motivo(), previous, deadline));
+        return MetaResponse.from(meta);
+    }
+
+    private br.com.conectatea.profissional.domain.Profissional requireAuthor(
+            Authentication authentication, Meta meta) {
+        var user = (AuthenticatedUser) authentication.getPrincipal();
+        authorization.requireCrianca(user, meta.getCriancaId());
+        var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
+        if (!meta.getProfissionalId().equals(professional.getId())) {
+            throw new AccessDeniedException("Somente o profissional autor pode alterar a meta");
+        }
+        return professional;
     }
 
     private List<Meta> filtered(
@@ -241,6 +292,9 @@ public class MetaController {
             String descricao) {
     }
 
+    public record PauseRequest(@NotBlank String motivo) {}
+    public record ResumeRequest(LocalDate dataFim, String motivo) {}
+
     public record MetaResponse(
             Long id,
             String titulo,
@@ -251,12 +305,24 @@ public class MetaController {
             int progresso,
             LocalDate dataInicio,
             LocalDate dataFim,
-            Long criancaId) {
+            Long criancaId,
+            Long autorProfissionalId,
+            boolean prazoProximo,
+            boolean prazoAtrasado,
+            Instant pausadaEm,
+            String motivoPausa) {
         static MetaResponse from(Meta meta) {
             return new MetaResponse(
                     meta.getId(), meta.getTitulo(), meta.getDescricao(), meta.getCategoria(),
                     meta.getPrioridade(), meta.getStatus(), meta.getProgresso(),
-                    meta.getDataInicio(), meta.getDataFim(), meta.getCriancaId());
+                    meta.getDataInicio(), meta.getDataFim(), meta.getCriancaId(),
+                    meta.getProfissionalId(),
+                    meta.getStatus() == StatusMeta.EM_ANDAMENTO
+                            && !meta.getDataFim().isBefore(LocalDate.now())
+                            && !meta.getDataFim().isAfter(LocalDate.now().plusDays(7)),
+                    meta.getStatus() == StatusMeta.EM_ANDAMENTO
+                            && meta.getDataFim().isBefore(LocalDate.now()),
+                    meta.getPausadaEm(), meta.getMotivoPausa());
         }
     }
 

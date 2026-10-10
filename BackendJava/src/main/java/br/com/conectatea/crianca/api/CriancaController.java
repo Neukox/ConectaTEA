@@ -17,6 +17,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
@@ -86,6 +89,8 @@ public class CriancaController {
         var child = children.save(new Crianca(
                 request.nome(), request.dataNascimento(), request.genero(),
                 request.diagnostico(), request.diagnosticoDetalhes(), request.observacoes()));
+        child.updateStructured(request.escola(), request.escolaridade(), request.cidade(),
+                request.uf(), request.interesses(), request.nivelSuporte());
         links.save(new VinculoProfissionalCrianca(professional.getId(), child.getId()));
         var historyRepository = history.getIfAvailable();
         if (historyRepository != null) historyRepository.save(new HistoricoVinculo(
@@ -130,6 +135,8 @@ public class CriancaController {
         child.update(
                 request.nome(), request.dataNascimento(), request.genero(),
                 request.diagnostico(), request.diagnosticoDetalhes(), request.observacoes());
+        child.updateStructured(request.escola(), request.escolaridade(), request.cidade(),
+                request.uf(), request.interesses(), request.nivelSuporte());
         return ChildResponse.from(child);
     }
 
@@ -156,6 +163,12 @@ public class CriancaController {
             String diagnostico,
             String diagnosticoDetalhes,
             String observacoes,
+            String escola,
+            String escolaridade,
+            String cidade,
+            @Pattern(regexp = "[A-Z]{2}") String uf,
+            String interesses,
+            @Min(1) @Max(3) Integer nivelSuporte,
             @Valid PendingGuardianRequest responsavelPendente) {
     }
 
@@ -165,7 +178,13 @@ public class CriancaController {
             String genero,
             String diagnostico,
             String diagnosticoDetalhes,
-            String observacoes) {
+            String observacoes,
+            String escola,
+            String escolaridade,
+            String cidade,
+            @Pattern(regexp = "[A-Z]{2}") String uf,
+            String interesses,
+            @Min(1) @Max(3) Integer nivelSuporte) {
     }
 
     public record CreateChildResponse(String message, ChildResponse crianca) {
@@ -182,7 +201,14 @@ public class CriancaController {
             String genero,
             String diagnostico,
             String diagnosticoDetalhes,
-            String observacoes) {
+            String observacoes,
+            boolean arquivada,
+            String escola,
+            String escolaridade,
+            String cidade,
+            String uf,
+            String interesses,
+            Integer nivelSuporte) {
         public static ChildResponse from(Crianca child) {
             return new ChildResponse(
                     child.getId(),
@@ -192,7 +218,10 @@ public class CriancaController {
                     child.getGenero(),
                     child.getDiagnostico(),
                     child.getDiagnosticoDetalhes(),
-                    child.getObservacoes());
+                    child.getObservacoes(),
+                    child.isArquivada(),
+                    child.getEscola(), child.getEscolaridade(), child.getCidade(), child.getUf(),
+                    child.getInteresses(), child.getNivelSuporte());
         }
     }
 }

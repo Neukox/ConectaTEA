@@ -56,7 +56,7 @@ public class ProgressoController {
         var allowed = allowedMetas(authentication, criancaId);
         return new ProgressSummary(
                 allowed.stream().mapToInt(Meta::getProgresso).average().orElse(0),
-                allowed.stream().filter(item -> item.getStatus() != StatusMeta.CONCLUIDA).count(),
+                allowed.stream().filter(item -> item.getStatus() == StatusMeta.EM_ANDAMENTO).count(),
                 allowed.stream().filter(item -> item.getStatus() == StatusMeta.CONCLUIDA).count(),
                 allowed.stream().map(Meta::getCriancaId).distinct().count());
     }
@@ -72,6 +72,22 @@ public class ProgressoController {
                 .limit(10)
                 .map(item -> ProgressResponse.from(item, byId.get(item.getMetaId())))
                 .toList();
+    }
+
+    @GetMapping("/historico")
+    public ProgressHistory history(
+            Authentication authentication,
+            @RequestParam(required = false) Long criancaId,
+            @RequestParam(defaultValue = "6") int meses) {
+        if (meses != 3 && meses != 6 && meses != 12) {
+            throw new IllegalArgumentException("meses deve ser 3, 6 ou 12");
+        }
+        var allowed = allowedMetas(authentication, criancaId);
+        var byId = allowed.stream().collect(Collectors.toMap(Meta::getId, Function.identity()));
+        var points = historySince(allowed, Instant.now().minus(meses * 31L, ChronoUnit.DAYS)).stream()
+                .map(item -> ProgressResponse.from(item, byId.get(item.getMetaId())))
+                .toList();
+        return new ProgressHistory(meses, points, points.size(), points.isEmpty());
     }
 
     @GetMapping("/distribuicao-categoria")
@@ -139,6 +155,15 @@ public class ProgressoController {
         return progress.findByMetaIdInAndDataGreaterThanEqualOrderByDataDesc(ids, from);
     }
 
+    private List<Progresso> historySince(List<Meta> allowed, Instant from) {
+        var ids = allowed.stream().map(Meta::getId).toList();
+        return ids.isEmpty() ? List.of()
+                : progress.findByMetaIdInAndDataGreaterThanEqualOrderByDataDesc(ids, from);
+    }
+
+    public record ProgressHistory(int meses, List<ProgressResponse> pontos,
+                                  int tamanhoAmostra, boolean historicoInsuficiente) {}
+
     public record ProgressSummary(
             double mediaProgresso,
             long metasAtivas,
@@ -157,7 +182,9 @@ public class ProgressoController {
             int progressoAtual,
             Long metaId,
             String metaTitulo,
-            Long criancaId) {
+            Long criancaId,
+            Long autorProfissionalId,
+            StatusMeta estadoMeta) {
         static ProgressResponse from(Progresso progress, Meta meta) {
             return new ProgressResponse(
                     progress.getId(),
@@ -167,7 +194,7 @@ public class ProgressoController {
                     progress.getProgressoAtual(),
                     meta.getId(),
                     meta.getTitulo(),
-                    meta.getCriancaId());
+                    meta.getCriancaId(), progress.getProfissionalId(), progress.getStatus());
         }
     }
 }

@@ -4,34 +4,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import java.time.Instant;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MetaTest {
-    @ParameterizedTest
-    @CsvSource({
-            "0,EM_ANDAMENTO",
-            "89,EM_ANDAMENTO",
-            "90,QUASE_CONCLUIDA",
-            "99,QUASE_CONCLUIDA",
-            "100,CONCLUIDA"
-    })
-    void calculatesProgressStatus(int value, StatusMeta expected) {
+    @Test
+    void progressDoesNotImplicitlyChangeWorkState() {
         var meta = metaEndingAt(LocalDate.now().plusDays(30));
-        meta.progress(value);
-        assertThat(meta.getStatus()).isEqualTo(expected);
+        meta.progress(100);
+        assertThat(meta.getStatus()).isEqualTo(StatusMeta.EM_ANDAMENTO);
     }
 
     @Test
-    void calculatesDueSoonFromCurrentDateAtReadTime() {
+    void deadlineAlertIsNotAWorkState() {
         assertThat(metaEndingAt(LocalDate.now().plusDays(7)).getStatus())
-                .isEqualTo(StatusMeta.VENCENDO);
+                .isEqualTo(StatusMeta.EM_ANDAMENTO);
     }
 
     @Test
     void overdueGoalIsNotCountedAsDueSoon() {
         assertThat(metaEndingAt(LocalDate.now().minusDays(1)).getStatus())
                 .isEqualTo(StatusMeta.EM_ANDAMENTO);
+    }
+
+    @Test
+    void pausedGoalRejectsProgressAndCanResumeWithConfirmedDeadline() {
+        var meta = metaEndingAt(LocalDate.now().plusDays(7));
+        meta.pause("Reavaliação do plano", Instant.now());
+        assertThat(meta.getStatus()).isEqualTo(StatusMeta.PAUSADA);
+        assertThatThrownBy(() -> meta.progress(20)).isInstanceOf(IllegalStateException.class);
+        var newDeadline = LocalDate.now().plusDays(20);
+        meta.resume(newDeadline);
+        assertThat(meta.getStatus()).isEqualTo(StatusMeta.EM_ANDAMENTO);
+        assertThat(meta.getDataFim()).isEqualTo(newDeadline);
     }
 
     private Meta metaEndingAt(LocalDate end) {
