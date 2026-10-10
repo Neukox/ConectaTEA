@@ -73,7 +73,7 @@ public class MetaController {
             Authentication authentication,
             @Valid @RequestBody CreateMetaRequest request) {
         var user = (AuthenticatedUser) authentication.getPrincipal();
-        authorization.requireCrianca(user, request.criancaId());
+        authorization.requireCriancaWritable(user, request.criancaId());
         var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
         validateDates(request.dataInicio(), request.dataFim());
         return MetaResponse.from(metas.save(new Meta(
@@ -140,7 +140,7 @@ public class MetaController {
             @Valid @RequestBody UpdateProgressoRequest request) {
         var meta = metas.findById(id).orElseThrow();
         var user = (AuthenticatedUser) authentication.getPrincipal();
-        authorization.requireCrianca(user, meta.getCriancaId());
+        authorization.requireCriancaWritable(user, meta.getCriancaId());
         var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
         if (!meta.getProfissionalId().equals(professional.getId())) {
             throw new AccessDeniedException("Somente o profissional autor pode registrar progresso");
@@ -194,10 +194,16 @@ public class MetaController {
         return MetaResponse.from(meta);
     }
 
+    @PatchMapping("/{id}/conclusao") @PreAuthorize("hasRole('PROFISSIONAL')") @Transactional
+    public MetaResponse complete(Authentication authentication,@PathVariable Long id,@Valid @RequestBody CompleteRequest request){var meta=metas.findById(id).orElseThrow();var professional=requireAuthor(authentication,meta);var before=meta.getProgresso();meta.complete(request.resumoResultado(),Instant.now());progress.save(new Progresso(meta.getId(),professional.getId(),before,100,StatusMeta.CONCLUIDA,"Conclusão: "+request.resumoResultado()));events.save(new EventoMeta(meta.getId(),professional.getId(),"CONCLUIDA",request.resumoResultado(),meta.getDataFim(),meta.getDataFim()));return MetaResponse.from(meta);}
+
+    @PatchMapping("/{id}/reabertura") @PreAuthorize("hasRole('PROFISSIONAL')") @Transactional
+    public MetaResponse reopen(Authentication authentication,@PathVariable Long id,@Valid @RequestBody ReopenRequest request){var meta=metas.findById(id).orElseThrow();var professional=requireAuthor(authentication,meta);var oldDeadline=meta.getDataFim();meta.reopen(request.motivo(),request.novoPrazo(),request.progressoInicial(),Instant.now());progress.save(new Progresso(meta.getId(),professional.getId(),100,request.progressoInicial(),StatusMeta.EM_ANDAMENTO,"Reabertura: "+request.motivo()));events.save(new EventoMeta(meta.getId(),professional.getId(),"REABERTA",request.motivo(),oldDeadline,request.novoPrazo()));return MetaResponse.from(meta);}
+
     private br.com.conectatea.profissional.domain.Profissional requireAuthor(
             Authentication authentication, Meta meta) {
         var user = (AuthenticatedUser) authentication.getPrincipal();
-        authorization.requireCrianca(user, meta.getCriancaId());
+        authorization.requireCriancaWritable(user, meta.getCriancaId());
         var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
         if (!meta.getProfissionalId().equals(professional.getId())) {
             throw new AccessDeniedException("Somente o profissional autor pode alterar a meta");
@@ -295,6 +301,8 @@ public class MetaController {
 
     public record PauseRequest(@NotBlank @Size(max = 500) String motivo) {}
     public record ResumeRequest(LocalDate dataFim, @Size(max = 500) String motivo) {}
+    public record CompleteRequest(@NotBlank @Size(max=2000) String resumoResultado) {}
+    public record ReopenRequest(@NotBlank @Size(max=500) String motivo,@NotNull @FutureOrPresent LocalDate novoPrazo,@Min(0) @Max(99) int progressoInicial) {}
 
     public record MetaResponse(
             Long id,
@@ -311,7 +319,11 @@ public class MetaController {
             boolean prazoProximo,
             boolean prazoAtrasado,
             Instant pausadaEm,
-            String motivoPausa) {
+            String motivoPausa,
+            Instant concluidaEm,
+            String resumoResultado,
+            Instant reabertaEm,
+            boolean conclusaoRegistraMetaAtingida) {
         static MetaResponse from(Meta meta) {
             return new MetaResponse(
                     meta.getId(), meta.getTitulo(), meta.getDescricao(), meta.getCategoria(),
@@ -323,7 +335,8 @@ public class MetaController {
                             && !meta.getDataFim().isAfter(LocalDate.now().plusDays(7)),
                     meta.getStatus() == StatusMeta.EM_ANDAMENTO
                             && meta.getDataFim().isBefore(LocalDate.now()),
-                    meta.getPausadaEm(), meta.getMotivoPausa());
+                    meta.getPausadaEm(), meta.getMotivoPausa(), meta.getConcluidaEm(),
+                    meta.getResumoResultado(), meta.getReabertaEm(), true);
         }
     }
 

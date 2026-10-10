@@ -133,13 +133,12 @@ class AnotacaoServiceTest {
     }
 
     @Test
-    void tornarCompartilhadaPrivadaInformaAntigosDestinatarios() {
-        ownedSetup(annotation(30L, autor, COMPARTILHADA));
-        service.atualizar(professionalUser(1L), 10L, 30L,
-                "Conteúdo agora privado e protegido", PRIVADA);
-        verify(notificacoes).registrarAlteracaoAnotacao(
-                TipoNotificacao.ANOTACAO_TORNADA_PRIVADA, 10L, "Lia", 30L,
-                1L, "Dra. Autora");
+    void compartilhadaNaoVoltaAPrivada() {
+        when(profissionais.findByUsuarioId(1L)).thenReturn(Optional.of(autor));
+        when(anotacoes.findByIdAndCriancaId(30L, 10L)).thenReturn(Optional.of(annotation(30L, autor, COMPARTILHADA)));
+        assertThatThrownBy(() -> service.atualizar(professionalUser(1L), 10L, 30L,
+                "Conteúdo agora privado e protegido", PRIVADA))
+                .isInstanceOf(br.com.conectatea.shared.domain.BusinessRuleException.class);
     }
 
     @Test
@@ -179,16 +178,13 @@ class AnotacaoServiceTest {
     }
 
     @Test
-    void excluirCompartilhadaGeraNotificacao() {
+    void compartilhadaNaoAdmiteExclusaoComum() {
         var anotacao = annotation(30L, autor, COMPARTILHADA);
         when(profissionais.findByUsuarioId(1L)).thenReturn(Optional.of(autor));
         when(anotacoes.findByIdAndCriancaId(30L, 10L)).thenReturn(Optional.of(anotacao));
-        when(usuarios.findById(1L)).thenReturn(Optional.of(autorUsuario));
-
-        service.excluir(professionalUser(1L), 10L, 30L);
-
-        verify(notificacoes).registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_EXCLUIDA,
-                10L, "Lia", 30L, 1L, "Dra. Autora");
+        assertThatThrownBy(() -> service.excluir(professionalUser(1L), 10L, 30L))
+                .isInstanceOf(br.com.conectatea.shared.domain.BusinessRuleException.class);
+        verify(anotacoes, never()).delete(any());
     }
 
     @Test

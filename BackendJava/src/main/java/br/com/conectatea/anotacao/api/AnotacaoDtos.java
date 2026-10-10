@@ -14,20 +14,28 @@ public final class AnotacaoDtos {
 
     @Schema(name = "CriarAnotacaoRequest")
     public record CreateRequest(
+            @NotBlank @Size(max = 100) String titulo,
             @NotBlank @Size(min = 10, max = 3000)
             @Schema(example = "A criança respondeu bem aos combinados visuais.")
             String conteudo,
             @NotNull @Schema(example = "COMPARTILHADA")
-            VisibilidadeAnotacao visibilidade) {
+            VisibilidadeAnotacao visibilidade,
+            @Size(max = 500) String temas,
+            Long sessaoId) {
+        public CreateRequest(String conteudo, VisibilidadeAnotacao visibilidade) { this("Anotação", conteudo, visibilidade, null, null); }
     }
 
     @Schema(name = "AtualizarAnotacaoRequest")
     public record UpdateRequest(
+            @NotBlank @Size(max = 100) String titulo,
             @NotBlank @Size(min = 10, max = 3000)
             @Schema(example = "A criança respondeu bem aos combinados visuais atualizados.")
             String conteudo,
             @NotNull @Schema(example = "PRIVADA")
-            VisibilidadeAnotacao visibilidade) {
+            VisibilidadeAnotacao visibilidade,
+            @Size(max = 500) String temas,
+            @Size(max = 500) String motivoCorrecao) {
+        public UpdateRequest(String conteudo, VisibilidadeAnotacao visibilidade) { this("Anotação", conteudo, visibilidade, null, null); }
     }
 
     @Schema(name = "AnotacaoResponse")
@@ -38,7 +46,10 @@ public final class AnotacaoDtos {
             Long autorProfissionalId,
             String autorNome,
             String autorEspecialidade,
+            String titulo,
             String conteudo,
+            String temas,
+            Long sessaoId,
             VisibilidadeAnotacao visibilidade,
             Instant createdAt,
             Instant updatedAt,
@@ -47,8 +58,8 @@ public final class AnotacaoDtos {
         static Response from(AnotacaoView view) {
             return new Response(
                     view.id(), view.criancaId(), view.criancaNome(),
-                    view.autorProfissionalId(), view.autorNome(), view.autorEspecialidade(),
-                    view.conteudo(), view.visibilidade(), view.createdAt(), view.updatedAt(),
+                    view.autorProfissionalId(), view.autorNome(), view.autorEspecialidade(), view.titulo(),
+                    view.conteudo(), view.temas(), view.sessaoId(), view.visibilidade(), view.createdAt(), view.updatedAt(),
                     view.isAutor());
         }
     }

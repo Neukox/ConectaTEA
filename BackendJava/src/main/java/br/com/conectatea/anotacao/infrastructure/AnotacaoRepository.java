@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AnotacaoRepository extends JpaRepository<Anotacao, Long> {
+    @Query("select a from Anotacao a where a.autor.usuarioId=:userId order by a.createdAt desc,a.id desc") List<Anotacao> findArchiveByAuthorUserId(@Param("userId") Long userId);
     @Query("""
             select a from Anotacao a
             join fetch a.crianca c

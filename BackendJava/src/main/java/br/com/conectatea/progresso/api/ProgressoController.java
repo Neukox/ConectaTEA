@@ -15,6 +15,10 @@ import java.time.Instant;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -65,6 +69,12 @@ public class ProgressoController {
                 allowed.stream().filter(item -> item.getStatus() == StatusMeta.CONCLUIDA).count(),
                 allowed.stream().map(Meta::getCriancaId).distinct().count());
     }
+
+    @GetMapping("/resumo-atual")
+    public CurrentSummary currentSummary(Authentication authentication,@RequestParam(required=false) Long criancaId){var allowed=allowedMetas(authentication,criancaId);var active=allowed.stream().filter(m->m.getStatus()==StatusMeta.EM_ANDAMENTO).toList();var ids=active.stream().map(Meta::getId).toList();var records=ids.isEmpty()?List.<Progresso>of():progress.findByMetaIdInOrderByDataAsc(ids);var latest=records.stream().collect(Collectors.toMap(Progresso::getMetaId,Function.identity(),(a,b)->b));var categories=new EnumMap<CategoriaMeta,CategoryCurrent>(CategoriaMeta.class);active.stream().collect(Collectors.groupingBy(Meta::getCategoria)).forEach((category,items)->{var known=items.stream().filter(m->latest.containsKey(m.getId())).toList();categories.put(category,new CategoryCurrent(known.isEmpty()?null:known.stream().mapToInt(m->latest.get(m.getId()).getProgressoAtual()).average().orElseThrow(),known.size(),items.size()-known.size()));});return new CurrentSummary(categories,active.size(),allowed.stream().filter(m->m.getStatus()==StatusMeta.PAUSADA).count(),allowed.stream().filter(m->m.getStatus()==StatusMeta.CONCLUIDA).count(),latest.size(),active.size()-latest.size());}
+
+    @GetMapping("/evolucao-historica")
+    public HistoricalEvolution historicalEvolution(Authentication authentication,@RequestParam(required=false) Long criancaId,@RequestParam(defaultValue="3") int meses){if(meses!=3&&meses!=6&&meses!=12)throw new IllegalArgumentException("meses deve ser 3, 6 ou 12");var allowed=allowedMetas(authentication,criancaId);var ids=allowed.stream().map(Meta::getId).toList();var records=ids.isEmpty()?List.<Progresso>of():progress.findByMetaIdInOrderByDataAsc(ids);var zone=ZoneId.of("America/Bahia");var current=YearMonth.now(clock);var points=new ArrayList<MonthlyPoint>();for(int offset=meses-1;offset>=0;offset--){var month=current.minusMonths(offset);var boundary=offset==0?Instant.now(clock):month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant();var eligible=allowed.stream().filter(m->!m.getDataInicio().isAfter(month.atEndOfMonth())).toList();var values=new ArrayList<Integer>();var missing=0;for(var meta:eligible){var value=records.stream().filter(p->p.getMetaId().equals(meta.getId())&&p.getData().isBefore(boundary)).reduce((a,b)->b);if(value.isPresent())values.add(value.get().getProgressoAtual());else missing++;}var average=values.isEmpty()?null:values.stream().mapToInt(Integer::intValue).average().orElseThrow();var changes=eligible.stream().filter(m->YearMonth.from(m.getDataInicio()).equals(month)).map(m->new CompositionChange("ENTRADA_META",m.getId())).toList();points.add(new MonthlyPoint(month.toString(),average,values.size(),missing,changes,!changes.isEmpty()));}var valid=points.stream().filter(p->p.media()!=null).toList();Double trend=valid.size()<2?null:valid.get(valid.size()-1).media()-valid.get(0).media();return new HistoricalEvolution(meses,points,trend,"PONTOS_PERCENTUAIS",valid.size()<2,points.stream().anyMatch(MonthlyPoint::composicaoAlterada),"Indicador operacional; não representa avaliação clínica",records.isEmpty());}
 
     @GetMapping("/recentes")
     public List<ProgressResponse> recent(
@@ -185,6 +195,11 @@ public class ProgressoController {
             long metasConcluidas,
             long criancasAtivas) {
     }
+    public record CategoryCurrent(Double media,int metasComDados,int metasSemDados){}
+    public record CurrentSummary(Map<CategoriaMeta,CategoryCurrent> categorias,int metasEmAndamento,long metasPausadas,long metasConcluidas,int metasComDados,int metasSemDados){}
+    public record CompositionChange(String tipo,Long metaId){}
+    public record MonthlyPoint(String mes,Double media,int amostra,int metasSemDados,List<CompositionChange> alteracoes,boolean composicaoAlterada){}
+    public record HistoricalEvolution(int meses,List<MonthlyPoint> pontos,Double tendencia,String unidade,boolean historicoInsuficiente,boolean composicaoAlterada,String aviso,boolean historicoLegadoLimitado){}
 
     public record ChildProgress(String nome, double progresso) {
     }

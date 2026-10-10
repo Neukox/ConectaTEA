@@ -42,14 +42,14 @@ class AnotacaoControllerWebMvcTest {
 
     @Test
     void criaSemAceitarAutorNoContrato() throws Exception {
-        org.mockito.Mockito.when(service.criar(any(), eq(10L), any(), eq(VisibilidadeAnotacao.PRIVADA)))
+        org.mockito.Mockito.when(service.criar(any(), eq(10L), any(), any(), eq(VisibilidadeAnotacao.PRIVADA), any(), any()))
                 .thenReturn(view());
 
         mockMvc.perform(post("/criancas/10/anotacoes")
                         .principal(authentication())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"conteudo":"Conteúdo válido para teste", "visibilidade":"PRIVADA"}
+                                {"titulo":"Sessão", "conteudo":"Conteúdo válido para teste", "visibilidade":"PRIVADA"}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(30))

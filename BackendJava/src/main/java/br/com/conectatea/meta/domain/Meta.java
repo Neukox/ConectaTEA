@@ -22,6 +22,9 @@ public class Meta extends AuditableEntity {
     @Column(name = "profissional_id") private Long profissionalId;
     @Column(name = "pausada_em") private Instant pausadaEm;
     @Column(name = "motivo_pausa") private String motivoPausa;
+    @Column(name = "concluida_em") private Instant concluidaEm;
+    @Column(name = "resumo_resultado", columnDefinition = "text") private String resumoResultado;
+    @Column(name = "reaberta_em") private Instant reabertaEm;
     @Version private long version;
 
     protected Meta() {}
@@ -41,6 +44,7 @@ public class Meta extends AuditableEntity {
     public LocalDate getDataFim(){return dataFim;} public Long getCriancaId(){return criancaId;}
     public Long getProfissionalId(){return profissionalId;} public Instant getPausadaEm(){return pausadaEm;}
     public String getMotivoPausa(){return motivoPausa;}
+    public Instant getConcluidaEm(){return concluidaEm;} public String getResumoResultado(){return resumoResultado;} public Instant getReabertaEm(){return reabertaEm;}
 
     public void update(String titulo, String descricao, CategoriaMeta categoria,
                        PrioridadeMeta prioridade, LocalDate inicio, LocalDate fim) {
@@ -62,5 +66,13 @@ public class Meta extends AuditableEntity {
     public void resume(LocalDate deadline) {
         if (status != StatusMeta.PAUSADA) throw new BusinessRuleException("META_CANNOT_RESUME", "Somente meta pausada pode ser retomada");
         dataFim = deadline; status = StatusMeta.EM_ANDAMENTO; motivoPausa = null; pausadaEm = null;
+    }
+    public void complete(String summary, Instant at) {
+        if (status != StatusMeta.EM_ANDAMENTO && status != StatusMeta.PAUSADA) throw new BusinessRuleException("META_CANNOT_COMPLETE", "Meta já concluída");
+        status=StatusMeta.CONCLUIDA; progresso=100; concluidaEm=at; resumoResultado=summary; pausadaEm=null; motivoPausa=null;
+    }
+    public void reopen(String reason, LocalDate deadline, int initialProgress, Instant at) {
+        if (status != StatusMeta.CONCLUIDA) throw new BusinessRuleException("META_CANNOT_REOPEN", "Somente meta concluída pode ser reaberta");
+        status=StatusMeta.EM_ANDAMENTO; dataFim=deadline; progresso=initialProgress; reabertaEm=at;
     }
 }

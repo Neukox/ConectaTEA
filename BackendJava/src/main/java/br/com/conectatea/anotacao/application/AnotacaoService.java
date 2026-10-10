@@ -3,6 +3,8 @@ package br.com.conectatea.anotacao.application;
 import br.com.conectatea.anotacao.domain.Anotacao;
 import br.com.conectatea.anotacao.domain.VisibilidadeAnotacao;
 import br.com.conectatea.anotacao.infrastructure.AnotacaoRepository;
+import br.com.conectatea.anotacao.infrastructure.VersaoAnotacaoRepository;
+import br.com.conectatea.anotacao.domain.VersaoAnotacao;
 import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.notificacao.application.NotificationService;
@@ -35,6 +37,7 @@ public class AnotacaoService {
     private final AnotacaoAuthorizationService autorizacaoAnotacao;
     private final AuditLogService auditoria;
     private final NotificationService notificacoes;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private VersaoAnotacaoRepository versoes;
 
     public AnotacaoService(
             AnotacaoRepository anotacoes,
@@ -62,7 +65,7 @@ public class AnotacaoService {
             String conteudo,
             VisibilidadeAnotacao visibilidade) {
         exigirProfissional(usuario);
-        autorizacaoCrianca.requireCrianca(usuario, criancaId);
+        autorizacaoCrianca.requireCriancaWritable(usuario, criancaId);
         var profissional = profissional(usuario);
         var crianca = criancas.findById(criancaId).orElseThrow(NoSuchElementException::new);
         var anotacao = anotacoes.save(new Anotacao(crianca, profissional, conteudo, visibilidade));
@@ -76,6 +79,9 @@ public class AnotacaoService {
         }
         return mapear(anotacao, usuario, profissional.getId(), atorNome);
     }
+
+    @Transactional
+    public AnotacaoView criar(AuthenticatedUser usuario,Long criancaId,String titulo,String conteudo,VisibilidadeAnotacao visibilidade,String temas,Long sessaoId){exigirProfissional(usuario);autorizacaoCrianca.requireCriancaWritable(usuario,criancaId);var profissional=profissional(usuario);var crianca=criancas.findById(criancaId).orElseThrow();var anotacao=anotacoes.save(new Anotacao(crianca,profissional,titulo,conteudo,temas,sessaoId));if(visibilidade==VisibilidadeAnotacao.COMPARTILHADA)anotacao.atualizar(conteudo,visibilidade);auditoria.record(usuario.id(),"ANNOTATION_CREATED","ANOTACAO",anotacao.getId(),criancaId,profissional.getId(),"SUCESSO","visibilidade="+visibilidade);if(visibilidade==VisibilidadeAnotacao.COMPARTILHADA)notificacoes.registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_CRIADA,criancaId,crianca.getNome(),anotacao.getId(),usuario.id(),nomeUsuario(profissional));return mapear(anotacao,usuario,profissional.getId(),nomeUsuario(profissional));}
 
     @Transactional(readOnly = true)
     public List<AnotacaoView> listar(
@@ -129,7 +135,7 @@ public class AnotacaoService {
             String conteudo,
             VisibilidadeAnotacao visibilidade) {
         exigirProfissional(usuario);
-        autorizacaoCrianca.requireCrianca(usuario, criancaId);
+        autorizacaoCrianca.requireCriancaWritable(usuario, criancaId);
         var profissional = profissional(usuario);
         var anotacao = anotacaoDaCrianca(criancaId, anotacaoId);
         autorizacaoAnotacao.exigirAutoria(profissional.getId(), anotacao);
@@ -148,13 +154,20 @@ public class AnotacaoService {
     }
 
     @Transactional
+    public AnotacaoView atualizar(AuthenticatedUser usuario,Long criancaId,Long anotacaoId,String titulo,String conteudo,VisibilidadeAnotacao visibilidade,String temas,String motivo){exigirProfissional(usuario);autorizacaoCrianca.requireCriancaWritable(usuario,criancaId);var profissional=profissional(usuario);var anotacao=anotacaoDaCrianca(criancaId,anotacaoId);autorizacaoAnotacao.exigirAutoria(profissional.getId(),anotacao);var anterior=anotacao.getVisibilidade();if(anterior==VisibilidadeAnotacao.COMPARTILHADA&&(motivo==null||motivo.isBlank()))throw new br.com.conectatea.shared.domain.BusinessRuleException("CORRECTION_REASON_REQUIRED","Correção compartilhada exige motivo");if(anterior==VisibilidadeAnotacao.COMPARTILHADA&&versoes!=null)versoes.save(new VersaoAnotacao(anotacaoId,(int)versoes.countByNote(anotacaoId)+1,anotacao.getTitulo(),anotacao.getConteudo(),anotacao.getTemas(),motivo,usuario.id()));anotacao.corrigir(titulo,conteudo,temas);if(anterior==VisibilidadeAnotacao.PRIVADA&&visibilidade==VisibilidadeAnotacao.COMPARTILHADA)anotacao.atualizar(conteudo,visibilidade);auditoria.record(usuario.id(),"ANNOTATION_UPDATED","ANOTACAO",anotacaoId,criancaId,profissional.getId(),"SUCESSO",anterior==VisibilidadeAnotacao.COMPARTILHADA?"correcaoComMotivo=true":"visibilidade="+visibilidade);var actor=nomeUsuario(profissional);var tipo=tipoAtualizacao(anterior,anotacao.getVisibilidade());if(tipo!=null)notificacoes.registrarAlteracaoAnotacao(tipo,criancaId,anotacao.getCrianca().getNome(),anotacaoId,usuario.id(),actor);return mapear(anotacao,usuario,profissional.getId(),actor);}
+
+    @Transactional(readOnly=true)
+    public List<AnotacaoView> arquivoProprio(AuthenticatedUser usuario){exigirProfissional(usuario);var profissional=profissional(usuario);var items=anotacoes.findArchiveByAuthorUserId(usuario.id());return items.stream().map(a->mapear(a,usuario,profissional.getId(),nomeUsuario(profissional))).toList();}
+
+    @Transactional
     public void excluir(AuthenticatedUser usuario, Long criancaId, Long anotacaoId) {
         exigirProfissional(usuario);
-        autorizacaoCrianca.requireCrianca(usuario, criancaId);
+        autorizacaoCrianca.requireCriancaWritable(usuario, criancaId);
         var profissional = profissional(usuario);
         var anotacao = anotacaoDaCrianca(criancaId, anotacaoId);
         autorizacaoAnotacao.exigirAutoria(profissional.getId(), anotacao);
         var visibilidade = anotacao.getVisibilidade();
+        if(visibilidade==VisibilidadeAnotacao.COMPARTILHADA)throw new br.com.conectatea.shared.domain.BusinessRuleException("SHARED_NOTE_PRESERVED","Anotação compartilhada não admite exclusão comum");
         anotacoes.delete(anotacao);
         auditoria.record(
                 usuario.id(), "ANNOTATION_DELETED", "ANOTACAO", anotacaoId, criancaId,
@@ -239,7 +252,10 @@ public class AnotacaoService {
                 anotacao.getAutor().getId(),
                 autorNome,
                 anotacao.getAutor().getEspecialidade(),
+                anotacao.getTitulo(),
                 anotacao.getConteudo(),
+                anotacao.getTemas(),
+                anotacao.getSessaoId(),
                 anotacao.getVisibilidade(),
                 anotacao.getCreatedAt(),
                 anotacao.getUpdatedAt(),
