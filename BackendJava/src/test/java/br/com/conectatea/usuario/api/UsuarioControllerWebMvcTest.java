@@ -11,6 +11,7 @@ import br.com.conectatea.shared.api.ApiExceptionHandler;
 import br.com.conectatea.usuario.domain.Usuario;
 import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
 import br.com.conectatea.vinculo.application.CirculoService;
+import br.com.conectatea.emailverification.application.EmailVerificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -29,7 +30,8 @@ class UsuarioControllerWebMvcTest {
     @BeforeEach
     void setup() {
         var controller = new UsuarioController(users, passwords, professionals,
-                org.mockito.Mockito.mock(CirculoService.class));
+                org.mockito.Mockito.mock(CirculoService.class),
+                org.mockito.Mockito.mock(EmailVerificationService.class));
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();

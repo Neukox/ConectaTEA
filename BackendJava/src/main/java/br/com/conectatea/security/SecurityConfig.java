@@ -33,8 +33,9 @@ public class SecurityConfig {
             @Value("${app.rate-limit.enabled:true}") boolean enabled,
             @Value("${app.rate-limit.login-per-minute:10}") int loginLimit,
             @Value("${app.rate-limit.token-per-minute:30}") int tokenLimit,
-            @Value("${app.rate-limit.password-reset-per-minute:5}") int passwordResetLimit) {
-        return new RateLimitFilter(mapper, enabled, loginLimit, tokenLimit, passwordResetLimit);
+            @Value("${app.rate-limit.password-reset-per-minute:5}") int passwordResetLimit,
+            @Value("${app.rate-limit.email-verification-per-minute:5}") int emailVerificationLimit) {
+        return new RateLimitFilter(mapper, enabled, loginLimit, tokenLimit, passwordResetLimit, emailVerificationLimit);
     }
 
     @Bean
@@ -72,7 +73,7 @@ public class SecurityConfig {
                 .csrf(configurer -> configurer
                         .csrfTokenRepository(csrf)
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-                        .ignoringRequestMatchers("/auth/login", "/users/register", "/auth/password/**"))
+                        .ignoringRequestMatchers("/auth/login", "/users/register", "/auth/password/**", "/auth/email-verification/request", "/auth/email-verification/confirm"))
                 .sessionManagement(configurer -> configurer
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(errors -> errors
@@ -86,6 +87,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/login",
                                 "/auth/password/**",
+                                "/auth/email-verification/request",
+                                "/auth/email-verification/confirm",
                                 "/users/register",
                                 "/docs/**",
                                 "/swagger-ui.html",

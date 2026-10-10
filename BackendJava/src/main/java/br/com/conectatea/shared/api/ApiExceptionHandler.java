@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import br.com.conectatea.passwordreset.application.InvalidPasswordResetTokenException;
+import br.com.conectatea.emailverification.application.InvalidEmailVerificationTokenException;
 import br.com.conectatea.shared.domain.BusinessRuleException;
 
 @RestControllerAdvice
@@ -43,6 +44,14 @@ public class ApiExceptionHandler {
             HttpServletRequest request) {
         return response(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD_RESET_TOKEN",
                 "Token de redefinição inválido ou expirado.", request, null);
+    }
+
+    @ExceptionHandler(InvalidEmailVerificationTokenException.class)
+    ResponseEntity<ApiError> invalidEmailVerificationToken(
+            InvalidEmailVerificationTokenException exception,
+            HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "INVALID_EMAIL_VERIFICATION_TOKEN",
+                "Token de verificação inválido ou expirado.", request, null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

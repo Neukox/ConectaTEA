@@ -10,6 +10,10 @@ app:
   password-reset:
     token-ttl: PT30M
     frontend-url: http://localhost:5173/redefinir-senha
+  email-verification:
+    token-ttl: PT24H
+    resend-interval: PT5M
+    frontend-url: http://localhost:5173/verificar-email
 spring:
   jpa:
     open-in-view: false
