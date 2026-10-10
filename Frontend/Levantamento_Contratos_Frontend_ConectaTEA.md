@@ -24,8 +24,8 @@ Atualizada em 10/10/2026 a partir da matriz local não rastreada fornecida no wo
 | P03 Detalhe/Círculo profissional | `GET /criancas/{id}`, `/circulo`, `/feed` | histórico autorizado; privado excluído | V11/V14; autorização existente | implementada com validação pendente |
 | P04 Metas | `/metas`, `PATCH /conclusao`, `/reabertura`, `/pausa`, `/retomada` | somente autor altera | V8/V14; domínio | implementada com validação pendente |
 | P05 Progresso | `/progresso/resumo-atual`, `/evolucao-historica` | médias sem zero presumido e tendência | V14 índices; exemplo numérico pendente | implementada com validação pendente |
-| P06 Sessões | `/sessoes` e `/sessoes/{id}/status` | autor administra; responsável sem observação privada | V14; teste de privacidade existente | parcial — histórico de correção/reagendamento ainda sem endpoint |
-| P07 Anotações | `/criancas/{id}/anotacoes` | título, temas, sessão, compartilhamento e versões | V14; testes existentes requerem atualização | implementada com validação pendente |
+| P06 Sessões | `/sessoes`, `PATCH /sessoes/{id}/status`, `/correcao`, `/reagendamento` | autor administra; responsável sem observação privada; correções preservam motivo/histórico | V14; privacidade e migrations validadas | implementada com validação pendente — falta concorrência HTTP específica |
+| P07 Anotações | `/criancas/{id}/anotacoes` | título, temas, sessão, compartilhamento e versões | V14; testes unitários/HTTP atualizados | implementada e validada |
 | P08 Notificações | `/notificacoes`, `/nao-lidas/count` | não lidas incluem ocultadas do sino | V7/V9; testes existentes | implementada e validada antes desta tranche |
 | P09 Perfil | `/profissionais/me`, `/me/foto` | PUT e foto serializados; limpeza reprocessável | V14 fila; concorrência PostgreSQL pendente | implementada com validação pendente |
 | R01 Dashboard responsável | `GET /dashboard/responsavel`, feed `size=5` | todas as crianças ativas autorizadas | consultas agregadas existentes | parcial |
@@ -38,3 +38,5 @@ Atualizada em 10/10/2026 a partir da matriz local não rastreada fornecida no wo
 ## Compatibilidade React
 
 O frontend deve trocar o rótulo “Novas notificações” por “Notificações não lidas”; tratar `PENDENTE_VALIDACAO_ADMINISTRATIVA`; usar os novos enums; nunca renderizar observação privada; e consumir os contratos de resumo/evolução em vez de inferir médias. Essas mudanças de cliente são contratuais e não reformulam o visual de Alexandre.
+
+Validação desta tranche: `mvn clean test` executou 128 testes, sem falhas ou testes ignorados, com PostgreSQL 16 real via Testcontainers, instalação limpa das 14 migrations e validação Hibernate. Isso não substitui os cenários marcados como pendentes na tabela.
