@@ -2,7 +2,8 @@
 
 > Atualização de 10/10/2026: em `GET /criancas/{id}/circulo/membros`, `acoesPermitidas` contém `podeRemover`, `podeSair`, `requerTransferenciaGestao` e `podeTransferirGestao`. Para o último gestor, `podeSair=false` e `requerTransferenciaGestao=true`; a tentativa direta continua retornando `409 LAST_MANAGER`.
 >
-> Foto profissional: `POST /profissionais/me/foto` (`multipart/form-data`, parte `file`) substitui a foto do próprio perfil; `DELETE /profissionais/me/foto` remove; `GET /profissionais/fotos/{key}` entrega JPEG/PNG armazenado. Limites: 5 MiB e 64–4096 px. Bytes, assinatura e decodificação são validados; `fotoPerfilUrl` enviado no `PUT /profissionais/me` é ignorado para impedir URL arbitrária.
+> Foto profissional: `POST /profissionais/me/foto` (`multipart/form-data`, parte `file`) substitui a foto do próprio perfil; `DELETE /profissionais/me/foto` remove; `GET /profissionais/fotos/{key}` entrega JPEG/PNG armazenado. Limites: 5 MiB e 64–4096 px. Bytes, assinatura e decodificação são validados; `PUT /profissionais/me` não aceita `fotoPerfilUrl`.
+> O `PUT /profissionais/me` não possui mais `fotoPerfilUrl`. A URL retornada é absoluta e configurável por `PUBLIC_API_URL`; sem essa variável, usa a origem HTTP observada e o context-path `/api`. Troca e remoção usam lock do perfil, persistência explícita e limpeza de arquivo sincronizada ao commit.
 
 **Estado atual:** este é o contrato textual do único backend ativo. O OpenAPI em `/api/v3/api-docs` e a Swagger UI refletem os controllers Java; trechos explicitamente históricos ao final registram divergências já resolvidas.
 
