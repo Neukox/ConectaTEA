@@ -236,7 +236,19 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   })
   expect(updatedAnnotation.status).toBe(200)
   expect(updatedAnnotation.json.visibilidade).toBe('COMPARTILHADA')
-  const deletedAnnotation = await api(profPage, `/criancas/${childId}/anotacoes/${temporaryAnnotation.json.id}`, 'DELETE')
+  // Regra aprovada: anotação compartilhada não admite exclusão comum (Contexto.md §8)
+  const deleteSharedForbidden = await api(profPage, `/criancas/${childId}/anotacoes/${temporaryAnnotation.json.id}`, 'DELETE')
+  expect(deleteSharedForbidden.status).toBe(409)
+  expect(deleteSharedForbidden.json.code).toBe('SHARED_NOTE_PRESERVED')
+  // Para deleção válida: anotação privada pode ser excluída pelo autor
+  const deletableAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    titulo: `Anotacao privada ${run}`,
+    conteudo: `Anotacao para deletar E2E ${run}`,
+    temas: 'e2e,privada',
+    visibilidade: 'PRIVADA',
+  })
+  expect(deletableAnnotation.status).toBe(201)
+  const deletedAnnotation = await api(profPage, `/criancas/${childId}/anotacoes/${deletableAnnotation.json.id}`, 'DELETE')
   expect(deletedAnnotation.status).toBe(204)
 
   const progress = await api(profPage, `/metas/${metaBody.id}/progresso`, 'PATCH', {
@@ -412,34 +424,41 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
     `/criancas/${childId}/anotacoes/${notificationAnnotation.json.id}`, 'PUT', {
       conteudo: `Atualizacao compartilhada editada ${run}`,
       visibilidade: 'COMPARTILHADA',
+      motivoCorrecao: 'Correcao de teste E2E',
     })
   expect(editedShared.status).toBe(200)
 
+  // Regra: compartilhada não volta a privada
+  const sharedToPrivateForbidden = await api(profPage,
+    `/criancas/${childId}/anotacoes/${notificationAnnotation.json.id}`, 'PUT', {
+      conteudo: `Tentativa de privatizar ${run}`,
+      visibilidade: 'PRIVADA',
+    })
+  expect(sharedToPrivateForbidden.status).toBe(409)
+  expect(sharedToPrivateForbidden.json.code).toBe('SHARED_NOTE_IMMUTABLE_VISIBILITY')
+
+  // Compartilhamento válido: PRIVADA -> COMPARTILHADA
   const privateToSharedBase = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    titulo: `Compartilhamento E2E ${run}`,
     conteudo: `Base privada para compartilhar ${run}`,
+    temas: 'e2e,compartilhamento',
     visibilidade: 'PRIVADA',
   })
   expect(privateToSharedBase.status).toBe(201)
-  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(1)
   const privateToShared = await api(profPage,
     `/criancas/${childId}/anotacoes/${privateToSharedBase.json.id}`, 'PUT', {
       conteudo: `Agora compartilhada com cuidado ${run}`,
       visibilidade: 'COMPARTILHADA',
     })
   expect(privateToShared.status).toBe(200)
-  const sharedToPrivate = await api(profPage,
-    `/criancas/${childId}/anotacoes/${privateToSharedBase.json.id}`, 'PUT', {
-      conteudo: `Agora privada novamente ${run}`,
-      visibilidade: 'PRIVADA',
-    })
-  expect(sharedToPrivate.status).toBe(200)
-  const deleteSharedNotification = await api(profPage,
-    `/criancas/${childId}/anotacoes/${notificationAnnotation.json.id}`, 'DELETE')
-  expect(deleteSharedNotification.status).toBe(204)
-  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(4)
+
+  // Contagem: 1 editedShared + 1 privateToShared (anotation criada antes do vinculo não gera notif)
+  const guardianAnnotationsBefore = await api(respPage, '/notificacoes/nao-lidas/count')
+  expect(guardianAnnotationsBefore.status).toBe(200)
+  expect(guardianAnnotationsBefore.json.count).toBe(2)
   const readAllNotifications = await api(respPage, '/notificacoes/lidas', 'PATCH')
   expect(readAllNotifications.status).toBe(200)
-  expect(readAllNotifications.json.updated).toBe(4)
+  expect(readAllNotifications.json.updated).toBe(2)
   expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(0)
 
   const guardianAnnotations = await api(respPage, `/criancas/${childId}/anotacoes`)

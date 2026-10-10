@@ -125,7 +125,7 @@ export function AnotacoesExperience({ papel }: Props) {
         await updateMutation.mutateAsync({
           criancaId: editing.criancaId,
           id: editing.id,
-          input: { conteudo: data.conteudo, visibilidade: data.visibilidade },
+          input: { titulo:data.titulo, conteudo: data.conteudo, visibilidade: data.visibilidade, temas:data.temas, motivoCorrecao:data.motivoCorrecao },
         })
       else await createMutation.mutateAsync(data)
       notificarSucesso(

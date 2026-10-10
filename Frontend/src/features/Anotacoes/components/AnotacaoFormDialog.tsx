@@ -46,6 +46,7 @@ export function AnotacaoFormDialog({
     resolver: zodResolver(anotacaoSchema),
     defaultValues: {
       criancaId: criancas[0]?.id,
+      titulo: '',
       conteudo: '',
       visibilidade: 'PRIVADA',
     },
@@ -57,10 +58,12 @@ export function AnotacaoFormDialog({
       anotacao
         ? {
             criancaId: anotacao.criancaId,
+            titulo: anotacao.titulo,
             conteudo: anotacao.conteudo,
             visibilidade: anotacao.visibilidade,
+            temas: anotacao.temas ?? '',
           }
-        : { criancaId: criancas[0]?.id, conteudo: '', visibilidade: 'PRIVADA' },
+        : { criancaId: criancas[0]?.id, titulo: '', conteudo: '', visibilidade: 'PRIVADA', temas: '' },
     )
   }, [anotacao, criancas, open, reset])
 
@@ -116,6 +119,7 @@ export function AnotacaoFormDialog({
               </p>
             )}
           </div>
+          <div><label htmlFor='anotacao-titulo' className='mb-2 block text-sm font-medium text-gray-800'>Título</label><input id='anotacao-titulo' {...register('titulo')} className={fieldClass}/>{errors.titulo&&<p role='alert' className='mt-1 text-sm text-red-600'>{errors.titulo.message}</p>}</div>
           <div>
             <label
               htmlFor='anotacao-conteudo'
@@ -139,6 +143,9 @@ export function AnotacaoFormDialog({
               </p>
             )}
           </div>
+          <div><label htmlFor='anotacao-temas' className='mb-2 block text-sm font-medium text-gray-800'>Temas</label><input id='anotacao-temas' {...register('temas')} className={fieldClass} placeholder='Comunicação, rotina, autonomia'/></div>
+          {!anotacao&&<div><label htmlFor='anotacao-sessao' className='mb-2 block text-sm font-medium text-gray-800'>Sessão (opcional)</label><input id='anotacao-sessao' type='number' {...register('sessaoId',{valueAsNumber:true,setValueAs:value=>value===''?undefined:Number(value)})} className={fieldClass}/></div>}
+          {anotacao?.visibilidade==='COMPARTILHADA'&&<div><label htmlFor='anotacao-motivo' className='mb-2 block text-sm font-medium text-gray-800'>Motivo da correção</label><textarea id='anotacao-motivo' {...register('motivoCorrecao',{required:'Informe o motivo da correção.'})} className={fieldClass}/>{errors.motivoCorrecao&&<p role='alert' className='mt-1 text-sm text-red-600'>{errors.motivoCorrecao.message}</p>}</div>}
           <fieldset>
             <legend className='mb-2 text-sm font-medium text-gray-800'>
               Visibilidade
