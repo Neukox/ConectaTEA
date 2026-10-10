@@ -472,3 +472,16 @@ O inventário histórico acima permanece para registrar o estado anterior. Na re
 As correções adicionais foram: dashboards associados à role correta; constants de rotas inexistentes removidas; mutation de meta aguardando a resposta HTTP; invalidações de cache relacionadas; progresso recente respeitando filtro; e `dataHora` de sessão emitido como ISO-8601 com offset local explícito. `tipoSessao`, `data` e `horario` permanecem somente no modelo de formulário e são transformados para `{tipo,dataHora}` antes do request.
 
 O run `37031485540` validou `frontend` e `backend-java` no commit funcional `39a8248`. Isso comprova CI estático/unitário, não substitui a fase E2E real ainda pendente.
+# Complemento canônico — novo frontend (10/10/2026)
+
+- `POST /criancas/cadastro-responsavel` cria criança pendente e pedido administrativo, sem acesso ativo.
+- `GET|PATCH /administracao/pedidos-primeiro-gestor[/{id}]` exige `usuarios.administrador=true`; decisão registra referência mínima e operador.
+- `PATCH /criancas/{id}/estado` e `/arquivamento` são exclusivos de gestor. Arquivada continua legível por vínculo e rejeita mutações.
+- `PATCH /metas/{id}/conclusao` exige `resumoResultado`; `/reabertura` exige `motivo`, `novoPrazo` e `progressoInicial` 0–99.
+- `GET /progresso/resumo-atual` e `/evolucao-historica?meses=3|6|12` são contratos distintos; ausência de registro é `metasSemDados`, não zero.
+- Sessões não expõem `observacoes` privadas fora do autor. Estados canônicos: `AGENDADA|REALIZADA|CANCELADA|NAO_COMPARECEU`.
+- Anotação usa `titulo`, `conteudo`, `temas`, `sessaoId`; correção compartilhada requer `motivoCorrecao`; `GET .../arquivo-proprio` retorna apenas autoria própria.
+- `GET /criancas/{id}/feed?size=&offset=` ordena por instante e identificador, sem janela temporal arbitrária.
+- `PUT /profissionais/me` não aceita `fotoPerfilUrl`; foto é mutação separada e serializada pelo mesmo lock pessimista.
+
+Instantes são ISO-8601/UTC; cálculo local usa `America/Bahia` como fallback, sem inferir todos os municípios por UF. Política definitiva de retenção e implantação AWS não integram este contrato funcional.
