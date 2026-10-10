@@ -6,6 +6,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
+import br.com.conectatea.crianca.domain.Crianca;
+import br.com.conectatea.crianca.infrastructure.CriancaRepository;
+import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.shared.domain.BusinessRuleException;
@@ -16,14 +19,23 @@ import br.com.conectatea.vinculo.domain.StatusVinculo;
 import br.com.conectatea.vinculo.domain.VinculoResponsavelCrianca;
 import br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository;
 import br.com.conectatea.vinculo.infrastructure.VinculoResponsavelRepository;
+import br.com.conectatea.vinculo.infrastructure.HistoricoVinculoRepository;
+import br.com.conectatea.vinculo.infrastructure.SolicitacaoTokenVinculoRepository;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class CirculoServiceTest {
     private final VinculoResponsavelRepository guardians = mock(VinculoResponsavelRepository.class);
+    private final CriancaRepository children = mock(CriancaRepository.class);
     private final CirculoService service = new CirculoService(guardians,
             mock(VinculoProfissionalRepository.class), mock(ProfissionalRepository.class),
-            mock(UsuarioRepository.class), mock(AuthorizationService.class));
+            mock(UsuarioRepository.class), mock(AuthorizationService.class), children,
+            mock(HistoricoVinculoRepository.class), mock(AuditLogService.class),
+            mock(SolicitacaoTokenVinculoRepository.class));
 
     @Test
     void lastManagerCannotLeave() {
@@ -41,11 +53,90 @@ class CirculoServiceTest {
         var target = guardian(2L, false);
         when(guardians.lockActiveByChild(10L, StatusVinculo.VINCULADO))
                 .thenReturn(List.of(current, target));
+        activeChild();
 
         service.transferManagement(user(1L), 10L, 2L);
 
         assertThat(current.getPapel()).isEqualTo(PapelCirculo.RESPONSAVEL);
         assertThat(target.getPapel()).isEqualTo(PapelCirculo.RESPONSAVEL_GESTOR);
+    }
+
+    @Test
+    void transferToSelfIsRejectedWithoutChangingManager() {
+        var current = guardian(1L, true);
+        when(guardians.lockActiveByChild(10L, StatusVinculo.VINCULADO)).thenReturn(List.of(current));
+        activeChild();
+
+        assertThatThrownBy(() -> service.transferManagement(user(1L), 10L, 1L))
+                .isInstanceOf(BusinessRuleException.class)
+                .extracting("code").isEqualTo("CANNOT_TRANSFER_TO_SELF");
+        assertThat(current.isGestor()).isTrue();
+    }
+
+    @Test
+    void commonGuardianCanLeaveAndLegacyRouteUsesSameRule() {
+        var manager = guardian(1L, true);
+        var common = guardian(2L, false);
+        when(guardians.lockActiveByChild(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(manager, common));
+
+        service.leave(user(2L), 10L);
+
+        assertThat(common.getStatus()).isEqualTo(StatusVinculo.DESVINCULADO);
+        assertThat(manager.isGestor()).isTrue();
+    }
+
+    @Test
+    void accountDeactivationCannotRemoveTheLastManager() {
+        var manager = guardian(1L, true);
+        when(guardians.findAllByResponsavelIdAndStatus(1L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(manager));
+        when(guardians.lockActiveByChild(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(manager));
+
+        assertThatThrownBy(() -> service.deactivateGuardian(1L))
+                .isInstanceOf(BusinessRuleException.class)
+                .extracting("code").isEqualTo("LAST_MANAGER");
+        assertThat(manager.getStatus()).isEqualTo(StatusVinculo.VINCULADO);
+        assertThat(manager.isGestor()).isTrue();
+    }
+
+    @Test
+    void transferRejectsUnlinkedAndLegacyTarget() {
+        var current = guardian(1L, true);
+        when(guardians.lockActiveByChild(10L, StatusVinculo.VINCULADO)).thenReturn(List.of(current));
+        activeChild();
+        assertThatThrownBy(() -> service.transferManagement(user(1L), 10L, 99L))
+                .isInstanceOf(BusinessRuleException.class)
+                .extracting("code").isEqualTo("TARGET_NOT_ACTIVE");
+
+        var legacy = guardian(2L, false);
+        ReflectionTestUtils.setField(legacy, "papel", null);
+        when(guardians.lockActiveByChild(10L, StatusVinculo.VINCULADO)).thenReturn(List.of(current, legacy));
+        assertThatThrownBy(() -> service.transferManagement(user(1L), 10L, 2L))
+                .isInstanceOf(BusinessRuleException.class)
+                .extracting("code").isEqualTo("LEGACY_ROLE_UNCLASSIFIED");
+        assertThat(current.isGestor()).isTrue();
+    }
+
+    @Test
+    void archivedChildAndUserWithoutAuthorityCannotTransfer() {
+        var archived = new Crianca("Criança", LocalDate.of(2018, 1, 1), null, null, null, null);
+        archived.arquivar();
+        when(children.findById(10L)).thenReturn(Optional.of(archived));
+        assertThatThrownBy(() -> service.transferManagement(user(1L), 10L, 2L))
+                .isInstanceOf(BusinessRuleException.class)
+                .extracting("code").isEqualTo("CHILD_ARCHIVED");
+
+        activeChild();
+        when(guardians.lockActiveByChild(10L, StatusVinculo.VINCULADO)).thenReturn(List.of(guardian(2L, true)));
+        assertThatThrownBy(() -> service.transferManagement(user(1L), 10L, 2L))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    private void activeChild() {
+        when(children.findById(10L)).thenReturn(Optional.of(new Crianca(
+                "Criança", LocalDate.of(2018, 1, 1), null, null, null, null)));
     }
 
     private VinculoResponsavelCrianca guardian(Long userId, boolean manager) {

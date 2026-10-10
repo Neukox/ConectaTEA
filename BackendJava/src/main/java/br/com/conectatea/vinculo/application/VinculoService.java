@@ -4,6 +4,7 @@ import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.usuario.domain.TipoUsuario;
+import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
 import br.com.conectatea.vinculo.domain.Consentimento;
 import br.com.conectatea.vinculo.domain.HistoricoVinculo;
 import br.com.conectatea.vinculo.domain.StatusToken;
@@ -47,6 +48,7 @@ public class VinculoService {
     private final HistoricoVinculoRepository history;
     private final AuditLogService audits;
     private final SolicitacaoTokenVinculoRepository requests;
+    private final UsuarioRepository users;
     private final SecureRandom random = new SecureRandom();
     private final String consentVersion;
     private final String consentPurpose;
@@ -60,6 +62,7 @@ public class VinculoService {
             HistoricoVinculoRepository history,
             AuditLogService audits,
             SolicitacaoTokenVinculoRepository requests,
+            UsuarioRepository users,
             @Value("${app.consent.version:1.0}") String consentVersion,
             @Value("${app.consent.purpose:Acompanhamento terapêutico da criança}")
                     String consentPurpose) {
@@ -70,6 +73,7 @@ public class VinculoService {
         this.history = history;
         this.audits = audits;
         this.requests = requests;
+        this.users = users;
         this.consentVersion = consentVersion;
         this.consentPurpose = consentPurpose;
     }
@@ -77,7 +81,7 @@ public class VinculoService {
     public VinculoService(TokenVinculoRepository tokens, CriancaRepository children,
             VinculoResponsavelRepository links, ConsentimentoRepository consents,
             String consentVersion, String consentPurpose) {
-        this(tokens, children, links, consents, null, null, null, consentVersion, consentPurpose);
+        this(tokens, children, links, consents, null, null, null, null, consentVersion, consentPurpose);
     }
 
     @Transactional
@@ -146,14 +150,25 @@ public class VinculoService {
     @Transactional
     public LinkRequest decideRequest(Long childId, Long requestId, boolean approve,
                                      AuthenticatedUser manager) {
+        var child = children.findById(childId).orElseThrow();
+        if (child.isArquivada()) throw new BusinessRuleException("CHILD_ARCHIVED", "Criança arquivada não aceita aprovação");
         var active = links.lockActiveByChild(childId, br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO);
         var managerLink = active.stream().filter(item -> item.getResponsavelId().equals(manager.id())).findFirst()
                 .orElseThrow(() -> new AccessDeniedException("Sem vínculo ativo"));
         if (!managerLink.isGestor()) throw new AccessDeniedException("Somente gestor decide solicitações");
         var request = requests.findByIdForUpdate(requestId).orElseThrow();
         if (!request.getCriancaId().equals(childId)) throw new AccessDeniedException("Solicitação pertence a outra criança");
+        var requester = users.findById(request.getSolicitanteUsuarioId()).orElseThrow();
+        if (!requester.isAtivo()) throw new BusinessRuleException("REQUESTER_INACTIVE", "Solicitante não está ativo");
+        if (active.stream().anyMatch(item -> item.getResponsavelId().equals(request.getSolicitanteUsuarioId()))) {
+            throw new BusinessRuleException("ALREADY_LINKED", "Solicitante já possui vínculo ativo");
+        }
         if (!approve) {
             request.reject(manager.id());
+            recordHistory(childId, manager.id(), request.getSolicitanteUsuarioId(), null,
+                    "SOLICITACAO_VINCULO_RECUSADA", "RECUSADA", null);
+            audit(manager.id(), "SOLICITACAO_VINCULO_RECUSADA", "SOLICITACAO_VINCULO",
+                    request.getId(), childId, null, null);
             return new LinkRequest(request.getId(), childId, request.getStatus());
         }
         request.approve(manager.id());
@@ -166,6 +181,8 @@ public class VinculoService {
                 consentVersion, consentPurpose));
         recordHistory(childId, manager.id(), request.getSolicitanteUsuarioId(),
                 token.getProfissionalId(), "SOLICITACAO_VINCULO_APROVADA", "VINCULADO", null);
+        audit(manager.id(), "SOLICITACAO_VINCULO_APROVADA", "SOLICITACAO_VINCULO",
+                request.getId(), childId, token.getProfissionalId(), null);
         return new LinkRequest(request.getId(), childId, request.getStatus());
     }
 
@@ -184,16 +201,6 @@ public class VinculoService {
         }
         token.cancelar();
         audit(actorId, "TOKEN_VINCULO_CANCELADO", "TOKEN_VINCULO", tokenId, childId, professionalId, null);
-    }
-
-    @Transactional
-    public void unlink(Long childId, AuthenticatedUser user) {
-        var link = links.findByResponsavelIdAndCriancaId(user.id(), childId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Vínculo não encontrado"));
-        link.desvincular();
-        recordHistory(childId, user.id(), user.id(), null, "VINCULO_ENCERRADO", "DESVINCULADO", null);
-        audit(user.id(), "VINCULO_ENCERRADO", "VINCULO_RESPONSAVEL", null, childId, null, null);
     }
 
     private void validate(TokenVinculo token) {

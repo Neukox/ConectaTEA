@@ -14,6 +14,7 @@ public interface VinculoResponsavelRepository extends JpaRepository<VinculoRespo
     boolean existsByResponsavelIdAndCriancaIdAndStatus(Long responsavelId, Long criancaId, StatusVinculo status);
     Optional<VinculoResponsavelCrianca> findByResponsavelIdAndCriancaId(Long responsavelId, Long criancaId);
     List<VinculoResponsavelCrianca> findAllByCriancaIdAndStatus(Long criancaId, StatusVinculo status);
+    List<VinculoResponsavelCrianca> findAllByResponsavelIdAndStatus(Long responsavelId, StatusVinculo status);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select v from VinculoResponsavelCrianca v where v.criancaId=:criancaId and v.status=:status order by v.id")
     List<VinculoResponsavelCrianca> lockActiveByChild(@Param("criancaId") Long criancaId,

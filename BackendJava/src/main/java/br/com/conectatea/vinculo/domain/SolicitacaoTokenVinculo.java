@@ -27,6 +27,8 @@ public class SolicitacaoTokenVinculo {
     public Long getId(){return id;} public Long getTokenId(){return tokenId;}
     public Long getCriancaId(){return criancaId;} public Long getSolicitanteUsuarioId(){return solicitanteUsuarioId;}
     public String getStatus(){return status;} public String getIp(){return ip;} public String getUserAgent(){return userAgent;}
+    public Long getDecididaPorUsuarioId(){return decididaPorUsuarioId;} public Instant getDecididaEm(){return decididaEm;}
+    public Instant getCreatedAt(){return createdAt;}
     public void approve(Long managerId){if(!status.equals("PENDENTE"))throw new BusinessRuleException("REQUEST_ALREADY_DECIDED","Solicitação já decidida");status="APROVADA";decididaPorUsuarioId=managerId;decididaEm=Instant.now();}
     public void reject(Long managerId){if(!status.equals("PENDENTE"))throw new BusinessRuleException("REQUEST_ALREADY_DECIDED","Solicitação já decidida");status="RECUSADA";decididaPorUsuarioId=managerId;decididaEm=Instant.now();}
 }

@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface SolicitacaoTokenVinculoRepository extends JpaRepository<SolicitacaoTokenVinculo,Long> {
     List<SolicitacaoTokenVinculo> findAllByCriancaIdAndStatusOrderById(Long childId, String status);
+    List<SolicitacaoTokenVinculo> findAllBySolicitanteUsuarioIdOrderByIdDesc(Long userId);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from SolicitacaoTokenVinculo s where s.id=:id")
     Optional<SolicitacaoTokenVinculo> findByIdForUpdate(@Param("id") Long id);

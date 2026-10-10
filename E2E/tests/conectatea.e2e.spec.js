@@ -371,6 +371,23 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   expect(approval.json.status).toBe('APROVADA')
   expect((await api(respPage, `/criancas/${childId}`)).status).toBe(200)
 
+  const selfTransfer = await api(
+    gestorPage,
+    `/criancas/${childId}/circulo/gestao`,
+    'PATCH',
+    { responsavelUsuarioId: gestorMe.json.user.id },
+  )
+  expect(selfTransfer.status).toBe(409)
+  expect(selfTransfer.json.code).toBe('CANNOT_TRANSFER_TO_SELF')
+
+  const legacyManagerLeave = await api(gestorPage, `/vinculos/criancas/${childId}`, 'DELETE')
+  expect(legacyManagerLeave.status).toBe(409)
+  expect(legacyManagerLeave.json.code).toBe('LAST_MANAGER')
+
+  const circleManagerLeave = await api(gestorPage, `/criancas/${childId}/circulo/membros/me`, 'DELETE')
+  expect(circleManagerLeave.status).toBe(409)
+  expect(circleManagerLeave.json.code).toBe('LAST_MANAGER')
+
   const notificationAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
     conteudo: `Atualizacao compartilhada para notificacao ${run}`,
     visibilidade: 'COMPARTILHADA',

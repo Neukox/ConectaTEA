@@ -21,6 +21,12 @@ public class CirculoController {
         return service.members(principal(authentication), criancaId);
     }
 
+    @GetMapping("/solicitacoes")
+    public java.util.List<CirculoService.RequestResponse> pendingRequests(
+            Authentication authentication, @PathVariable Long criancaId) {
+        return service.pendingRequests(principal(authentication), criancaId);
+    }
+
     @PatchMapping("/gestao")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void transfer(Authentication authentication, @PathVariable Long criancaId,
@@ -32,6 +38,13 @@ public class CirculoController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void leave(Authentication authentication, @PathVariable Long criancaId) {
         service.leave(principal(authentication), criancaId);
+    }
+
+    @DeleteMapping("/membros/{vinculoId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remove(Authentication authentication, @PathVariable Long criancaId,
+                       @PathVariable Long vinculoId, @RequestParam String tipo) {
+        service.removeMember(principal(authentication), criancaId, vinculoId, tipo);
     }
 
     private AuthenticatedUser principal(Authentication authentication) {

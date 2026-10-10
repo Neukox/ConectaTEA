@@ -6,6 +6,7 @@ import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import br.com.conectatea.usuario.domain.Usuario;
 import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
+import br.com.conectatea.vinculo.application.CirculoService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -32,14 +33,17 @@ public class UsuarioController {
     private final UsuarioRepository users;
     private final PasswordEncoder encoder;
     private final ProfissionalRepository professionals;
+    private final CirculoService circle;
 
     public UsuarioController(
             UsuarioRepository users,
             PasswordEncoder encoder,
-            ProfissionalRepository professionals) {
+            ProfissionalRepository professionals,
+            CirculoService circle) {
         this.users = users;
         this.encoder = encoder;
         this.professionals = professionals;
+        this.circle = circle;
     }
 
     @PostMapping("/register")
@@ -82,6 +86,10 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     public void deactivate(Authentication authentication) {
+        var principal = (AuthenticatedUser) authentication.getPrincipal();
+        if (principal.tipo() == TipoUsuario.RESPONSAVEL) {
+            circle.deactivateGuardian(principal.id());
+        }
         current(authentication).desativar();
     }
 
