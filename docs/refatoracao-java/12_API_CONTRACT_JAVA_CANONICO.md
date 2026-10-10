@@ -293,7 +293,7 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 - Request: list aceita `criancaId,categoria,prioridade,status,periodo,search`; períodos `TODOS|HOJE|SEMANA|MES|ATRASADAS`. Resumo sem parâmetros. Get usa `id`.
 - Response list `200`: array de MetaResponse. Resumo: `{totalMetas,metasEmAndamento,metasVencendo,metasConcluidas}`. Get: MetaResponse.
 - Erros: `400` enum/período inválido, `401`, `403` acesso/role/contexto sem child, `404` meta ausente.
-- Regra: status temporal é derivado na leitura; 100% conclui, 90–99% quase concluída e vencimento em até 7 dias classifica VENCENDO, conforme regras de domínio atuais.
+- Regra vigente desde a preparação do novo frontend (#66): o estado de trabalho é `EM_ANDAMENTO`, `PAUSADA` ou `CONCLUIDA`; prazo próximo/atrasado é sinalizado separadamente. Progresso 100% não conclui automaticamente enquanto a regra de conclusão/reabertura estiver pendente. Consulte `docs/preparacao-backend-novo-frontend.md` para os endpoints de pausa/retomada e compatibilidade da V8.
 - Frontend: `axiosMetas.ts` chama list/resumo/get; contrato de resumo compatível. A listagem atual não inclui `criancaId` na interface de filtros e componente de responsável precisa fornecê-lo.
 
 ### `PUT /metas/{id}`, `PATCH /metas/{id}/progresso`, `DELETE /metas/{id}`
