@@ -2,6 +2,26 @@
 
 Data: 2026-10-10
 
+## Revisão após `e735812`
+
+As fontes foram novamente verificadas em 10/10/2026: matriz local integral, 15 imagens e issues #8/#10/#62–#79. As decisões listadas como pendentes na matriz continuam pendentes nas issues; conteúdo ilustrativo das imagens não foi promovido a regra de produto.
+
+Correções implementadas e validadas:
+
+- O teste PostgreSQL de concorrência agora inspeciona ambos os `Future`: a transferência precisa concluir; a saída pode concluir ou retornar exclusivamente `LAST_MANAGER`. Qualquer outra falha faz o teste falhar.
+- `acoesPermitidas` do último gestor retorna `podeSair=false` e `requerTransferenciaGestao=true`. O servidor continua protegendo a operação com transação e lock pessimista.
+
+| Módulo | Operação bloqueada | Decisão indispensável | Recomendação concreta |
+|---|---|---|---|
+| Convites/bootstrap | bootstrap produtivo e nominal/proposta completos | prova de autoridade e fluxo de email | validação manual auditada; email comprova apenas posse da conta |
+| Metas/progresso | concluir/reabrir e série agregada | transições, coorte, baseline e granularidade | conclusão manual; pontos mensais com coorte explícita |
+| Anotações/arquivo | arquivo pós-saída e snapshot | dados mínimos, retenção e efeitos de editar/excluir | snapshot imutável após definição jurídica de retenção |
+| Perfil/email | foto e verificação de cadastro | limites/storage e regras de token/reenvio | validar assinatura/decodificação; storage substituível; token hash com rate limit |
+| Dashboards/feed | feed composto e indicadores finais | tipos, janela, limite e semântica | cursor `(data,id)` e somente eventos de domínio aprovados |
+| Crianças/sessões | acompanhamento e máquina final | enum, editores e transições | legado nulo; aprovar diagrama antes de persistir estados |
+
+Esses itens permanecem na classificação 3. Não foi criada migration nesta revisão: nenhum dado pendente foi ativado e as duas correções não alteram persistência.
+
 Base: `origin/main` em `ed5c453fd2d800c14c00e93e9322c5530787f777`
 
 Branch: `feat/preparacao-backend-banco-novo-frontend`
