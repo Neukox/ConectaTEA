@@ -64,6 +64,7 @@ public class CirculoService {
                 .collect(Collectors.toMap(item -> item.getId(), Function.identity()));
         var actorManager = guardianLinks.stream().anyMatch(item ->
                 item.getResponsavelId().equals(actor.id()) && item.isGestor());
+        var managerCount = guardianLinks.stream().filter(VinculoResponsavelCrianca::isGestor).count();
 
         var result = new ArrayList<MemberResponse>();
         guardianLinks.forEach(link -> {
@@ -71,8 +72,10 @@ public class CirculoService {
             result.add(new MemberResponse(link.getId(), user.getId(), user.getNome(),
                     link.getPapel(), "RESPONSAVEL",
                     new AllowedActions(actorManager && !user.getId().equals(actor.id())
-                                    && (!link.isGestor() || guardianLinks.stream().filter(VinculoResponsavelCrianca::isGestor).count() > 1),
-                            user.getId().equals(actor.id()), actorManager && !user.getId().equals(actor.id())
+                                    && (!link.isGestor() || managerCount > 1),
+                            user.getId().equals(actor.id()) && (!link.isGestor() || managerCount > 1),
+                            user.getId().equals(actor.id()) && link.isGestor() && managerCount <= 1,
+                            actorManager && !user.getId().equals(actor.id())
                                     && link.getPapel() == PapelCirculo.RESPONSAVEL)));
         });
         professionalLinks.forEach(link -> {
@@ -80,7 +83,7 @@ public class CirculoService {
             var user = userById.get(profile.getUsuarioId());
             result.add(new MemberResponse(link.getId(), user.getId(), user.getNome(),
                     PapelCirculo.PROFISSIONAL, "PROFISSIONAL",
-                    new AllowedActions(actorManager, user.getId().equals(actor.id()), false)));
+                    new AllowedActions(actorManager, user.getId().equals(actor.id()), false, false)));
         });
         return new CircleResponse(childId, actorManager, result);
     }
@@ -224,7 +227,8 @@ public class CirculoService {
     public record CircleResponse(Long criancaId, boolean gestorAtual, List<MemberResponse> membros) {}
     public record MemberResponse(Long vinculoId, Long usuarioId, String nome, PapelCirculo papel,
                                  String tipo, AllowedActions acoesPermitidas) {}
-    public record AllowedActions(boolean podeRemover, boolean podeSair, boolean podeTransferirGestao) {}
+    public record AllowedActions(boolean podeRemover, boolean podeSair,
+                                 boolean requerTransferenciaGestao, boolean podeTransferirGestao) {}
     public record RequestResponse(Long solicitacaoId, Long criancaId, String status, Instant criadaEm,
                                   Long solicitanteUsuarioId, String solicitanteNome, String solicitanteEmail) {}
     public record OwnRequestResponse(Long solicitacaoId, Long criancaId, String criancaNome, String status,

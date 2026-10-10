@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import br.com.conectatea.crianca.domain.Crianca;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.security.AuthenticatedUser;
+import br.com.conectatea.shared.domain.BusinessRuleException;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import br.com.conectatea.usuario.domain.Usuario;
 import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
@@ -16,6 +17,7 @@ import br.com.conectatea.vinculo.infrastructure.VinculoResponsavelRepository;
 import java.time.LocalDate;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +40,12 @@ class CircleManagementConcurrencyIntegrationTest extends PostgresIntegrationTest
 
         var ready = new CountDownLatch(2);
         var start = new CountDownLatch(1);
+        Future<OperationResult> transfer;
+        Future<OperationResult> leave;
         try (var executor = Executors.newFixedThreadPool(2)) {
-            executor.submit(() -> run(ready, start, () -> service.transferManagement(
+            transfer = executor.submit(() -> run(ready, start, () -> service.transferManagement(
                     principal(manager), child.getId(), target.getId())));
-            executor.submit(() -> run(ready, start, () -> service.leave(
+            leave = executor.submit(() -> run(ready, start, () -> service.leave(
                     principal(manager), child.getId())));
             assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
             start.countDown();
@@ -49,21 +53,29 @@ class CircleManagementConcurrencyIntegrationTest extends PostgresIntegrationTest
             assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
         }
 
+        assertThat(transfer.get()).isEqualTo(OperationResult.SUCCESS);
+        assertThat(leave.get()).isIn(OperationResult.SUCCESS, OperationResult.LAST_MANAGER);
+
         var active = links.findAllByCriancaIdAndStatus(child.getId(), StatusVinculo.VINCULADO);
         assertThat(active).anyMatch(link -> link.getPapel() == PapelCirculo.RESPONSAVEL_GESTOR);
     }
 
-    private void run(CountDownLatch ready, CountDownLatch start, Runnable operation) {
+    private OperationResult run(CountDownLatch ready, CountDownLatch start, Runnable operation) throws Exception {
         ready.countDown();
         try {
             start.await();
             operation.run();
-        } catch (RuntimeException ignored) {
-            // LAST_MANAGER é resultado válido quando a saída obtém o lock primeiro.
+            return OperationResult.SUCCESS;
+        } catch (BusinessRuleException exception) {
+            if ("LAST_MANAGER".equals(exception.getCode())) return OperationResult.LAST_MANAGER;
+            throw exception;
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
+            throw exception;
         }
     }
+
+    private enum OperationResult { SUCCESS, LAST_MANAGER }
 
     private AuthenticatedUser principal(Usuario user) {
         return new AuthenticatedUser(user.getId(), user.getEmail(), user.getTipo());

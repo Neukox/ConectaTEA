@@ -13,6 +13,7 @@ import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.shared.domain.BusinessRuleException;
 import br.com.conectatea.usuario.domain.TipoUsuario;
+import br.com.conectatea.usuario.domain.Usuario;
 import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
 import br.com.conectatea.vinculo.domain.PapelCirculo;
 import br.com.conectatea.vinculo.domain.StatusVinculo;
@@ -31,9 +32,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 class CirculoServiceTest {
     private final VinculoResponsavelRepository guardians = mock(VinculoResponsavelRepository.class);
     private final CriancaRepository children = mock(CriancaRepository.class);
+    private final VinculoProfissionalRepository professionalLinks = mock(VinculoProfissionalRepository.class);
+    private final UsuarioRepository users = mock(UsuarioRepository.class);
     private final CirculoService service = new CirculoService(guardians,
-            mock(VinculoProfissionalRepository.class), mock(ProfissionalRepository.class),
-            mock(UsuarioRepository.class), mock(AuthorizationService.class), children,
+            professionalLinks, mock(ProfissionalRepository.class),
+            users, mock(AuthorizationService.class), children,
             mock(HistoricoVinculoRepository.class), mock(AuditLogService.class),
             mock(SolicitacaoTokenVinculoRepository.class));
 
@@ -45,6 +48,24 @@ class CirculoServiceTest {
                 .isInstanceOf(BusinessRuleException.class)
                 .extracting("code").isEqualTo("LAST_MANAGER");
         assertThat(manager.getStatus()).isEqualTo(StatusVinculo.VINCULADO);
+    }
+
+    @Test
+    void lastManagerActionsRequireTransferInsteadOfAdvertisingImmediateLeave() {
+        var manager = guardian(1L, true);
+        var account = new Usuario("Gestor", "gestor@example.test", "hash", null, null,
+                TipoUsuario.RESPONSAVEL);
+        ReflectionTestUtils.setField(account, "id", 1L);
+        when(guardians.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(manager));
+        when(professionalLinks.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of());
+        when(users.findAllById(List.of(1L))).thenReturn(List.of(account));
+
+        var member = service.members(user(1L), 10L).membros().getFirst();
+
+        assertThat(member.acoesPermitidas().podeSair()).isFalse();
+        assertThat(member.acoesPermitidas().requerTransferenciaGestao()).isTrue();
     }
 
     @Test
