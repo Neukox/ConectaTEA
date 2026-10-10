@@ -1,6 +1,8 @@
 # Contrato canônico da API Java — fotografia da implementação
 
 > Atualização de 10/10/2026: em `GET /criancas/{id}/circulo/membros`, `acoesPermitidas` contém `podeRemover`, `podeSair`, `requerTransferenciaGestao` e `podeTransferirGestao`. Para o último gestor, `podeSair=false` e `requerTransferenciaGestao=true`; a tentativa direta continua retornando `409 LAST_MANAGER`.
+>
+> Foto profissional: `POST /profissionais/me/foto` (`multipart/form-data`, parte `file`) substitui a foto do próprio perfil; `DELETE /profissionais/me/foto` remove; `GET /profissionais/fotos/{key}` entrega JPEG/PNG armazenado. Limites: 5 MiB e 64–4096 px. Bytes, assinatura e decodificação são validados; `fotoPerfilUrl` enviado no `PUT /profissionais/me` é ignorado para impedir URL arbitrária.
 
 **Estado atual:** este é o contrato textual do único backend ativo. O OpenAPI em `/api/v3/api-docs` e a Swagger UI refletem os controllers Java; trechos explicitamente históricos ao final registram divergências já resolvidas.
 

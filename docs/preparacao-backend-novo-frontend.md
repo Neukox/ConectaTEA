@@ -10,6 +10,7 @@ Correções implementadas e validadas:
 
 - O teste PostgreSQL de concorrência agora inspeciona ambos os `Future`: a transferência precisa concluir; a saída pode concluir ou retornar exclusivamente `LAST_MANAGER`. Qualquer outra falha faz o teste falhar.
 - `acoesPermitidas` do último gestor retorna `podeSair=false` e `requerTransferenciaGestao=true`. O servidor continua protegendo a operação com transação e lock pessimista.
+- Foto de perfil: `POST /profissionais/me/foto` recebe multipart `file`; `DELETE /profissionais/me/foto` remove; `GET /profissionais/fotos/{key}` lê o identificador opaco. JPEG/PNG são validados por assinatura e decodificação, limite 5 MiB e dimensões 64–4096 px. O JSON de perfil não pode mais apontar URL arbitrária. O storage local/teste implementa `ProfileImageStorage`; futura AWS deve fornecer outra implementação sem mudar o domínio.
 
 | Módulo | Operação bloqueada | Decisão indispensável | Recomendação concreta |
 |---|---|---|---|
