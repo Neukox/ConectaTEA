@@ -27,7 +27,7 @@ class SessaoControllerPrivacyTest {
     private final CriancaRepository children = mock(CriancaRepository.class);
     private final ProfissionalRepository professionals = mock(ProfissionalRepository.class);
     private final SessaoController controller = new SessaoController(
-            sessions, children, professionals, mock(AuthorizationService.class));
+            sessions, children, professionals, mock(AuthorizationService.class), mock(br.com.conectatea.dashboard.application.FeedService.class));
 
     @Test
     void guardianCannotFindSessionByInternalObservation() {
@@ -45,7 +45,10 @@ class SessaoControllerPrivacyTest {
         var professional = new Profissional(1L, "PROF000001");
         ReflectionTestUtils.setField(professional, "id", 20L);
         when(professionals.findByUsuarioId(1L)).thenReturn(Optional.of(professional));
-        when(sessions.findByProfissionalId(20L)).thenReturn(List.of(session()));
+        var child = new Crianca("Lia", LocalDate.of(2018, 4, 12), null, null, null, null);
+        ReflectionTestUtils.setField(child, "id", 10L);
+        when(children.findLinkedToProfessional(20L)).thenReturn(List.of(child));
+        when(sessions.findByCriancaIdIn(List.of(10L))).thenReturn(List.of(session()));
 
         assertThat(controller.list(auth(1L, TipoUsuario.PROFISSIONAL), null, null, null,
                 null, "segredo-interno")).hasSize(1);

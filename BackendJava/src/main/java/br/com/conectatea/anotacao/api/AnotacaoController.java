@@ -52,7 +52,7 @@ public class AnotacaoController {
             @PathVariable Long criancaId,
             @Valid @RequestBody AnotacaoDtos.CreateRequest request) {
         return AnotacaoDtos.Response.from(service.criar(
-                principal(authentication), criancaId, request.titulo(), request.conteudo(), request.visibilidade(), request.temas(), request.sessaoId()));
+                principal(authentication), criancaId, request.tituloResolvido(), request.conteudo(), request.visibilidade(), request.temas(), request.sessaoId()));
     }
 
     @GetMapping
@@ -95,13 +95,10 @@ public class AnotacaoController {
             @Valid @RequestBody AnotacaoDtos.UpdateRequest request) {
         return AnotacaoDtos.Response.from(service.atualizar(
                 principal(authentication), criancaId, anotacaoId,
-                request.titulo(), request.conteudo(), request.visibilidade(), request.temas(), request.motivoCorrecao()));
+                request.tituloResolvido(), request.conteudo(), request.visibilidade(), request.temas(), request.motivoCorrecao()));
     }
 
-    @GetMapping("/arquivo-proprio") @PreAuthorize("hasRole('PROFISSIONAL')")
-    public List<AnotacaoDtos.Response> arquivo(Authentication authentication) {
-        return service.arquivoProprio(principal(authentication)).stream().map(AnotacaoDtos.Response::from).toList();
-    }
+
 
     @DeleteMapping("/{anotacaoId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

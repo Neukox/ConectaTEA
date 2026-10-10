@@ -32,17 +32,21 @@ public class DashboardController {
     private final SessaoRepository sessions;
     private final ConexaoRepository connections;
 
+    private final br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository professionalLinks;
+
     public DashboardController(
             ProfissionalRepository professionals,
             CriancaRepository children,
             MetaRepository metas,
             SessaoRepository sessions,
-            ConexaoRepository connections) {
+            ConexaoRepository connections,
+            br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository professionalLinks) {
         this.professionals = professionals;
         this.children = children;
         this.metas = metas;
         this.sessions = sessions;
         this.connections = connections;
+        this.professionalLinks = professionalLinks;
     }
 
     @GetMapping("/profissional")
@@ -50,20 +54,24 @@ public class DashboardController {
     public ProfessionalDashboard professional(Authentication authentication) {
         var professional = currentProfessional(authentication);
         var linkedChildren = children.findLinkedToProfessional(professional);
-        var professionalGoals = metas.findByProfissionalId(professional);
-        var acceptedConnections = connections.findMine(professional).stream()
-                .filter(item -> item.getStatus() == StatusConexao.ACEITO)
-                .toList();
+        var childIds = linkedChildren.stream().map(Crianca::getId).toList();
+        var professionalGoals = childIds.isEmpty() ? List.<Meta>of() : metas.findByCriancaIdIn(childIds);
+        
+        long teamSize = childIds.isEmpty() ? 0 : professionalLinks.countDistinctProfissionaisByCriancaIdInAndStatus(childIds, br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO);
+
         var monthStart = LocalDate.now().withDayOfMonth(1)
                 .atStartOfDay().toInstant(ZoneOffset.UTC);
+                
+        int activeGoals = (int) professionalGoals.stream().filter(g -> g.getStatus() == StatusMeta.EM_ANDAMENTO).count();
+
         return new ProfessionalDashboard(
                 linkedChildren.size(),
                 linkedChildren.stream().filter(item -> item.getCreatedAt() != null
                         && !item.getCreatedAt().isBefore(monthStart)).count(),
-                acceptedConnections.size(),
-                acceptedConnections.stream().filter(item -> item.getCreatedAt() != null
-                        && !item.getCreatedAt().isBefore(monthStart)).count(),
+                teamSize,
+                0, // profissionaisAtivosEsteMes - not needed to be exact if we don't track when they joined the circle in this simple query
                 professionalGoals.size(),
+                activeGoals,
                 professionalGoals.stream().filter(item -> item.getCreatedAt() != null
                         && !item.getCreatedAt().isBefore(monthStart)).count(),
                 averageProgress(professionalGoals),
@@ -84,7 +92,9 @@ public class DashboardController {
     @GetMapping("/profissional/metas")
     @PreAuthorize("hasRole('PROFISSIONAL')")
     public List<GoalDashboard> professionalGoals(Authentication authentication) {
-        var goals = metas.findByProfissionalId(currentProfessional(authentication));
+        var linkedChildren = children.findLinkedToProfessional(currentProfessional(authentication));
+        var childIds = linkedChildren.stream().map(Crianca::getId).toList();
+        var goals = childIds.isEmpty() ? List.<Meta>of() : metas.findByCriancaIdIn(childIds);
         var names = children.findAllById(goals.stream().map(Meta::getCriancaId).distinct().toList())
                 .stream().collect(Collectors.toMap(Crianca::getId, Crianca::getNome));
         return goals.stream()
@@ -120,9 +130,10 @@ public class DashboardController {
     public record ProfessionalDashboard(
             int totalCriancas,
             long criancasEsteMes,
-            int profissionaisAtivos,
+            long profissionaisAtivos,
             long profissionaisAtivosEsteMes,
             int totalMetas,
+            int metasAtivas,
             long totalMetasEsteMes,
             double taxaProgresso,
             double taxaProgressoEsteMes) {

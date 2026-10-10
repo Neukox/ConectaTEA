@@ -20,4 +20,12 @@ public class EventoMeta {
         this.metaId=metaId; this.autorProfissionalId=autor; this.tipo=tipo; this.motivo=motivo;
         this.prazoAnterior=anterior; this.prazoNovo=novo; this.data=Instant.now();
     }
+    public Long getId() { return id; }
+    public Long getMetaId() { return metaId; }
+    public Long getAutorProfissionalId() { return autorProfissionalId; }
+    public String getTipo() { return tipo; }
+    public String getMotivo() { return motivo; }
+    public LocalDate getPrazoAnterior() { return prazoAnterior; }
+    public LocalDate getPrazoNovo() { return prazoNovo; }
+    public Instant getData() { return data; }
 }

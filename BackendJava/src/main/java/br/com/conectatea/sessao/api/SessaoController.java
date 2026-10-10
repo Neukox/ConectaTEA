@@ -11,6 +11,7 @@ import br.com.conectatea.sessao.domain.ModalidadeSessao;
 import br.com.conectatea.sessao.infrastructure.SessaoRepository;
 import br.com.conectatea.sessao.infrastructure.HistoricoSessaoRepository;
 import br.com.conectatea.sessao.domain.HistoricoSessao;
+import br.com.conectatea.dashboard.application.FeedService;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -44,17 +45,20 @@ public class SessaoController {
     private final CriancaRepository children;
     private final ProfissionalRepository professionals;
     private final AuthorizationService authorization;
+    private final FeedService feedService;
     @org.springframework.beans.factory.annotation.Autowired(required=false) private HistoricoSessaoRepository sessionHistory;
 
     public SessaoController(
             SessaoRepository sessions,
             CriancaRepository children,
             ProfissionalRepository professionals,
-            AuthorizationService authorization) {
+            AuthorizationService authorization,
+            FeedService feedService) {
         this.sessions = sessions;
         this.children = children;
         this.professionals = professionals;
         this.authorization = authorization;
+        this.feedService = feedService;
     }
 
     @PostMapping
@@ -71,6 +75,7 @@ public class SessaoController {
                 request.dataHora(), request.duracao(), request.tipo(), request.descricao(),
                 request.observacoes(), request.criancaId(), professional.getId()));
         saved.details(request.modalidade(),request.localInstrucoes(),request.objetivos(),request.anotacaoId());
+        feedService.registrar(saved.getCriancaId(), user.id(), "SESSAO_AGENDADA", "SESSAO", saved.getId(), saved.getDescricao() != null ? saved.getDescricao() : "Sessão agendada", null, true);
         return SessionResponse.from(saved, true);
     }
 
@@ -144,7 +149,15 @@ public class SessaoController {
             @Valid @RequestBody StatusRequest request) {
         var session = sessions.findById(id).orElseThrow();
         requireAuthor(authentication, session);
-        var before=session.getStatus();session.status(request.status());if(sessionHistory!=null)sessionHistory.save(new HistoricoSessao(id,((AuthenticatedUser)authentication.getPrincipal()).id(),"STATUS",before.name(),request.status().name(),null,null,request.motivo()));
+        var before=session.getStatus();
+        session.status(request.status());
+        if(sessionHistory!=null)sessionHistory.save(new HistoricoSessao(id,((AuthenticatedUser)authentication.getPrincipal()).id(),"STATUS",before.name(),request.status().name(),null,null,request.motivo()));
+        
+        if (request.status() == StatusSessao.REALIZADA || request.status() == StatusSessao.CANCELADA) {
+            String feedTipo = request.status() == StatusSessao.REALIZADA ? "SESSAO_REALIZADA" : "SESSAO_CANCELADA";
+            feedService.registrar(session.getCriancaId(), ((AuthenticatedUser)authentication.getPrincipal()).id(), feedTipo, "SESSAO", session.getId(), session.getDescricao() != null ? session.getDescricao() : "Sessão", request.motivo(), true);
+        }
+        
         return SessionResponse.from(session, true);
     }
 
@@ -181,7 +194,9 @@ public class SessaoController {
         }
         if (user.tipo() == TipoUsuario.PROFISSIONAL) {
             var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
-            return sessions.findByProfissionalId(professional.getId());
+            var linkedChildren = children.findLinkedToProfessional(professional.getId());
+            var childIds = linkedChildren.stream().map(br.com.conectatea.crianca.domain.Crianca::getId).toList();
+            return childIds.isEmpty() ? List.of() : sessions.findByCriancaIdIn(childIds);
         }
         return children.findLinkedToGuardian(user.id()).stream()
                 .flatMap(child -> sessions.findByCriancaId(child.getId()).stream())

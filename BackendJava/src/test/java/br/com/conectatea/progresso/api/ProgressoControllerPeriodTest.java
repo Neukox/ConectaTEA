@@ -28,8 +28,10 @@ class ProgressoControllerPeriodTest {
 
     private ProgressoController controllerAt(String instant) {
         return new ProgressoController(mock(MetaRepository.class), mock(ProgressoRepository.class),
+                mock(br.com.conectatea.meta.infrastructure.EventoMetaRepository.class),
                 mock(CriancaRepository.class), mock(ProfissionalRepository.class),
                 mock(AuthorizationService.class),
+                mock(br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository.class),
                 Clock.fixed(Instant.parse(instant), ZoneOffset.UTC));
     }
 }

@@ -49,6 +49,8 @@ class AnotacaoServiceTest {
     @Mock AuthorizationService autorizacaoCrianca;
     @Mock AuditLogService auditoria;
     @Mock NotificationService notificacoes;
+    @Mock br.com.conectatea.sessao.infrastructure.SessaoRepository sessoes;
+    @Mock br.com.conectatea.dashboard.application.FeedService feedService;
 
     private final AnotacaoAuthorizationService autorizacaoAnotacao =
             new AnotacaoAuthorizationService();
@@ -62,7 +64,7 @@ class AnotacaoServiceTest {
     void setup() {
         service = new AnotacaoService(
                 anotacoes, criancas, profissionais, usuarios,
-                autorizacaoCrianca, autorizacaoAnotacao, auditoria, notificacoes);
+                autorizacaoCrianca, autorizacaoAnotacao, auditoria, notificacoes, sessoes, feedService);
         crianca = child(10L);
         autor = professional(20L, 1L);
         outro = professional(21L, 2L);

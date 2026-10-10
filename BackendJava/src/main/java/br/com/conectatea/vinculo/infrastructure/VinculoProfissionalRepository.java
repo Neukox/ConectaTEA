@@ -20,4 +20,10 @@ public interface VinculoProfissionalRepository extends JpaRepository<VinculoProf
     @Query("select v from VinculoProfissionalCrianca v where v.id=:id and v.criancaId=:childId and v.status=:status")
     Optional<VinculoProfissionalCrianca> findByIdAndChildForUpdate(
             @Param("id") Long id, @Param("childId") Long childId, @Param("status") StatusVinculo status);
+
+    @Query("select distinct v.criancaId from VinculoProfissionalCrianca v where v.profissionalId=:id and v.status=:status")
+    List<Long> findCriancaIdsByProfissionalIdAndStatus(@Param("id") Long id, @Param("status") StatusVinculo status);
+
+    @Query("select count(distinct v.profissionalId) from VinculoProfissionalCrianca v where v.criancaId in :childIds and v.status=:status")
+    long countDistinctProfissionaisByCriancaIdInAndStatus(@Param("childIds") List<Long> childIds, @Param("status") StatusVinculo status);
 }
