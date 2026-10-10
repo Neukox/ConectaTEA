@@ -1,7 +1,44 @@
 import { test, expect } from '@playwright/test'
+import pg from 'pg'
 
 const API = process.env.E2E_API_URL || 'http://127.0.0.1:3000/api'
 const PASSWORD = 'ConectaTEA-E2E-2026!'
+const { Client } = pg
+const seededManagerLinks = []
+
+async function withDatabase(action) {
+  const client = new Client({
+    connectionString: process.env.E2E_DATABASE_URL,
+  })
+  await client.connect()
+  try {
+    return await action(client)
+  } finally {
+    await client.end()
+  }
+}
+
+async function seedAuthorizedManager(managerUserId, childId) {
+  const result = await withDatabase((client) => client.query(
+    `INSERT INTO vinculos_responsaveis_criancas
+       (responsavel_id, crianca_id, principal, status, data_vinculo, papel)
+     VALUES ($1, $2, true, 'VINCULADO', now(), 'RESPONSAVEL_GESTOR')
+     RETURNING id`,
+    [managerUserId, childId],
+  ))
+  const linkId = Number(result.rows[0].id)
+  seededManagerLinks.push(linkId)
+  return linkId
+}
+
+test.afterEach(async () => {
+  if (seededManagerLinks.length === 0) return
+  const ownedIds = seededManagerLinks.splice(0)
+  await withDatabase((client) => client.query(
+    'DELETE FROM vinculos_responsaveis_criancas WHERE id = ANY($1::bigint[])',
+    [ownedIds],
+  ))
+})
 
 function id() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -69,6 +106,10 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
     nome: `Responsavel E2E ${run}`,
     email: `resp-${run}@example.test`,
   }
+  const gestor = {
+    nome: `Responsavel Gestor E2E ${run}`,
+    email: `gestor-${run}@example.test`,
+  }
   const intruso = {
     nome: `Responsavel IDOR ${run}`,
     email: `idor-${run}@example.test`,
@@ -133,6 +174,14 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   const childBody = await childResponse.json()
   const childId = childBody.crianca.id
   await expect(profPage.getByText(nomeCrianca, { exact: true })).toBeVisible()
+
+  const gestorContext = await browser.newContext()
+  const gestorPage = await gestorContext.newPage()
+  await register(gestorPage, gestor.nome, gestor.email, 'RESPONSAVEL')
+  await login(gestorPage, gestor.email, 'RESPONSAVEL')
+  const gestorMe = await api(gestorPage, '/auth/me')
+  expect(gestorMe.status).toBe(200)
+  await seedAuthorizedManager(gestorMe.json.user.id, childId)
 
   await profPage.goto('/profissional/metas')
   await profPage.getByRole('button', { name: 'Nova Meta' }).click()
@@ -252,10 +301,76 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
 
   const confirm = respPage.waitForResponse((r) => r.url().endsWith('/api/vinculos/confirmar') && r.request().method() === 'POST')
   await respPage.getByRole('button', { name: 'Aceitar e Confirmar' }).click()
-  expect((await confirm).status()).toBe(200)
-  await expect(respPage.getByText('Vínculo Criado com Sucesso!')).toBeVisible()
+  const confirmResponse = await confirm
+  expect(confirmResponse.status()).toBe(200)
+  const linkRequest = await confirmResponse.json()
+  expect(linkRequest).toMatchObject({ criancaId: childId, status: 'PENDENTE' })
+  expect(linkRequest.solicitacaoId).toBeTruthy()
+  await expect(respPage.getByRole('heading', { name: 'Solicitação enviada' })).toBeVisible()
+  await expect(respPage.getByText(/^Sua solicitação aguarda aprovação do responsável gestor/)).toBeVisible()
+  expect((await api(respPage, `/criancas/${childId}`)).status).toBe(403)
 
+  const selfApproval = await api(
+    respPage,
+    `/vinculos/criancas/${childId}/solicitacoes/${linkRequest.solicitacaoId}`,
+    'PATCH',
+    { aprovar: true },
+  )
+  expect(selfApproval.status).toBe(403)
   await login(profPage, profissional.email, 'PROFISSIONAL')
+  const professionalApproval = await api(
+    profPage,
+    `/vinculos/criancas/${childId}/solicitacoes/${linkRequest.solicitacaoId}`,
+    'PATCH',
+    { aprovar: true },
+  )
+  expect(professionalApproval.status).toBe(403)
+
+  const pendingAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    conteudo: `Atualizacao durante solicitacao pendente ${run}`,
+    visibilidade: 'COMPARTILHADA',
+  })
+  expect(pendingAnnotation.status).toBe(201)
+  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(0)
+
+  const commonGuardianContext = await browser.newContext()
+  const commonGuardianPage = await commonGuardianContext.newPage()
+  const commonGuardian = {
+    nome: `Responsavel Comum E2E ${run}`,
+    email: `comum-${run}@example.test`,
+  }
+  await register(commonGuardianPage, commonGuardian.nome, commonGuardian.email, 'RESPONSAVEL')
+  await login(commonGuardianPage, commonGuardian.email, 'RESPONSAVEL')
+  const commonGuardianMe = await api(commonGuardianPage, '/auth/me')
+  const commonLinkId = await withDatabase(async (client) => {
+    const result = await client.query(
+      `INSERT INTO vinculos_responsaveis_criancas
+         (responsavel_id, crianca_id, principal, status, data_vinculo, papel)
+       VALUES ($1, $2, false, 'VINCULADO', now(), 'RESPONSAVEL') RETURNING id`,
+      [commonGuardianMe.json.user.id, childId],
+    )
+    return Number(result.rows[0].id)
+  })
+  seededManagerLinks.push(commonLinkId)
+  const commonApproval = await api(
+    commonGuardianPage,
+    `/vinculos/criancas/${childId}/solicitacoes/${linkRequest.solicitacaoId}`,
+    'PATCH',
+    { aprovar: true },
+  )
+  expect(commonApproval.status).toBe(403)
+  await commonGuardianContext.close()
+
+  const approval = await api(
+    gestorPage,
+    `/vinculos/criancas/${childId}/solicitacoes/${linkRequest.solicitacaoId}`,
+    'PATCH',
+    { aprovar: true },
+  )
+  expect(approval.status).toBe(200)
+  expect(approval.json.status).toBe('APROVADA')
+  expect((await api(respPage, `/criancas/${childId}`)).status).toBe(200)
+
   const notificationAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
     conteudo: `Atualizacao compartilhada para notificacao ${run}`,
     visibilidade: 'COMPARTILHADA',
@@ -377,6 +492,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   expect(afterUnlink.status).toBe(403)
 
   await prof2Context.close()
+  await gestorContext.close()
   await respContext.close()
   await profContext.close()
 })

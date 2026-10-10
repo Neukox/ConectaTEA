@@ -128,6 +128,7 @@ jobs:
         env:
           E2E_BASE_URL: http://127.0.0.1:5173
           E2E_API_URL: http://127.0.0.1:3000/api
+          E2E_DATABASE_URL: postgresql://conectatea:conectatea-e2e@127.0.0.1:5432/conectatea_e2e
         run: npm run test:e2e
         working-directory: E2E
 

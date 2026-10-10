@@ -130,3 +130,10 @@ Alexandre prepara visual, componentes, estados e interfaces e mantém #12/#16 co
 - `DELETE /criancas/{criancaId}/circulo/membros/me`: saída voluntária; último gestor recebe `409 LAST_MANAGER`.
 - `POST /vinculos/confirmar`: agora consome/reserva atomicamente o código não nominal e cria solicitação `PENDENTE`, sem conceder acesso.
 - `PATCH /vinculos/criancas/{childId}/solicitacoes/{requestId}`: gestor aprova ou recusa; somente a aprovação cria o vínculo e consentimento. Replay do token continua `410`.
+
+### Integração da solicitação pendente e E2E
+
+- O cliente React interpreta `{solicitacaoId,criancaId,status}`. `PENDENTE` mostra “Solicitação enviada”, não invalida caches de vínculos/crianças/dashboard e não anuncia acesso liberado.
+- O E2E cria um gestor previamente autorizado por fixture direta no PostgreSQL isolado e remove somente os vínculos criados pela própria execução. A fixture estabelece o pré-requisito do cenário; não implementa nem valida o bootstrap produtivo do primeiro gestor.
+- Solicitação pendente permanece sem acesso e sem notificações. A aprovação é feita pela API real do gestor; solicitante, responsável comum e profissional recebem `403`. Somente após `APROVADA` o vínculo ativo autoriza leitura e entrega de notificações.
+- Validação local: lint sem erros, build de produção aprovado e 7 testes focados de backend aprovados. O Playwright percorreu todas as asserções funcionais, mas a execução local encerrou ao copiar o trace por falta de espaço no volume; a repetição sem artefatos locais foi interrompida pelo usuário para publicação e confirmação no CI.
