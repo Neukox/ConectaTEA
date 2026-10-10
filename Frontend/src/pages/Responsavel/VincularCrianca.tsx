@@ -9,7 +9,6 @@ import Stepper from '~/components/VinculacaoCrianca/Stepper'
 import { vinculacaoAPI, type ValidarCodigoResponse } from '~/api/protected/axiosVinculacao'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
 import { getApiErrorMessage } from '~/api/errors'
-import { queryClient, QUERY_KEYS } from '~/api/query-client'
 
 type Step =
   | 'selecao'
@@ -17,14 +16,14 @@ type Step =
   | 'codigo'
   | 'confirmacao'
   | 'consentimento'
-  | 'sucesso'
+  | 'pendente'
 
 const STEPS = [
   'Selecionar Método',
   'Validação',
   'Confirmação',
   'Consentimento',
-  'Sucesso',
+  'Solicitação',
 ]
 
 const getStepIndex = (step: Step): number => {
@@ -34,7 +33,7 @@ const getStepIndex = (step: Step): number => {
     'codigo': 1,
     'confirmacao': 2,
     'consentimento': 3,
-    'sucesso': 4,
+    'pendente': 4,
   }
   return mapping[step]
 }
@@ -78,17 +77,18 @@ export default function VincularCrianca() {
 
     setLoading(true)
     try {
-      await vinculacaoAPI.confirmarVinculo({
+      const solicitacao = await vinculacaoAPI.confirmarVinculo({
         codigo: codigoValidado,
         consentimentoAceito: true,
       })
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.VINCULOS] }),
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CRIANCAS] }),
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_RESPONSAVEL] }),
-      ])
-      notificarSucesso('Vínculo criado', `${criancaData.nome} foi vinculado(a) à sua conta.`)
-      setStep('sucesso')
+      if (solicitacao.status !== 'PENDENTE') {
+        throw new Error(`Estado inesperado da solicitação: ${solicitacao.status}`)
+      }
+      notificarSucesso(
+        'Solicitação enviada',
+        `A solicitação para acompanhar ${criancaData.nome} aguarda aprovação do responsável gestor.`,
+      )
+      setStep('pendente')
     } catch (error) {
       notificarErro('Erro ao confirmar vínculo', getApiErrorMessage(error))
     } finally {
@@ -251,7 +251,7 @@ export default function VincularCrianca() {
           </div>
         )
 
-      case 'sucesso':
+      case 'pendente':
         return (
           <div className='mx-auto max-w-2xl text-center'>
             <div className='mb-6 flex justify-center'>
@@ -272,11 +272,11 @@ export default function VincularCrianca() {
               </div>
             </div>
             <h1 className='mb-4 text-3xl font-bold text-gray-800'>
-              Vínculo Criado com Sucesso!
+              Solicitação enviada
             </h1>
             <p className='mb-8 text-gray-600'>
-              A criança foi vinculada à sua conta. Você agora pode acompanhar o
-              progresso e receber atualizações do profissional.
+              Sua solicitação aguarda aprovação do responsável gestor. O acesso
+              à criança e as notificações serão liberados somente após a aprovação.
             </p>
             <button
               onClick={handleVoltarPrincipal}
