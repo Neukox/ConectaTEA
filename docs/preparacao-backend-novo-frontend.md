@@ -137,3 +137,35 @@ Alexandre prepara visual, componentes, estados e interfaces e mantém #12/#16 co
 - O E2E cria um gestor previamente autorizado por fixture direta no PostgreSQL isolado e remove somente os vínculos criados pela própria execução. A fixture estabelece o pré-requisito do cenário; não implementa nem valida o bootstrap produtivo do primeiro gestor.
 - Solicitação pendente permanece sem acesso e sem notificações. A aprovação é feita pela API real do gestor; solicitante, responsável comum e profissional recebem `403`. Somente após `APROVADA` o vínculo ativo autoriza leitura e entrega de notificações.
 - Validação local: lint sem erros, build de produção aprovado e 7 testes focados de backend aprovados. O Playwright percorreu todas as asserções funcionais, mas a execução local encerrou ao copiar o trace por falta de espaço no volume; a repetição sem artefatos locais foi interrompida pelo usuário para publicação e confirmação no CI.
+
+## Matriz de cobertura das 15 telas após correções de gestão
+
+| Tela/bloco/ação | Endpoint | Banco/migration | Autorização | Teste | Situação | Pendência localizada |
+|---|---|---|---|---|---|---|
+| Shell/sessão #63 | `/auth/me`, `/auth/logout`, `/auth/csrf`, `/users/me` | usuários existentes | cookie HttpOnly, CSRF e usuário ativo | Auth/JWT/usuário | 1. Implementado e validado | integração visual/cache por conta continua com Gabriel |
+| P01 Dashboard profissional #64 | `/dashboard/profissional`, `/criancas`, `/metas` | índices existentes | vínculos profissionais ativos | suíte backend; composição sem N+1 | 1. Implementado e validado para dados atuais | janela “nova” e semântica final do card semanal |
+| P02 Crianças profissional #65 | `/criancas` e `/criancas/{id}` | V8/V10 | profissional vinculado; arquivada bloqueada | controller/Flyway | 1. Campos estruturados implementados e validados | paginação/filtros de alto volume e enum de acompanhamento ainda não implementados |
+| P03 Detalhe/Círculo profissional #75/#76 | detalhe infantil, membros, metas, sessões, anotações | V8–V11 | vínculo infantil; autoria nas mutações | autorização e Círculo | 2. Blocos independentes implementados | feed composto e arquivo pós-saída bloqueados por contrato/retenção |
+| P04 Metas #66 | `/metas`, `/pausa`, `/retomada`, `/progresso` | V8/V10 | somente autor muta | domínio e HTTP | 1. Implementado e validado | concluir/reabrir continua bloqueado; exclusão referenciada preserva histórico e retorna conflito |
+| P05 Progresso #67 | `/progresso/historico`, resumo e consultas existentes | V8/V10 | vínculo ativo e escopo infantil | calendário/Flyway | 2. Histórico 3/6/12 implementado | série agregada, coorte, baseline e frequência ainda bloqueados; histórico bruto não é anunciado como agregado |
+| P06 Sessões #68 | `/sessoes`, `/sessoes/{id}`, `/resumo` | schema existente | autor muta; responsável lê sem observação interna | privacidade de busca | 1. Contrato independente implementado e validado | transições finais, local/modalidade/objetivos e associação com anotação |
+| P07 Anotações profissional #69 | `/criancas/{id}/anotacoes` | V6 | privada só autor; compartilhada relacional | 20 testes de serviço + integração | 1. Núcleo implementado e validado | título/temas e arquivo pós-saída bloqueados por retenção/dados mínimos |
+| P08 Notificações profissional #74 | histórico, sino, limpar, leitura e badge | V7/V9 | isolamento por destinatário | serviço/controller/OpenAPI | 1. Implementado e validado | janela “nova/recente” não definida |
+| P09 Perfil/configurações #70 | `/users/me`, `/profissionais/me` | schema existente | próprio usuário/perfil | MockMvc | 2. Campos atuais implementados | upload/remoção de foto, limites/storage e verificação de email ainda não implementados |
+| R01 Dashboard responsável #71 | `/dashboard/responsavel` | índices existentes | todas as crianças com vínculo ativo | suíte backend/E2E | 1. Implementado e validado para cards atuais | feed composto e indicadores dependem de #67/#74 |
+| R02 Minhas crianças #78 | `/criancas`, `/vinculos/me` | vínculos V1/V11 | somente vínculos ativos, não contatos pendentes | autorização/E2E | 1. Implementado e validado | filtros/paginação contratual de alto volume |
+| R03 Detalhe/Círculo responsável #75/#77 | membros, solicitações, transferência, remoção e saída | V11 | gestor administra; comum lê/sai; último gestor protegido | unidade + concorrência PostgreSQL | 1. Núcleo de gestão implementado e validado | feed/arquivo permanecem localizados; bootstrap produtivo não está ativo |
+| R04 Vinculação #72 | preview, confirmar, `/solicitacoes/me`, decisão do gestor | V11 | pendente sem acesso; gestor decide | replay/concorrência/E2E | 1. Código não nominal implementado e validado | nominal e proposta profissional aguardam email confirmado/aceite operacional; tabelas isoladas não são anunciadas como funcionalidade |
+| R05 Anotações compartilhadas #73 | `/criancas/{id}/anotacoes` | V6/V7 | responsável recebe apenas compartilhadas | serviço/E2E | 1. Implementado e validado no vínculo ativo | preservação após edição/exclusão e retenção exigem decisão |
+| R06 Notificações responsável #74 | histórico/sino/badge/leitura | V7/V9 | somente destinatário ativo; pendente/desvinculado não recebe eventos novos | provedor/E2E | 1. Implementado e validado | destino da UI deve continuar revalidando recurso |
+
+Classificação 1 não significa tela visual concluída: indica que o contrato backend listado foi executado e validado. Integração React é de Gabriel; visual/componentes e #12/#16 permanecem com Alexandre.
+
+### Gestão do Círculo — correções posteriores a `b94d696`
+
+- `DELETE /vinculos/criancas/{id}` e `DELETE /criancas/{id}/circulo/membros/me` usam o mesmo fluxo transacional com lock pessimista. `LAST_MANAGER` impede que qualquer rota deixe a criança sem gestor.
+- `DELETE /users/me` encerra vínculos do responsável pelo mesmo fluxo e rejeita desativação do último gestor; não deixa gestor inativo “utilizável” no Círculo.
+- `PATCH /criancas/{id}/circulo/gestao` rejeita o próprio ator com `409 CANNOT_TRANSFER_TO_SELF`, criança arquivada, destino ausente e papel legado não classificado sem alterar o estado.
+- `DELETE /criancas/{id}/circulo/membros/{vinculoId}?tipo=RESPONSAVEL|PROFISSIONAL` permite remoção apenas pelo gestor, com auditoria/histórico e proteção do último gestor.
+- `GET /criancas/{id}/circulo/solicitacoes` lista pendências para o gestor; `GET /vinculos/solicitacoes/me` mostra ao solicitante apenas seus próprios estados e identificação mínima da criança.
+- Aprovação revalida criança, gestor, solicitante ativo e vínculo atual. Decisões repetidas, solicitante já vinculado e criança arquivada retornam conflito de domínio.

@@ -242,6 +242,11 @@ O contrato Java descrito neste documento registra o que está implementado e as 
 - `POST /vinculos/confirmar`: código não nominal não cria vínculo. Response `{solicitacaoId,criancaId,status:"PENDENTE"}`; o token é consumido atomicamente para impedir replay.
 - `PATCH /vinculos/criancas/{childId}/solicitacoes/{requestId}`: gestor decide `{aprovar:boolean}`. Aprovação cria/reativa vínculo como responsável comum e registra consentimento; recusa exige novo convite.
 - Vínculos responsáveis anteriores à V11 permanecem com `papel=null`; isso significa “legado não classificado”, jamais gestor. Convite nominal/email confirmado e bootstrap do primeiro gestor ainda não estão ativos.
+- `GET /criancas/{criancaId}/circulo/solicitacoes`: somente gestor ativo; retorna solicitações pendentes com IDs, estado, instante e identificação do solicitante.
+- `GET /vinculos/solicitacoes/me`: responsável consulta somente as próprias solicitações, inclusive decisão e identificação mínima da criança.
+- `DELETE /criancas/{criancaId}/circulo/membros/{vinculoId}?tipo=RESPONSAVEL|PROFISSIONAL`: somente gestor; `LAST_MANAGER`, `USE_LEAVE_FLOW`, `MEMBER_NOT_ACTIVE` e `INVALID_MEMBER_TYPE` são conflitos `409`.
+- As duas rotas de saída (`/circulo/membros/me` e a compatível `/vinculos/criancas/{id}`) compartilham lock e regra `LAST_MANAGER`. Desativação de conta responsável também passa pela mesma proteção.
+- Transferência para o próprio ator retorna `409 CANNOT_TRANSFER_TO_SELF`; destino precisa estar ativo, vinculado e classificado como `RESPONSAVEL`.
 
 ### `GET /vinculos/tokens/{codigo}/preview`
 
