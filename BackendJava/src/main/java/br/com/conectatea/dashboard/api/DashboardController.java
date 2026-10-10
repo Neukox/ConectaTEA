@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -83,9 +84,11 @@ public class DashboardController {
     @GetMapping("/profissional/metas")
     @PreAuthorize("hasRole('PROFISSIONAL')")
     public List<GoalDashboard> professionalGoals(Authentication authentication) {
-        return metas.findByProfissionalId(currentProfessional(authentication)).stream()
-                .map(item -> GoalDashboard.from(item, children.findById(item.getCriancaId())
-                        .orElseThrow().getNome()))
+        var goals = metas.findByProfissionalId(currentProfessional(authentication));
+        var names = children.findAllById(goals.stream().map(Meta::getCriancaId).distinct().toList())
+                .stream().collect(Collectors.toMap(Crianca::getId, Crianca::getNome));
+        return goals.stream()
+                .map(item -> GoalDashboard.from(item, names.get(item.getCriancaId())))
                 .toList();
     }
 
@@ -95,9 +98,9 @@ public class DashboardController {
         var user = (AuthenticatedUser) authentication.getPrincipal();
         var linkedChildren = children.findLinkedToGuardian(user.id());
         var ids = linkedChildren.stream().map(Crianca::getId).toList();
-        var goals = ids.stream().flatMap(id -> metas.findByCriancaId(id).stream()).toList();
-        var upcomingSessions = ids.stream()
-                .flatMap(id -> sessions.findByCriancaId(id).stream())
+        var goals = ids.isEmpty() ? List.<Meta>of() : metas.findByCriancaIdIn(ids);
+        var upcomingSessions = (ids.isEmpty() ? List.<br.com.conectatea.sessao.domain.Sessao>of()
+                : sessions.findByCriancaIdIn(ids)).stream()
                 .filter(item -> item.getStatus() == StatusSessao.AGENDADA)
                 .filter(item -> item.getDataHora().isAfter(java.time.OffsetDateTime.now()))
                 .count();
