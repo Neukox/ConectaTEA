@@ -204,3 +204,12 @@ Classificação 1 não significa tela visual concluída: indica que o contrato b
 - `DELETE /criancas/{id}/circulo/membros/{vinculoId}?tipo=RESPONSAVEL|PROFISSIONAL` permite remoção apenas pelo gestor, com auditoria/histórico e proteção do último gestor.
 - `GET /criancas/{id}/circulo/solicitacoes` lista pendências para o gestor; `GET /vinculos/solicitacoes/me` mostra ao solicitante apenas seus próprios estados e identificação mínima da criança.
 - Aprovação revalida criança, gestor, solicitante ativo e vínculo atual. Decisões repetidas, solicitante já vinculado e criança arquivada retornam conflito de domínio.
+
+### Convite nominal — consistência de reentrada e rastreabilidade (V13)
+
+- A emissão, o cancelamento e o aceite nominal registram histórico e auditoria sem armazenar o token bruto. O aceite de responsável também registra o consentimento de compartilhamento; o aceite profissional não reutiliza essa finalidade de consentimento familiar.
+- A reentrada sempre aplica o papel autorizado pela nova operação. Um antigo gestor convidado como `RESPONSAVEL` retorna como responsável comum; vínculo ativo existente retorna `ALREADY_LINKED` sem alterar papel ou reiniciar o vínculo. A mesma normalização foi aplicada à aprovação de solicitação por código/QR.
+- Listagens usam autorização somente leitura. Emissão, aceite e cancelamento mantêm lock pessimista dos vínculos ativos para revalidar o gestor no instante da mutação.
+- Convite pendente cujo `expiraEm` passou é projetado como `EXPIRADO` e deixa de participar da unicidade lógica de convites utilizáveis. A expiração é calculada, portanto a rejeição do aceite não depende de persistir uma mudança que seria revertida junto com a transação.
+- `V13__nominal_invite_traceability.sql` permite consentimento sem profissional, classifica sua finalidade e adiciona índice parcial para consultas de convites nominais pendentes. A ativação do vínculo, o consentimento aplicável, o histórico e o consumo do convite permanecem na mesma transação.
+- O bootstrap produtivo do primeiro gestor continua indisponível: falta definir a prova de autoridade sobre a criança. Recomendação: validação administrativa verificável, com evidência e decisão auditadas, antes da emissão nominal que concede `RESPONSAVEL_GESTOR`; confirmação de email isolada não atende esse requisito.

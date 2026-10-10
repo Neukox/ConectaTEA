@@ -24,6 +24,8 @@ public class Consentimento {
     @Column(name = "termo_versao")
     private String termoVersao;
     private String finalidade;
+    @Column(name = "tipo_aceite", nullable = false, length = 40)
+    private String tipoAceite = "RESPONSAVEL_COMPARTILHAMENTO";
     @Column(name = "data_aceite")
     private Instant dataAceite;
     @Column(name = "data_revogacao")

@@ -8,5 +8,6 @@ public interface ConviteCirculoRepository extends JpaRepository<ConviteCirculo,L
  @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select c from ConviteCirculo c where c.codigoHash=:hash") Optional<ConviteCirculo> findByHashForUpdate(@Param("hash") String hash);
  List<ConviteCirculo> findAllByCriancaIdOrderByCreatedAtDesc(Long childId);
  List<ConviteCirculo> findAllByDestinatarioUsuarioIdOrderByCreatedAtDesc(Long userId);
- boolean existsByCriancaIdAndDestinatarioUsuarioIdAndPapelAndStatus(Long childId,Long recipient,br.com.conectatea.vinculo.domain.PapelCirculo role,String status);
+ @Query("select (count(c)>0) from ConviteCirculo c where c.criancaId=:childId and c.destinatarioUsuarioId=:recipient and c.papel=:role and c.status='PENDENTE_ACEITE' and c.expiraEm>:now")
+ boolean existsPendingUsable(@Param("childId") Long childId,@Param("recipient") Long recipient,@Param("role") br.com.conectatea.vinculo.domain.PapelCirculo role,@Param("now") java.time.Instant now);
 }

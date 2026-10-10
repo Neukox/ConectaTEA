@@ -25,6 +25,7 @@ public class ConviteCirculo {
     public ConviteCirculo(Long child,Long issuer,Long recipient,String email,PapelCirculo role,String hash,Instant expires,Instant now){criancaId=child;emissorUsuarioId=issuer;destinatarioUsuarioId=recipient;destinatarioEmail=email;papel=role;tipo="NOMINAL_GESTOR";status="PENDENTE_ACEITE";codigoHash=hash;aprovadoPorUsuarioId=issuer;aprovadoEm=now;expiraEm=expires;createdAt=now;}
     public Long getId(){return id;} public Long getCriancaId(){return criancaId;} public Long getEmissorUsuarioId(){return emissorUsuarioId;} public Long getDestinatarioUsuarioId(){return destinatarioUsuarioId;} public String getDestinatarioEmail(){return destinatarioEmail;} public PapelCirculo getPapel(){return papel;} public String getStatus(){return status;} public Instant getExpiraEm(){return expiraEm;} public Instant getCreatedAt(){return createdAt;}
     public boolean utilizavelEm(Instant now){return "PENDENTE_ACEITE".equals(status)&&consumidoEm==null&&expiraEm.isAfter(now);}
+    public String statusEm(Instant now){return "PENDENTE_ACEITE".equals(status)&&!expiraEm.isAfter(now)?"EXPIRADO":status;}
     public void aceitar(Instant now){if(!utilizavelEm(now))throw new IllegalStateException("Convite indisponível");status="ACEITO";consumidoEm=now;}
     public void cancelar(){if(!"PENDENTE_ACEITE".equals(status))throw new IllegalStateException("Convite indisponível");status="CANCELADO";}
     public void expirar(){if("PENDENTE_ACEITE".equals(status))status="EXPIRADO";}

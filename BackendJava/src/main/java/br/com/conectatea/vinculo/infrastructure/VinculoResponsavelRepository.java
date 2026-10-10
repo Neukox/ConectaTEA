@@ -12,6 +12,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface VinculoResponsavelRepository extends JpaRepository<VinculoResponsavelCrianca, Long> {
     boolean existsByResponsavelIdAndCriancaIdAndStatus(Long responsavelId, Long criancaId, StatusVinculo status);
+    boolean existsByResponsavelIdAndCriancaIdAndStatusAndPapel(
+            Long responsavelId, Long criancaId, StatusVinculo status,
+            br.com.conectatea.vinculo.domain.PapelCirculo papel);
     Optional<VinculoResponsavelCrianca> findByResponsavelIdAndCriancaId(Long responsavelId, Long criancaId);
     List<VinculoResponsavelCrianca> findAllByCriancaIdAndStatus(Long criancaId, StatusVinculo status);
     List<VinculoResponsavelCrianca> findAllByResponsavelIdAndStatus(Long responsavelId, StatusVinculo status);

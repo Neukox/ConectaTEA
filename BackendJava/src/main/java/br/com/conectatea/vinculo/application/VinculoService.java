@@ -174,7 +174,7 @@ public class VinculoService {
         request.approve(manager.id());
         var token = tokens.findById(request.getTokenId()).orElseThrow();
         var existing = links.findByResponsavelIdAndCriancaId(request.getSolicitanteUsuarioId(), childId);
-        existing.ifPresentOrElse(VinculoResponsavelCrianca::vincular,
+        existing.ifPresentOrElse(link -> link.vincularComo(br.com.conectatea.vinculo.domain.PapelCirculo.RESPONSAVEL),
                 () -> links.save(new VinculoResponsavelCrianca(request.getSolicitanteUsuarioId(), childId)));
         consents.save(new Consentimento(request.getSolicitanteUsuarioId(), childId,
                 token.getProfissionalId(), request.getIp(), request.getUserAgent(),

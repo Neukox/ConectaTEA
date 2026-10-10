@@ -80,6 +80,15 @@ public class VinculoResponsavelCrianca extends AuditableEntity {
         dataDesvinculo = null;
     }
 
+    public void vincularComo(PapelCirculo papelAutorizado) {
+        if (papelAutorizado != PapelCirculo.RESPONSAVEL
+                && papelAutorizado != PapelCirculo.RESPONSAVEL_GESTOR) {
+            throw new IllegalArgumentException("Papel inválido para vínculo de responsável");
+        }
+        papel = papelAutorizado;
+        vincular();
+    }
+
     public void desvincular() {
         status = StatusVinculo.DESVINCULADO;
         dataDesvinculo = Instant.now();
