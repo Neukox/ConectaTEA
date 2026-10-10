@@ -5,6 +5,16 @@
 > Foto profissional: `POST /profissionais/me/foto` (`multipart/form-data`, parte `file`) substitui a foto do próprio perfil; `DELETE /profissionais/me/foto` remove; `GET /profissionais/fotos/{key}` entrega JPEG/PNG armazenado. Limites: 5 MiB e 64–4096 px. Bytes, assinatura e decodificação são validados; `PUT /profissionais/me` não aceita `fotoPerfilUrl`.
 > O `PUT /profissionais/me` não possui mais `fotoPerfilUrl`. A URL retornada é absoluta e configurável por `PUBLIC_API_URL`; sem essa variável, usa a origem HTTP observada e o context-path `/api`. Troca e remoção usam lock do perfil, persistência explícita e limpeza de arquivo sincronizada ao commit.
 
+## Verificação de email e convite nominal (V12)
+
+- `POST /auth/email-verification/request`: público, `{email}`, resposta neutra e rate limit por IP.
+- `POST /auth/email-verification/confirm`: público, `{token}`, consumo único; token inválido/expirado/usado retorna `400 INVALID_EMAIL_VERIFICATION_TOKEN`.
+- `GET /auth/email-verification/status`: autenticado, `{confirmado,confirmadoEm}`.
+- `POST /vinculos/convites`: gestor ativo, `{criancaId,destinatarioEmail,papel}` com `RESPONSAVEL|PROFISSIONAL`; retorna token uma única vez e `PENDENTE_ACEITE`.
+- `POST /vinculos/convites/aceitar`: destinatário autenticado com email confirmado; revalida gestor, criança e conta antes de ativar o vínculo.
+- `GET /vinculos/convites/me`, `GET /vinculos/convites/criancas/{id}` e `DELETE /vinculos/convites/criancas/{id}/{conviteId}` consultam/cancelam conforme destinatário ou gestor.
+- Primeiro gestor permanece indisponível até aprovação da prova de autoridade; confirmação de email não a substitui.
+
 **Estado atual:** este é o contrato textual do único backend ativo. O OpenAPI em `/api/v3/api-docs` e a Swagger UI refletem os controllers Java; trechos explicitamente históricos ao final registram divergências já resolvidas.
 
 ## Recursos profissionais — Fase 3

@@ -2,6 +2,18 @@
 
 Data: 2026-10-10
 
+## Incremento de email e convites nominais — V12
+
+- `POST /auth/email-verification/request` responde sempre com mensagem neutra; tokens aleatórios de 256 bits são guardados somente como SHA-256, valem 24 horas por padrão e têm reenvio suprimido por cinco minutos.
+- `POST /auth/email-verification/confirm` consome o token atomicamente. `GET /auth/email-verification/status` expõe apenas o estado da conta autenticada. O cadastro emite a verificação após persistir a conta; falha assíncrona de envio não desfaz cadastro e o reenvio permite recuperação.
+- `POST /vinculos/convites` permite ao gestor emitir nominal para `RESPONSAVEL` ou `PROFISSIONAL`. `POST /vinculos/convites/aceitar` exige conta destinatária, email confirmado, conta/criança/emissor ainda válidos e token pendente antes de criar ou reativar vínculo.
+- `GET /vinculos/convites/me`, `GET /vinculos/convites/criancas/{childId}` e `DELETE /vinculos/convites/criancas/{childId}/{inviteId}` cobrem consulta e cancelamento. Replay não reativa acesso.
+- `RESPONSAVEL_GESTOR` é rejeitado com `FIRST_MANAGER_AUTHORITY_REQUIRED`: email confirmado não prova autoridade sobre a criança; bootstrap produtivo segue bloqueado por #8/#62.
+
+Configuração: `EMAIL_VERIFICATION_TOKEN_TTL=PT24H`, `EMAIL_VERIFICATION_RESEND_INTERVAL=PT5M`, `FRONTEND_EMAIL_VERIFICATION_URL` e `EMAIL_VERIFICATION_RATE_LIMIT_PER_MINUTE=5`. A V12 adiciona `usuarios.email_confirmado_em`, tabela de tokens e índice parcial. Legados ficam não confirmados, sem bloqueio ou promoção retroativa.
+
+Validação: 122 testes, sem falhas, erros ou ignorados; PostgreSQL 16/Testcontainers validou instalação limpa, `ddl-auto=validate` e upgrade V7→V12. Novos testes cobrem consumo único, destinatário incorreto, aceite e replay.
+
 ## Revisão após `e735812`
 
 As fontes foram novamente verificadas em 10/10/2026: matriz local integral, 15 imagens e issues #8/#10/#62–#79. As decisões listadas como pendentes na matriz continuam pendentes nas issues; conteúdo ilustrativo das imagens não foi promovido a regra de produto.
