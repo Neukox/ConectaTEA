@@ -5,6 +5,10 @@ server:
 spring:
   application:
     name: conectatea
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
@@ -35,6 +39,9 @@ management:
       probes:
         enabled: true
 app:
+  profile-images:
+    directory: ${PROFILE_IMAGE_DIRECTORY:${java.io.tmpdir}/conectatea-profile-images}
+    public-base-url: ${PUBLIC_API_URL:}
   jwt:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:PT8H}

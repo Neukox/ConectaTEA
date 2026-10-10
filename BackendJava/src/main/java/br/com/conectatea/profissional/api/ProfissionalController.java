@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -35,14 +37,20 @@ public class ProfissionalController {
     private final ProfissionalRepository professionals;
     private final UsuarioRepository users;
     private final ProfileImageService profileImages;
+    private final String publicApiBaseUrl;
+    private final String contextPath;
 
     public ProfissionalController(
             ProfissionalRepository professionals,
             UsuarioRepository users,
-            ProfileImageService profileImages) {
+            ProfileImageService profileImages,
+            @Value("${app.profile-images.public-base-url:}") String publicApiBaseUrl,
+            @Value("${server.servlet.context-path:/api}") String contextPath) {
         this.professionals = professionals;
         this.users = users;
         this.profileImages = profileImages;
+        this.publicApiBaseUrl = publicApiBaseUrl == null ? "" : publicApiBaseUrl.replaceAll("/$", "");
+        this.contextPath = contextPath;
     }
 
     @GetMapping
@@ -86,15 +94,15 @@ public class ProfissionalController {
     @PreAuthorize("hasRole('PROFISSIONAL')")
     public ProfessionalResponse uploadPhoto(Authentication authentication,
             @RequestPart("file") MultipartFile file) {
-        var professional = current(authentication);
-        profileImages.replace(professional, file);
-        return response(professional);
+        var principal = (AuthenticatedUser) authentication.getPrincipal();
+        return response(profileImages.replace(principal.id(), file));
     }
 
     @DeleteMapping("/me/foto")
     @PreAuthorize("hasRole('PROFISSIONAL')")
     public ResponseEntity<Void> removePhoto(Authentication authentication) {
-        profileImages.remove(current(authentication));
+        var principal = (AuthenticatedUser) authentication.getPrincipal();
+        profileImages.remove(principal.id());
         return ResponseEntity.noContent().build();
     }
 
@@ -102,7 +110,7 @@ public class ProfissionalController {
     public ResponseEntity<byte[]> photo(@PathVariable String key) {
         var image = profileImages.load(key);
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(image.contentType()))
-                .cacheControl(org.springframework.http.CacheControl.maxAge(java.time.Duration.ofDays(30)).cachePublic())
+                .cacheControl(org.springframework.http.CacheControl.maxAge(java.time.Duration.ofDays(30)).cachePrivate().immutable())
                 .body(image.bytes());
     }
 
@@ -128,7 +136,17 @@ public class ProfissionalController {
     private Optional<ProfessionalResponse> responseIfActive(Profissional professional) {
         return users.findById(professional.getUsuarioId())
                 .filter(Usuario::isAtivo)
-                .map(user -> ProfessionalResponse.from(professional, user));
+                .map(user -> ProfessionalResponse.from(professional, user, photoUrl(professional)));
+    }
+
+    private String photoUrl(Profissional professional) {
+        var reference = professional.getFotoPerfilUrl();
+        if (reference == null) return null;
+        if (!reference.startsWith(ProfileImageService.REFERENCE_PREFIX)) return reference;
+        var key = reference.substring(ProfileImageService.REFERENCE_PREFIX.length());
+        if (!publicApiBaseUrl.isBlank()) return publicApiBaseUrl + "/profissionais/fotos/" + key;
+        return ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(contextPath)
+                .path("/profissionais/fotos/").path(key).replaceQuery(null).toUriString();
     }
 
     private boolean contains(String value, String search) {
@@ -140,8 +158,7 @@ public class ProfissionalController {
             String registroProfissional,
             String titulo,
             String formacaoAcademica,
-            String sobre,
-            String fotoPerfilUrl) {
+            String sobre) {
     }
 
     public record ProfessionalResponse(
@@ -155,7 +172,7 @@ public class ProfissionalController {
             String sobre,
             String fotoPerfilUrl,
             String codigoIdentificacao) {
-        static ProfessionalResponse from(Profissional professional, Usuario user) {
+        static ProfessionalResponse from(Profissional professional, Usuario user, String photoUrl) {
             return new ProfessionalResponse(
                     professional.getId(),
                     professional.getUsuarioId(),
@@ -165,7 +182,7 @@ public class ProfissionalController {
                     professional.getTitulo(),
                     professional.getFormacaoAcademica(),
                     professional.getSobre(),
-                    professional.getFotoPerfilUrl(),
+                    photoUrl,
                     professional.getCodigoIdentificacao());
         }
     }

@@ -15,11 +15,20 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import br.com.conectatea.passwordreset.application.InvalidPasswordResetTokenException;
 import br.com.conectatea.shared.domain.BusinessRuleException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> uploadTooLarge(
+            MaxUploadSizeExceededException exception,
+            HttpServletRequest request) {
+        return response(HttpStatus.PAYLOAD_TOO_LARGE, "PROFILE_IMAGE_TOO_LARGE",
+                "A foto deve ter no máximo 5 MiB", request, null);
+    }
 
     @ExceptionHandler(BusinessRuleException.class)
     ResponseEntity<ApiError> businessRule(

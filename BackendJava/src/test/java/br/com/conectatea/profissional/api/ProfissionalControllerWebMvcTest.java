@@ -30,7 +30,7 @@ class ProfissionalControllerWebMvcTest {
     void setup() {
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new ProfissionalController(professionals, users,
-                        org.mockito.Mockito.mock(ProfileImageService.class)))
+                        org.mockito.Mockito.mock(ProfileImageService.class), "", "/api"))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
     }

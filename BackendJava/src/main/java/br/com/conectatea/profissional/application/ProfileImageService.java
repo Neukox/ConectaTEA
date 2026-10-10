@@ -1,45 +1,66 @@
 package br.com.conectatea.profissional.application;
 
 import br.com.conectatea.profissional.domain.Profissional;
+import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.shared.domain.BusinessRuleException;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.UUID;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ProfileImageService {
+    private static final Logger log = LoggerFactory.getLogger(ProfileImageService.class);
+    public static final String REFERENCE_PREFIX = "profile-image:";
     public static final long MAX_BYTES = 5L * 1024 * 1024;
     private final ProfileImageStorage storage;
+    private final ProfissionalRepository professionals;
 
-    public ProfileImageService(ProfileImageStorage storage) { this.storage = storage; }
+    public ProfileImageService(ProfileImageStorage storage, ProfissionalRepository professionals) {
+        this.storage = storage;
+        this.professionals = professionals;
+    }
 
     @Transactional
-    public String replace(Profissional professional, MultipartFile file) {
+    public Profissional replace(Long authenticatedUserId, MultipartFile file) {
         var image = validate(file);
         var extension = image.format().equals("image/png") ? ".png" : ".jpg";
         var key = UUID.randomUUID() + extension;
+        var professional = professionals.findByUsuarioIdForUpdate(authenticatedUserId)
+                .orElseThrow(() -> new BusinessRuleException("PROFILE_NOT_FOUND", "Perfil profissional não encontrado"));
         var previous = professional.getFotoPerfilUrl();
         try {
             storage.store(key, image.bytes());
-            professional.setFotoPerfilUrl("/profissionais/fotos/" + key);
-            deletePrevious(previous);
-            return professional.getFotoPerfilUrl();
+            // Registra a compensação antes do flush: uma falha de banco também
+            // precisa remover o arquivo recém-gravado ao concluir o rollback.
+            synchronizeFiles(key, previous);
+            professional.setFotoPerfilUrl(REFERENCE_PREFIX + key);
+            professionals.saveAndFlush(professional);
+            return professional;
         } catch (IOException exception) {
-            try { storage.delete(key); } catch (IOException ignored) { }
+            cleanup(key, "nova imagem após falha de gravação");
             throw new BusinessRuleException("PROFILE_IMAGE_STORAGE_FAILED", "Não foi possível armazenar a foto");
         }
     }
 
     @Transactional
-    public void remove(Profissional professional) {
+    public Profissional remove(Long authenticatedUserId) {
+        var professional = professionals.findByUsuarioIdForUpdate(authenticatedUserId)
+                .orElseThrow(() -> new BusinessRuleException("PROFILE_NOT_FOUND", "Perfil profissional não encontrado"));
         var previous = professional.getFotoPerfilUrl();
         professional.setFotoPerfilUrl(null);
-        deletePrevious(previous);
+        professionals.saveAndFlush(professional);
+        afterCommit(() -> cleanup(referenceKey(previous), "imagem removida do perfil"));
+        return professional;
     }
 
     public ImageContent load(String key) {
@@ -58,14 +79,28 @@ public class ProfileImageService {
         try {
             var bytes = file.getBytes();
             var format = signature(bytes);
+            validateDimensionsFromMetadata(bytes);
             BufferedImage decoded = ImageIO.read(new ByteArrayInputStream(bytes));
             if (decoded == null) throw invalid();
-            if (decoded.getWidth() < 64 || decoded.getHeight() < 64 || decoded.getWidth() > 4096 || decoded.getHeight() > 4096) {
-                throw new BusinessRuleException("PROFILE_IMAGE_DIMENSIONS", "A foto deve ter entre 64 e 4096 pixels por dimensão");
-            }
             return new ValidatedImage(bytes, format);
         } catch (IOException exception) {
             throw invalid();
+        }
+    }
+
+    private void validateDimensionsFromMetadata(byte[] bytes) throws IOException {
+        try (var input = ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
+            var readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) throw invalid();
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                var width = reader.getWidth(0);
+                var height = reader.getHeight(0);
+                if (width < 64 || height < 64 || width > 4096 || height > 4096) {
+                    throw new BusinessRuleException("PROFILE_IMAGE_DIMENSIONS", "A foto deve ter entre 64 e 4096 pixels por dimensão");
+                }
+            } finally { reader.dispose(); }
         }
     }
 
@@ -75,10 +110,32 @@ public class ProfileImageService {
         throw invalid();
     }
 
-    private void deletePrevious(String url) {
-        if (url == null || !url.startsWith("/profissionais/fotos/")) return;
-        try { storage.delete(url.substring(url.lastIndexOf('/') + 1)); }
-        catch (IOException exception) { throw new BusinessRuleException("PROFILE_IMAGE_CLEANUP_FAILED", "Não foi possível remover a foto anterior"); }
+    private void synchronizeFiles(String newKey, String previousReference) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCompletion(int status) {
+                if (status == STATUS_COMMITTED) cleanup(referenceKey(previousReference), "imagem substituída");
+                else cleanup(newKey, "nova imagem após rollback");
+            }
+        });
+    }
+
+    private void afterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() { action.run(); }
+        });
+    }
+
+    private String referenceKey(String reference) {
+        return reference != null && reference.startsWith(REFERENCE_PREFIX)
+                ? reference.substring(REFERENCE_PREFIX.length()) : null;
+    }
+
+    private void cleanup(String key, String reason) {
+        if (key == null) return;
+        try { storage.delete(key); }
+        catch (IOException exception) { log.warn("Falha recuperável ao limpar {} ({})", reason, key, exception); }
     }
 
     private BusinessRuleException invalid() {
