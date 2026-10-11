@@ -374,6 +374,7 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 
 - Requests e responses Java usam propriedades JSON `camelCase`; `LocalDate` é `YYYY-MM-DD` e `Instant`/`OffsetDateTime` são ISO-8601. Enums são strings com o nome do enum.
 - A autenticação é stateless por JWT no cookie `jwt` (HttpOnly). O principal autenticado é a fonte do ID/tipo do ator; rotas próprias não recebem o ID do usuário no body.
+- O JWT contém a versão persistida das credenciais. O filtro consulta a conta a cada requisição e rejeita conta inativa, versão divergente ou token antigo sem essa claim. Após a implantação, sessões criadas pela versão anterior exigem novo login.
 - São públicos `POST /auth/login`, `POST /auth/password/forgot`, `POST /auth/password/reset`, `POST /users/register`, documentação, health e `OPTIONS`. As demais rotas requerem autenticação. `POST`, `PUT`, `PATCH` e `DELETE` exigem CSRF via cookie `XSRF-TOKEN` e header `X-XSRF-TOKEN`, exceto login, registro e recuperação de senha. CORS aceita credenciais e origens configuradas.
 - Resposta de erro da infraestrutura de segurança: `{timestamp,status,error,code,message,path}`. Erros de validação podem também conter `fields`. Status usados pelos endpoints: `400` request inválido/filtro inválido, `401` não autenticado/credenciais inválidas/conta inativa, `403` role ou autorização relacional negada, `404` recurso/perfil ausente, `409` conflito de unicidade/concorrência, `410` token indisponível/expirado. Não se deve tratar entidades JPA como contrato HTTP; os controllers abaixo expõem records/DTOs, com exceções descritas.
 - As respostas não têm envelope global. Algumas rotas retornam `{message,...}`, enquanto outras retornam DTO, lista ou mapa diretamente.
@@ -464,7 +465,7 @@ O contrato Java descrito neste documento registra o que está implementado e as 
 - Request: `{token:string,newPassword:string}`; senha entre 8 e 72 caracteres.
 - Response `200`: `{message:"Senha redefinida com sucesso."}`.
 - Erros: `400` validação ou `{code:"INVALID_PASSWORD_RESET_TOKEN",message:"Token de redefinição inválido ou expirado."}` para token ausente, expirado, usado, invalidado ou usuário inativo.
-- Regra/autorização: SHA-256 localiza o registro; bloqueio pessimista torna consumo, troca BCrypt e atualização de `credentialsUpdatedAt` atômicos e single-use. JWTs com `iat` anterior deixam de autenticar; não há login automático. TTL padrão: 30 minutos.
+- Regra/autorização: SHA-256 localiza o registro; bloqueio pessimista na ordem usuário → token torna consumo, troca BCrypt e incremento de `credentialsVersion` atômicos e single-use. JWTs com versão anterior deixam de autenticar, inclusive se emitidos no mesmo segundo; não há login automático. TTL padrão: 30 minutos.
 - Consumer: frontend futuro de “Redefinir senha”. Testes: unitário, MockMvc e integração concorrente com PostgreSQL/Testcontainers.
 
 ### `POST /auth/login`
@@ -473,7 +474,7 @@ O contrato Java descrito neste documento registra o que está implementado e as 
 - Request: `{email:string,password:string}` (email e senha não vazios; email validado).
 - Response `200`: `{message:"Login realizado",user:{id,name,email,telefone,endereco,tipo}}`; JWT é entregue no cookie HttpOnly `jwt`, não no JSON.
 - Erros: `400` validação, `401` credenciais inválidas ou usuário inativo.
-- Regra: usuário precisa existir, estar ativo e a senha corresponder.
+- Regra: usuário precisa existir, estar ativo e a senha corresponder. O JWT recebe a versão atual das credenciais; o contrato JSON e os atributos do cookie não mudam.
 - Frontend: `src/api/authApi.ts` (`login`). Campos principais compatíveis; o frontend tipa `user` sem telefone/endereço, mas são campos adicionais opcionais na prática.
 
 ### `POST /auth/logout`

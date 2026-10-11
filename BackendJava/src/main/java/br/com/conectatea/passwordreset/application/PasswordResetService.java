@@ -53,11 +53,14 @@ public class PasswordResetService {
     @Transactional
     public void resetPassword(String rawToken,String newPassword) {
         var now=Instant.now(clock);
-        var token=tokens.findByHashForUpdate(hash(rawToken)).orElseThrow(InvalidPasswordResetTokenException::new);
-        if(!token.isUsableAt(now)||!token.getUsuario().isAtivo())throw new InvalidPasswordResetTokenException();
-        token.getUsuario().atualizarSenha(passwords.encode(newPassword),now);
+        var tokenHash=hash(rawToken);
+        var userId=tokens.findUsuarioIdByTokenHash(tokenHash).orElseThrow(InvalidPasswordResetTokenException::new);
+        var user=users.findByIdForUpdate(userId).orElseThrow(InvalidPasswordResetTokenException::new);
+        var token=tokens.findByHashForUpdate(tokenHash).orElseThrow(InvalidPasswordResetTokenException::new);
+        if(!token.getUsuario().getId().equals(user.getId())||!token.isUsableAt(now)||!user.isAtivo())throw new InvalidPasswordResetTokenException();
+        user.atualizarSenha(passwords.encode(newPassword),now);
         token.consume(now);
-        audits.record(token.getUsuario().getId(),"PASSWORD_RESET_COMPLETED","USUARIO",token.getUsuario().getId(),null,null,"SUCESSO",null);
+        audits.record(user.getId(),"PASSWORD_RESET_COMPLETED","USUARIO",user.getId(),null,null,"SUCESSO",null);
     }
 
     private String generateToken(){var bytes=new byte[32];SECURE_RANDOM.nextBytes(bytes);return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);}

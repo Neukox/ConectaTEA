@@ -13,6 +13,9 @@ import org.springframework.data.repository.query.Param;
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
     long countByUsuarioId(Long userId);
 
+    @Query("select t.usuario.id from PasswordResetToken t where t.tokenHash=:hash")
+    Optional<Long> findUsuarioIdByTokenHash(@Param("hash") String hash);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from PasswordResetToken t join fetch t.usuario where t.tokenHash=:hash")
     Optional<PasswordResetToken> findByHashForUpdate(@Param("hash") String hash);
