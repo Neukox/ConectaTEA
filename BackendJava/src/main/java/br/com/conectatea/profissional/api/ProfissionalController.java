@@ -2,6 +2,7 @@ package br.com.conectatea.profissional.api;
 
 import br.com.conectatea.profissional.domain.Profissional;
 import br.com.conectatea.profissional.application.ProfileImageService;
+import br.com.conectatea.profissional.application.ProfileImageUrlResolver;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.usuario.domain.Usuario;
@@ -26,8 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -37,20 +36,17 @@ public class ProfissionalController {
     private final ProfissionalRepository professionals;
     private final UsuarioRepository users;
     private final ProfileImageService profileImages;
-    private final String publicApiBaseUrl;
-    private final String contextPath;
+    private final ProfileImageUrlResolver profileImageUrls;
 
     public ProfissionalController(
             ProfissionalRepository professionals,
             UsuarioRepository users,
             ProfileImageService profileImages,
-            @Value("${app.profile-images.public-base-url:}") String publicApiBaseUrl,
-            @Value("${server.servlet.context-path:/api}") String contextPath) {
+            ProfileImageUrlResolver profileImageUrls) {
         this.professionals = professionals;
         this.users = users;
         this.profileImages = profileImages;
-        this.publicApiBaseUrl = publicApiBaseUrl == null ? "" : publicApiBaseUrl.replaceAll("/$", "");
-        this.contextPath = contextPath;
+        this.profileImageUrls = profileImageUrls;
     }
 
     @GetMapping
@@ -137,17 +133,8 @@ public class ProfissionalController {
     private Optional<ProfessionalResponse> responseIfActive(Profissional professional) {
         return users.findById(professional.getUsuarioId())
                 .filter(Usuario::isAtivo)
-                .map(user -> ProfessionalResponse.from(professional, user, photoUrl(professional)));
-    }
-
-    private String photoUrl(Profissional professional) {
-        var reference = professional.getFotoPerfilUrl();
-        if (reference == null) return null;
-        if (!reference.startsWith(ProfileImageService.REFERENCE_PREFIX)) return reference;
-        var key = reference.substring(ProfileImageService.REFERENCE_PREFIX.length());
-        if (!publicApiBaseUrl.isBlank()) return publicApiBaseUrl + "/profissionais/fotos/" + key;
-        return ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(contextPath)
-                .path("/profissionais/fotos/").path(key).replaceQuery(null).toUriString();
+                .map(user -> ProfessionalResponse.from(professional, user,
+                        profileImageUrls.resolve(professional.getFotoPerfilUrl())));
     }
 
     private boolean contains(String value, String search) {

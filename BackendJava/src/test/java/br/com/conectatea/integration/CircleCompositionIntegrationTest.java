@@ -45,7 +45,7 @@ class CircleCompositionIntegrationTest extends PostgresIntegrationTest {
         var outsider = user("Sem vínculo", TipoUsuario.RESPONSAVEL);
         var professionalUser = user("Bruna", TipoUsuario.PROFISSIONAL);
         var secondProfessionalUser = user("Ana Profissional", TipoUsuario.PROFISSIONAL);
-        var professional = profile(professionalUser, "Psicologia", "/api/profissionais/fotos/bruna");
+        var professional = profile(professionalUser, "Psicologia", "profile-image:bruna.png");
         var secondProfessional = profile(secondProfessionalUser, null, null);
         var child = child("Criança A");
         var otherChild = child("Criança B");
@@ -70,7 +70,8 @@ class CircleCompositionIntegrationTest extends PostgresIntegrationTest {
                 .andExpect(jsonPath("$.membros[0].parentesco").value("Mãe"))
                 .andExpect(jsonPath("$.membros[1].papel").value("RESPONSAVEL"))
                 .andExpect(jsonPath("$.membros[2].especialidade").value("Psicologia"))
-                .andExpect(jsonPath("$.membros[2].fotoPerfilUrl").value("/api/profissionais/fotos/bruna"));
+                .andExpect(jsonPath("$.membros[2].fotoPerfilUrl")
+                        .value("http://localhost/api/profissionais/fotos/bruna.png"));
 
         mvc.perform(get("/criancas/{id}/circulo/membros", child.getId())
                         .with(authentication(auth(outsider))))

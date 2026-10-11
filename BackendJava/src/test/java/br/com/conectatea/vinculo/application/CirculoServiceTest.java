@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.profissional.domain.Profissional;
+import br.com.conectatea.profissional.application.ProfileImageUrlResolver;
 import br.com.conectatea.crianca.domain.Crianca;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.dashboard.application.FeedService;
@@ -42,11 +43,12 @@ class CirculoServiceTest {
     private final UsuarioRepository users = mock(UsuarioRepository.class);
     private final FeedService feed = mock(FeedService.class);
     private final SolicitacaoTokenVinculoRepository requests = mock(SolicitacaoTokenVinculoRepository.class);
+    private final ProfileImageUrlResolver profileImageUrls = mock(ProfileImageUrlResolver.class);
     private final CirculoService service = new CirculoService(guardians,
             professionalLinks, professionals,
             users, mock(AuthorizationService.class), children,
             mock(HistoricoVinculoRepository.class), mock(AuditLogService.class),
-            requests, feed);
+            requests, feed, profileImageUrls);
 
     @Test
     void lastManagerCannotLeave() {
@@ -188,7 +190,7 @@ class CirculoServiceTest {
         var commonUser = account(2L, "Ana", TipoUsuario.RESPONSAVEL);
         var psychologistUser = account(3L, "Bruna", TipoUsuario.PROFISSIONAL);
         var therapistUser = account(4L, "Ana", TipoUsuario.PROFISSIONAL);
-        var psychologist = professional(31L, 3L, "Psicologia", "/api/profissionais/fotos/bruna");
+        var psychologist = professional(31L, 3L, "Psicologia", "profile-image:bruna.png");
         var therapist = professional(32L, 4L, null, null);
         var psychologistLink = professionalLink(201L, 31L, 10L);
         var therapistLink = professionalLink(202L, 32L, 10L);
@@ -200,6 +202,8 @@ class CirculoServiceTest {
         when(professionals.findAllById(List.of(31L, 32L))).thenReturn(List.of(psychologist, therapist));
         when(users.findAllById(List.of(2L, 1L, 3L, 4L)))
                 .thenReturn(List.of(managerUser, commonUser, psychologistUser, therapistUser));
+        when(profileImageUrls.resolve("profile-image:bruna.png"))
+                .thenReturn("https://api.example.test/api/profissionais/fotos/bruna.png");
 
         var response = service.members(user(1L), 10L);
 
@@ -214,7 +218,8 @@ class CirculoServiceTest {
         assertThat(response.membros().get(2).especialidade()).isNull();
         assertThat(response.membros().get(2).fotoPerfilUrl()).isNull();
         assertThat(response.membros().get(3).especialidade()).isEqualTo("Psicologia");
-        assertThat(response.membros().get(3).fotoPerfilUrl()).isEqualTo("/api/profissionais/fotos/bruna");
+        assertThat(response.membros().get(3).fotoPerfilUrl())
+                .isEqualTo("https://api.example.test/api/profissionais/fotos/bruna.png");
         assertThat(response.membros().get(1).acoesPermitidas().podeRemover()).isTrue();
         assertThat(response.membros().get(2).acoesPermitidas().podeRemover()).isTrue();
         verifyNoInteractions(requests);
@@ -263,6 +268,26 @@ class CirculoServiceTest {
             assertThat(member.papel()).isEqualTo(PapelCirculo.RESPONSAVEL);
             assertThat(member.acoesPermitidas().podeRemover()).isFalse();
         });
+    }
+
+    @Test
+    void omitsInconsistentProfessionalLinksWithoutInventingMemberData() {
+        var manager = guardian(1L, true, null, 101L);
+        var missingProfileLink = professionalLink(201L, 31L, 10L);
+        var missingUserProfile = professional(32L, 99L, "Psicologia", null);
+        var missingUserLink = professionalLink(202L, 32L, 10L);
+        when(guardians.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(manager));
+        when(professionalLinks.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(missingProfileLink, missingUserLink));
+        when(professionals.findAllById(List.of(31L, 32L))).thenReturn(List.of(missingUserProfile));
+        when(users.findAllById(List.of(1L, 99L)))
+                .thenReturn(List.of(account(1L, "Gestor", TipoUsuario.RESPONSAVEL)));
+
+        var response = service.members(user(1L), 10L);
+
+        assertThat(response.membros()).singleElement()
+                .extracting(CirculoService.MemberResponse::usuarioId).isEqualTo(1L);
     }
 
     private void activeChild() {

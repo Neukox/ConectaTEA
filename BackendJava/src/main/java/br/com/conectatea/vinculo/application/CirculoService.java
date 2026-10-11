@@ -4,6 +4,7 @@ import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.dashboard.application.FeedService;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
+import br.com.conectatea.profissional.application.ProfileImageUrlResolver;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.shared.domain.BusinessRuleException;
@@ -27,9 +28,12 @@ import java.util.stream.Collectors;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class CirculoService {
+    private static final Logger log = LoggerFactory.getLogger(CirculoService.class);
     private static final Comparator<MemberResponse> MEMBER_ORDER = Comparator
             .comparingInt((MemberResponse member) -> roleOrder(member.papel()))
             .thenComparing(MemberResponse::nome, String.CASE_INSENSITIVE_ORDER)
@@ -45,18 +49,21 @@ public class CirculoService {
     private final AuditLogService audits;
     private final SolicitacaoTokenVinculoRepository requests;
     private final FeedService feed;
+    private final ProfileImageUrlResolver profileImageUrls;
 
     public CirculoService(VinculoResponsavelRepository guardians,
             VinculoProfissionalRepository professionalsLinks,
             ProfissionalRepository professionals, UsuarioRepository users,
             AuthorizationService authorization, CriancaRepository children,
             HistoricoVinculoRepository history, AuditLogService audits,
-            SolicitacaoTokenVinculoRepository requests, FeedService feed) {
+            SolicitacaoTokenVinculoRepository requests, FeedService feed,
+            ProfileImageUrlResolver profileImageUrls) {
         this.guardians = guardians; this.professionalsLinks = professionalsLinks;
         this.professionals = professionals; this.users = users; this.authorization = authorization;
         this.children = children; this.history = history; this.audits = audits;
         this.requests = requests;
         this.feed = feed;
+        this.profileImageUrls = profileImageUrls;
     }
 
     @Transactional(readOnly = true)
@@ -78,7 +85,11 @@ public class CirculoService {
         var result = new ArrayList<MemberResponse>();
         guardianLinks.forEach(link -> {
             var user = userById.get(link.getResponsavelId());
-            if (user == null) return;
+            if (user == null) {
+                log.warn("Vínculo ativo de responsável {} da criança {} referencia usuário ausente {}",
+                        link.getId(), childId, link.getResponsavelId());
+                return;
+            }
             var role = link.getPapel() == null ? PapelCirculo.RESPONSAVEL : link.getPapel();
             result.add(new MemberResponse(childId, link.getId(), user.getId(), user.getNome(),
                     "RESPONSAVEL", role, null, null, link.getParentesco(),
@@ -91,11 +102,20 @@ public class CirculoService {
         });
         professionalLinks.forEach(link -> {
             var profile = profileById.get(link.getProfissionalId());
-            if (profile == null) return;
+            if (profile == null) {
+                log.warn("Vínculo ativo de profissional {} da criança {} referencia perfil ausente {}",
+                        link.getId(), childId, link.getProfissionalId());
+                return;
+            }
             var user = userById.get(profile.getUsuarioId());
-            if (user == null) return;
+            if (user == null) {
+                log.warn("Perfil profissional {} do vínculo ativo {} da criança {} referencia usuário ausente {}",
+                        profile.getId(), link.getId(), childId, profile.getUsuarioId());
+                return;
+            }
             result.add(new MemberResponse(childId, link.getId(), user.getId(), user.getNome(),
-                    "PROFISSIONAL", PapelCirculo.PROFISSIONAL, profile.getFotoPerfilUrl(),
+                    "PROFISSIONAL", PapelCirculo.PROFISSIONAL,
+                    profileImageUrls.resolve(profile.getFotoPerfilUrl()),
                     profile.getEspecialidade(), null,
                     new AllowedActions(actorManager, user.getId().equals(actor.id()), false, false)));
         });
