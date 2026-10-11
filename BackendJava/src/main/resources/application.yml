@@ -39,6 +39,7 @@ management:
       probes:
         enabled: true
 app:
+  time-zone: ${APP_TIME_ZONE:America/Bahia}
   profile-images:
     directory: ${PROFILE_IMAGE_DIRECTORY:${java.io.tmpdir}/conectatea-profile-images}
     public-base-url: ${PUBLIC_API_URL:}

@@ -52,6 +52,8 @@ Validação desta tranche: `mvn clean test` executou 128 testes, sem falhas ou t
 
 ### Atualização V16 — dashboards, gestão no feed e validação
 
+Atualização final de 11/10/2026: os dashboards aceitam `timezone` IANA opcional e retornam o campo aditivo `fusoUtilizado`. Na ausência do parâmetro, todo o agregado usa uma única configuração backend `APP_TIME_ZONE`, cujo fallback é `America/Bahia`; não há inferência por UF nem fuso individual persistido neste MVP. Valor inválido retorna HTTP 400 (`INVALID_ARGUMENT`). A média geral de `progressoAtual` usa peso igual por meta com dado, enquanto `categorias` em `/progresso/resumo-atual` mantém médias internas por meta. O último registro desempata por `data` e depois pelo maior `id`.
+
 `GET /dashboard/profissional` e `GET /dashboard/responsavel` entregam `totalCriancas`, `metasAtivas`, `sessoesSemana`, `notificacoesNaoLidas` e `progressoAtual`; o dashboard responsável inclui também `sessoesProximas`. O resumo atual inclui somente metas EM_ANDAMENTO com progresso conhecido, cada meta com peso igual, e informa `metasComDados`, `metasSemDados`, `metasPausadas` e `metasConcluidas`. Média `null` é ausência de amostra; progresso real 0 permanece 0. Semana usa segunda-feira local até a segunda seguinte exclusiva. Notificações não lidas incluem as ocultadas do sino.
 
 | Bloco | Endpoint e campos | Permissão/ação | Vazio/erro | Estado desta tranche |

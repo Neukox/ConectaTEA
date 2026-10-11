@@ -10,6 +10,7 @@ import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.progresso.domain.Progresso;
 import br.com.conectatea.progresso.infrastructure.ProgressoRepository;
 import br.com.conectatea.progresso.application.ProgressHistoryService;
+import br.com.conectatea.progresso.application.LatestProgressService;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.shared.time.LocalTimeZoneResolver;
@@ -51,6 +52,7 @@ public class ProgressoController {
     private final Clock clock;
     private final LocalTimeZoneResolver timeZones;
     private final ProgressHistoryService historyService;
+    private final LatestProgressService latestProgress;
 
     public ProgressoController(
             MetaRepository metas,
@@ -62,7 +64,8 @@ public class ProgressoController {
             VinculoProfissionalRepository professionalLinks,
             Clock clock,
             LocalTimeZoneResolver timeZones,
-            ProgressHistoryService historyService) {
+            ProgressHistoryService historyService,
+            LatestProgressService latestProgress) {
         this.metas = metas;
         this.progress = progress;
         this.events = events;
@@ -73,6 +76,7 @@ public class ProgressoController {
         this.clock = clock;
         this.timeZones = timeZones;
         this.historyService = historyService;
+        this.latestProgress = latestProgress;
     }
 
     @GetMapping("/resumo")
@@ -88,7 +92,20 @@ public class ProgressoController {
     }
 
     @GetMapping("/resumo-atual")
-    public CurrentSummary currentSummary(Authentication authentication,@RequestParam(required=false) Long criancaId){var allowed=allowedMetas(authentication,criancaId);var active=allowed.stream().filter(m->m.getStatus()==StatusMeta.EM_ANDAMENTO).toList();var ids=active.stream().map(Meta::getId).toList();var records=ids.isEmpty()?List.<Progresso>of():progress.findByMetaIdInOrderByDataAsc(ids);var latest=records.stream().collect(Collectors.toMap(Progresso::getMetaId,Function.identity(),(a,b)->b));var categories=new EnumMap<CategoriaMeta,CategoryCurrent>(CategoriaMeta.class);active.stream().collect(Collectors.groupingBy(Meta::getCategoria)).forEach((category,items)->{var known=items.stream().filter(m->latest.containsKey(m.getId())).toList();categories.put(category,new CategoryCurrent(known.isEmpty()?null:known.stream().mapToInt(m->latest.get(m.getId()).getProgressoAtual()).average().orElseThrow(),known.size(),items.size()-known.size()));});return new CurrentSummary(categories,active.size(),allowed.stream().filter(m->m.getStatus()==StatusMeta.PAUSADA).count(),allowed.stream().filter(m->m.getStatus()==StatusMeta.CONCLUIDA).count(),latest.size(),active.size()-latest.size());}
+    public CurrentSummary currentSummary(Authentication authentication, @RequestParam(required = false) Long criancaId) {
+        var allowed = allowedMetas(authentication, criancaId);
+        var summary = latestProgress.summarize(allowed);
+        var categories = new EnumMap<CategoriaMeta, CategoryCurrent>(CategoriaMeta.class);
+        summary.categorias().forEach((category, item) -> categories.put(category,
+                new CategoryCurrent(item.media(), item.metasComDados(), item.metasSemDados())));
+        return new CurrentSummary(
+                categories,
+                summary.metasComDados() + summary.metasSemDados(),
+                summary.metasPausadas(),
+                summary.metasConcluidas(),
+                summary.metasComDados(),
+                summary.metasSemDados());
+    }
 
     @GetMapping("/evolucao-historica")
     public ProgressHistoryService.Evolution historicalEvolution(Authentication authentication,@RequestParam(required=false) Long criancaId,@RequestParam(defaultValue="3") int meses, @RequestParam(required=false) String timezone){

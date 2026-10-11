@@ -22,4 +22,15 @@ class LocalTimeZoneResolverTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("IANA");
     }
+
+    @Test
+    void usaFonteBackendConfiguradaEValidaNaAusenciaDeOverride() {
+        var configured = new LocalTimeZoneResolver("America/Manaus");
+
+        assertThat(configured.resolve(null)).isEqualTo(ZoneId.of("America/Manaus"));
+        assertThat(configured.configuredZoneId()).isEqualTo("America/Manaus");
+        assertThatThrownBy(() -> new LocalTimeZoneResolver("Bahia/Brasil"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("app.time-zone");
+    }
 }

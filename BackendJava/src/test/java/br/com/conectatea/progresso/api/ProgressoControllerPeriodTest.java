@@ -28,12 +28,14 @@ class ProgressoControllerPeriodTest {
     }
 
     private ProgressoController controllerAt(String instant) {
+        var fixedClock = Clock.fixed(Instant.parse(instant), ZoneOffset.UTC);
         return new ProgressoController(mock(MetaRepository.class), mock(ProgressoRepository.class),
                 mock(br.com.conectatea.meta.infrastructure.EventoMetaRepository.class),
                 mock(CriancaRepository.class), mock(ProfissionalRepository.class),
                 mock(AuthorizationService.class),
                 mock(br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository.class),
-                Clock.fixed(Instant.parse(instant), ZoneOffset.UTC), new LocalTimeZoneResolver(),
-                new br.com.conectatea.progresso.application.ProgressHistoryService(Clock.fixed(Instant.parse(instant), ZoneOffset.UTC)));
+                fixedClock, new LocalTimeZoneResolver("America/Bahia"),
+                new br.com.conectatea.progresso.application.ProgressHistoryService(fixedClock),
+                new br.com.conectatea.progresso.application.LatestProgressService(mock(ProgressoRepository.class)));
     }
 }
