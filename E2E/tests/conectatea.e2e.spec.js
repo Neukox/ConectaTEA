@@ -384,6 +384,12 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   expect(approval.json.status).toBe('APROVADA')
   expect((await api(respPage, `/criancas/${childId}`)).status).toBe(200)
 
+  const childStatus = await api(gestorPage, `/criancas/${childId}/estado`, 'PATCH', {
+    status: 'EM_ACOMPANHAMENTO',
+    motivo: 'Classificação inicial validada no E2E',
+  })
+  expect(childStatus.status).toBe(200)
+
   const selfTransfer = await api(
     gestorPage,
     `/criancas/${childId}/circulo/gestao`,
@@ -476,7 +482,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   const dashboardResp = await api(respPage, '/dashboard/responsavel')
   expect(dashboardResp.status).toBe(200)
   expect(dashboardResp.json.totalCriancas).toBe(1)
-  expect(dashboardResp.json.totalMetas).toBeGreaterThanOrEqual(1)
+  expect(dashboardResp.json.metasAtivas).toBeGreaterThanOrEqual(1)
 
   const replay = await api(respPage, `/vinculos/tokens/${encodeURIComponent(token.codigo)}/preview`)
   expect(replay.status).toBe(410)

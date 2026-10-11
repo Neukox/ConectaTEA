@@ -144,7 +144,7 @@ export function AnotacaoFormDialog({
             )}
           </div>
           <div><label htmlFor='anotacao-temas' className='mb-2 block text-sm font-medium text-gray-800'>Temas</label><input id='anotacao-temas' {...register('temas')} className={fieldClass} placeholder='Comunicação, rotina, autonomia'/></div>
-          {!anotacao&&<div><label htmlFor='anotacao-sessao' className='mb-2 block text-sm font-medium text-gray-800'>Sessão (opcional)</label><input id='anotacao-sessao' type='number' {...register('sessaoId',{valueAsNumber:true,setValueAs:value=>value===''?undefined:Number(value)})} className={fieldClass}/></div>}
+          {!anotacao&&<div><label htmlFor='anotacao-sessao' className='mb-2 block text-sm font-medium text-gray-800'>Sessão (opcional)</label><input id='anotacao-sessao' type='number' {...register('sessaoId',{setValueAs:value=>value===''?undefined:Number(value)})} className={fieldClass}/>{errors.sessaoId&&<p role='alert' className='mt-1 text-sm text-red-600'>Informe um identificador de sessão válido.</p>}</div>}
           {anotacao?.visibilidade==='COMPARTILHADA'&&<div><label htmlFor='anotacao-motivo' className='mb-2 block text-sm font-medium text-gray-800'>Motivo da correção</label><textarea id='anotacao-motivo' {...register('motivoCorrecao',{required:'Informe o motivo da correção.'})} className={fieldClass}/>{errors.motivoCorrecao&&<p role='alert' className='mt-1 text-sm text-red-600'>{errors.motivoCorrecao.message}</p>}</div>}
           <fieldset>
             <legend className='mb-2 text-sm font-medium text-gray-800'>
