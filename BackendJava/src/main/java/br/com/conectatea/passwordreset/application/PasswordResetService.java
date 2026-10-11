@@ -52,11 +52,11 @@ public class PasswordResetService {
 
     @Transactional
     public void resetPassword(String rawToken,String newPassword) {
-        var now=Instant.now(clock);
         var tokenHash=hash(rawToken);
         var userId=tokens.findUsuarioIdByTokenHash(tokenHash).orElseThrow(InvalidPasswordResetTokenException::new);
         var user=users.findByIdForUpdate(userId).orElseThrow(InvalidPasswordResetTokenException::new);
         var token=tokens.findByHashForUpdate(tokenHash).orElseThrow(InvalidPasswordResetTokenException::new);
+        var now=Instant.now(clock);
         if(!token.getUsuario().getId().equals(user.getId())||!token.isUsableAt(now)||!user.isAtivo())throw new InvalidPasswordResetTokenException();
         user.atualizarSenha(passwords.encode(newPassword),now);
         token.consume(now);
