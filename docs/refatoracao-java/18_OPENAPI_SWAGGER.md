@@ -10,7 +10,9 @@ Com o backend local na porta padrão e context path `/api`, as URLs verificadas 
 - OpenAPI JSON: `http://localhost:3000/api/v3/api-docs`
 - atalho configurado da UI: `http://localhost:3000/api/docs`
 
-O GitHub Actions run `37053545940` confirmou HTTP 200 para o JSON e para `/api/swagger-ui/index.html`; a validação também exigiu `openapi`, `info`, `paths` e `components.securitySchemes.cookieAuth` no documento.
+O histórico inclui o run `37053545940`. A evidência revisada após o PR #80 é o [run 38138130356](https://github.com/Neukox/ConectaTEA/actions/runs/38138130356), SHA `32d3a90834ddfa3ce14b510c2b8a3fbdb814ca49`, concluído com sucesso. O job E2E confirmou HTTP válido para o JSON e para `/api/swagger-ui/index.html` e exigiu `openapi`, `info`, `paths` e `components.securitySchemes.cookieAuth`.
+
+Essa é uma validação estrutural e de disponibilidade. Ela não compara exaustivamente todos os paths, schemas e campos com todos os clientes TypeScript e não comprova a integração das 15 telas.
 
 ## Autenticação e CSRF
 

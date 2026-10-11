@@ -1,5 +1,318 @@
 # Contrato canônico da API Java — fotografia da implementação
 
+## Contrato vigente após o PR #80
+
+Base: `/api`; JSON `camelCase`; datas civis `YYYY-MM-DD`; instantes ISO-8601. Autenticação por cookie HttpOnly `jwt`; mutações autenticadas exigem CSRF (`XSRF-TOKEN`/`X-XSRF-TOKEN`). Erros usam `{timestamp,status,error,code,message,path,fields?}`. O principal autenticado define o ator; IDs no request nunca substituem autorização relacional.
+
+### Crianças e Círculo
+
+- `POST /criancas` e `PUT /criancas/{id}` usam `nome`, `dataNascimento`, campos clínicos opcionais e `escola`, `escolaridade`, `cidade`, `uf`, `interesses`, `nivelSuporte`. Lista: `GET /criancas` → `{items,total}`; detalhe: `GET /criancas/{id}` → DTO direto.
+- Estados: `PENDENTE_CLASSIFICACAO|EM_ACOMPANHAMENTO|PAUSADO|ENCERRADO`. `PATCH /criancas/{id}/estado` recebe `{status,motivo}`; `PATCH /criancas/{id}/arquivamento` recebe `{arquivada,motivo}`. Arquivamento preserva histórico, mas bloqueia mutações de domínio.
+- `GET /criancas/{id}/circulo/membros`, `GET /criancas/{id}/circulo/solicitacoes`, `PATCH /criancas/{id}/circulo/gestao`, `DELETE /criancas/{id}/circulo/membros/me` e `DELETE .../membros/{vinculoId}?tipo=` aplicam o papel vigente e protegem o último gestor.
+- Código/QR: preview autenticado, `POST /vinculos/confirmar` cria solicitação `PENDENTE`; gestor decide em `PATCH /vinculos/criancas/{childId}/solicitacoes/{requestId}`. Convite nominal usa `/vinculos/convites`, exige destinatário correto com email confirmado e aceite.
+- Primeiro gestor: `POST /criancas/cadastro-responsavel` ou `POST /criancas/{id}/cadastro-responsavel` cria pedido sem acesso; `GET|PATCH /administracao/pedidos-primeiro-gestor[/{id}]` exige operador com `administrador=true`. Aprovação revalida solicitante ativo/confirmado e criança não arquivada, cria `RESPONSAVEL_GESTOR`, histórico, auditoria e um evento restrito. Recusa é definitiva para o pedido.
+
+### Metas e progresso
+
+- Meta: `EM_ANDAMENTO|PAUSADA|CONCLUIDA`. CRUD e `/progresso` permanecem; ações explícitas: `PATCH /metas/{id}/pausa` `{motivo}`, `/retomada` `{dataFim?,motivo?}`, `/conclusao` `{resumoResultado}` (máx. 2.000) e `/reabertura` `{motivo,novoPrazo,progressoInicial}` (0–99). Somente o autor profissional altera; leitura continua relacional.
+- `GET /progresso/resumo-atual?criancaId=` retorna `{categorias,metasEmAndamento,metasPausadas,metasConcluidas,metasComDados,metasSemDados}`. Categorias contêm `{media,metasComDados,metasSemDados}`. Só metas em andamento entram na média; ausência é `null`, zero registrado é zero e cada meta com dado tem peso igual. O último registro é escolhido por `(data DESC,id DESC)`.
+- `GET /progresso/evolucao-historica?criancaId=&meses=3|6|12&timezone=` retorna séries mensais por categoria, amostra, metas sem dados/pausadas, alterações de composição, tendência em pontos percentuais e sinalização de histórico insuficiente/legado. Limites mensais são locais e exclusivos no fim.
+- `/resumo`, `/recentes`, `/historico`, `/distribuicao-categoria`, `/evolucao-categoria` e `/crianca` permanecem por compatibilidade; novos gráficos devem usar `resumo-atual` e `evolucao-historica`.
+
+### Sessões, anotações e notificações
+
+Contratos detalhados vigentes: [Sessões](#sessões) e [Anotações](#anotações).
+
+- Sessão recebe `{criancaId,tipo,dataHora,duracao,descricao?,observacoes?,modalidade?,localInstrucoes?,objetivos?,anotacaoId?}`; `modalidade` padrão `PRESENCIAL` quando ausente; estados `AGENDADA|REALIZADA|CANCELADA|NAO_COMPARECEU`; criação retorna `201` com todos os campos incluindo `autorProfissionalId`. Há CRUD, `GET /sessoes/{id}`, `PATCH /status`, `/correcao` e `/reagendamento`. Somente o profissional autor muta; responsável não recebe `observacoes` privadas (campo `null` na resposta).
+- Anotação: `POST` recebe `{titulo?,conteudo,visibilidade,temas?,sessaoId?}`; `titulo` ausente ou em branco aplica fallback `"Anotação"` antes de persistir; `sessaoId` exige sessão da mesma criança e do mesmo profissional. `PUT` recebe `{titulo,conteudo,visibilidade,temas,motivoCorrecao?}` — a semântica efetiva dos campos opcionais é descrita no contrato detalhado abaixo. Em qualquer edição, o servidor preserva o título anterior quando `titulo` é nulo ou em branco e os temas anteriores quando `temas` é `null`; quando a anotação já é `COMPARTILHADA`, `motivoCorrecao` torna-se obrigatório (`CORRECTION_REASON_REQUIRED`) e limita-se a 500 caracteres. `sessaoId` não integra o DTO de edição. Compartilhada não volta a privada (`SHARED_NOTE_IMMUTABLE_VISIBILITY`) e não admite exclusão (`SHARED_NOTE_PRESERVED`); correção gera versão anterior e evento `ANOTACAO_CORRIGIDA`.
+- `GET /anotacoes/arquivo-proprio` é somente leitura, independente do vínculo atual e retorna apenas anotações de autoria própria. O DTO inclui `snapshotCapturadoEm`, `snapshotOrigem` e `snapshotHistoricoConfiavel`; `snapshotOrigem=MIGRACAO_V15` com `snapshotHistoricoConfiavel=false` não deve ser apresentado como verdade histórica.
+- Notificações: `GET /notificacoes` (histórico), `/nao-lidas/count`, `/sino`; `PATCH /sino/limpar`, `/{id}/lida`, `/lidas`. Ocultar do sino não marca como lida nem apaga histórico.
+
+### Feed e paginação
+
+- Individual: `GET /criancas/{criancaId}/feed?size=10&antes=&antesId=`; `size` é 1–50. Agregado: `GET /dashboard/feed?size=5&antes=&antesId=`; `size` é 1–5.
+- Resposta: `{items,hasMore,nextAntes,nextAntesId}`. Item: `{tipo,recursoTipo,recursoId,titulo,resumo,instante,id}`. Ordenação é `(instante DESC,id DESC)`; quando `hasMore=true`, o próximo request envia juntos `nextAntes` como `antes` e `nextAntesId` como `antesId`. Não existe paginação por `offset`.
+- `id` é o identificador único da ocorrência e integra o cursor. Navegação usa `recursoTipo + recursoId`; tipos diferentes podem compartilhar `recursoId`.
+- `CIRCULO` exige vínculo atual com a criança. `GESTORES` exige adicionalmente vínculo atual `RESPONSAVEL_GESTOR` na criança do evento, inclusive no agregado. Perda de gestão revoga a leitura. Textos do feed são projeções mínimas e não contêm prova, referência ou motivo administrativo.
+
+### Dashboards e fuso
+
+- `GET /dashboard/profissional?timezone=` retorna `{totalCriancas,criancasEsteMes,profissionaisAtivos,profissionaisAtivosEsteMes,totalMetas,metasAtivas,totalMetasEsteMes,progressoAtual,progressoAtualEsteMes,sessoesSemana,notificacoesNaoLidas,fusoUtilizado}`.
+- `GET /dashboard/responsavel?timezone=` retorna `{totalCriancas,metasAtivas,sessoesSemana,sessoesProximas,notificacoesNaoLidas,progressoAtual,fusoUtilizado}`. `progressoAtual` contém `{media,metasComDados,metasSemDados,metasPausadas,metasConcluidas}`.
+- `timezone`, quando presente, deve ser IANA válido; inválido retorna `400 INVALID_ARGUMENT`. Omissão usa `APP_TIME_ZONE`, validado na inicialização, com fallback `America/Bahia`. O dashboard agregado usa um único calendário para todas as crianças: semana `[segunda local,segunda seguinte)`, mês por limites locais e próximas sessões a partir do `Clock` atual. Não há fuso individual persistido nem inferência por UF.
+
+### Perfil, OpenAPI e estado de validação
+
+- Perfil próprio usa `/users/me`, `/profissionais/me`; foto é `POST/DELETE /profissionais/me/foto` e `GET /profissionais/fotos/{key}`. Locais, redes sociais e áreas de atuação têm coleções próprias sob `/profissionais/me`.
+- OpenAPI: `/api/v3/api-docs`; Swagger: `/api/swagger-ui/index.html` e `/api/docs`. A CI valida presença de `openapi`, `info`, `paths` e `cookieAuth`, não equivalência exaustiva com todos os consumidores TypeScript.
+- Evidência revisada: [CI 38138130356](https://github.com/Neukox/ConectaTEA/actions/runs/38138130356), SHA `32d3a90834ddfa3ce14b510c2b8a3fbdb814ca49`: backend 169/169, frontend aprovado e um cenário E2E React + Java + PostgreSQL aprovado. Isso não homologa as 15 telas.
+
+## Sessões
+
+Todos os endpoints de sessão são relativos a `/api/sessoes`. Enums de tipo: `TERAPIA_INDIVIDUAL|TERAPIA_OCUPACIONAL|FONOAUDIOLOGIA|AVALIACAO`. Enums de status: `AGENDADA|REALIZADA|CANCELADA|NAO_COMPARECEU`. Enums de modalidade: `PRESENCIAL|ONLINE`. `dataHora` e `novoInicio` são ISO-8601 com offset (ex.: `2026-11-15T10:00:00-03:00`). `SessionResponse` completo: `{id,dataHora,duracao,status,tipo,descricao,observacoes,criancaId,autorProfissionalId,modalidade,localInstrucoes,objetivos,anotacaoId}`; campo `observacoes` é `null` para responsável ou quando o usuário autenticado não é o autor.
+
+### `POST /sessoes`
+
+- Role/autenticação: `PROFISSIONAL` com vínculo ativo à criança (`requireCriancaWritable`); CSRF requerido.
+- Request (todos os campos do `CreateSessionRequest`):
+
+  | Campo | Tipo | Obrigatório | Validação / default |
+  |---|---|---|---|
+  | `criancaId` | `Long` | sim | vínculo ativo obrigatório |
+  | `tipo` | enum `TipoSessao` | sim | — |
+  | `dataHora` | `OffsetDateTime` (ISO-8601) | sim | `@FutureOrPresent` |
+  | `duracao` | `int` (minutos) | sim | `@Min(1)` |
+  | `descricao` | `String` | não | sem limite declarado |
+  | `observacoes` | `String` | não | conteúdo privado; não exposto ao responsável |
+  | `modalidade` | enum `ModalidadeSessao` | não | default `PRESENCIAL` aplicado pelo servidor |
+  | `localInstrucoes` | `String` | não | sem limite declarado |
+  | `objetivos` | `String` | não | sem limite declarado |
+  | `anotacaoId` | `Long` | não | sem validação de associação adicional além da persistência |
+
+- Response `201`: `SessionResponse` completo. Status inicial sempre `AGENDADA`.
+- Erros: `400` validação (data passada, duração < 1, campo obrigatório ausente), `401`, `403` role/vínculo/CSRF, `404` profissional não encontrado.
+- Payload de exemplo:
+
+  ```json
+  {
+    "criancaId": 42,
+    "tipo": "TERAPIA_INDIVIDUAL",
+    "dataHora": "2026-11-15T10:00:00-03:00",
+    "duracao": 50,
+    "descricao": "Sessão de acompanhamento",
+    "observacoes": "Nota interna do profissional",
+    "modalidade": "PRESENCIAL",
+    "localInstrucoes": "Sala 3, trazer material sensorial",
+    "objetivos": "Trabalhar comunicação alternativa",
+    "anotacaoId": null
+  }
+  ```
+
+### `GET /sessoes` e `GET /sessoes/{id}`
+
+- Role/autenticação: qualquer autenticado; sem CSRF.
+- `GET /sessoes` — query params: `criancaId` (opcional), `status` (enum), `tipo` (enum), `periodo` (`TODOS|HOJE|SEMANA|MES`), `search` (busca em `descricao`; profissional também pesquisa em `observacoes`).
+  - Profissional sem `criancaId`: vê sessões de todas as crianças vinculadas ao próprio perfil.
+  - Responsável sem `criancaId`: vê sessões de todas as crianças vinculadas ativas.
+  - `criancaId` informado: valida vínculo antes de filtrar.
+  - Período `MES` cobre `[hoje, hoje + 1 mês]`, não o mês calendário.
+- `GET /sessoes/{id}`: exige vínculo ativo via `requireCriancaWritable`; retorna `SessionResponse` com `observacoes` preenchido apenas se o solicitante for o autor.
+- Response `200`: array de `SessionResponse` (list) ou `SessionResponse` único (detalhe).
+- Erros: `400` período inválido, `401`, `403` sem vínculo, `404` sessão/criança ausente.
+
+### `GET /sessoes/resumo`
+
+- Role/autenticação: qualquer autenticado; sem CSRF.
+- Request: sem parâmetros.
+- Response `200`: `{sessoesHoje,sessoesConcluidas,sessoesEstaSemana,sessoesPendentes}` (todos `long`).
+- Regra: escopo idêntico ao `GET /sessoes` sem `criancaId`; semana é `[segunda local, segunda local + 6 dias]`.
+
+### `PUT /sessoes/{id}`
+
+- Role/autenticação: `PROFISSIONAL` autor da sessão com vínculo ativo; CSRF requerido.
+- Request (`UpdateSessionRequest` — sem `criancaId`, sem campos de detalhe):
+
+  | Campo | Tipo | Obrigatório | Validação |
+  |---|---|---|---|
+  | `tipo` | enum `TipoSessao` | sim | — |
+  | `dataHora` | `OffsetDateTime` (ISO-8601) | sim | sem `@FutureOrPresent` |
+  | `duracao` | `int` | sim | `@Min(1)` |
+  | `descricao` | `String` | não | — |
+  | `observacoes` | `String` | não | — |
+
+  > `modalidade`, `localInstrucoes`, `objetivos` e `anotacaoId` **não** integram `UpdateSessionRequest`; permanecem inalterados.
+
+- Regra de negócio: `session.update()` lança `SESSION_FINAL` (409) se o status já não for `AGENDADA`; nesse caso, use `PATCH /correcao`.
+- Response `200`: `SessionResponse` completo.
+- Erros: `400` validação, `401`, `403` role/vínculo/autoria/CSRF, `404` sessão ausente, `409` `SESSION_FINAL`.
+
+### `PATCH /sessoes/{id}/status`
+
+- Role/autenticação: `PROFISSIONAL` autor com vínculo ativo; CSRF requerido.
+- Request (`StatusRequest`):
+
+  | Campo | Tipo | Obrigatório | Validação |
+  |---|---|---|---|
+  | `status` | enum `StatusSessao` | sim | destino: `REALIZADA|CANCELADA|NAO_COMPARECEU` |
+  | `motivo` | `String` | não | armazenado no histórico; sem limite declarado |
+
+- Regras de transição aplicadas pelo domínio:
+  - Somente sessões com status `AGENDADA` podem ser transicionadas; qualquer outro status gera `INVALID_SESSION_TRANSITION` (409).
+  - `NAO_COMPARECEU` só é aceito após `dataHora` (`NO_SHOW_BEFORE_START`, 409).
+  - Destino `AGENDADA` não é permitido (`INVALID_SESSION_TRANSITION`, 409).
+- Evento de feed: transição para `REALIZADA` gera `SESSAO_REALIZADA`; para `CANCELADA` gera `SESSAO_CANCELADA`.
+- Response `200`: `SessionResponse`.
+- Erros: `400` campo obrigatório ausente, `401`, `403`, `404`, `409` transição inválida ou `NO_SHOW_BEFORE_START`.
+
+### `PATCH /sessoes/{id}/correcao`
+
+- Role/autenticação: `PROFISSIONAL` autor com vínculo ativo; CSRF requerido.
+- Request (`CorrectionRequest`):
+
+  | Campo | Tipo | Obrigatório | Validação |
+  |---|---|---|---|
+  | `status` | enum `StatusSessao` | sim | destino: `REALIZADA|CANCELADA|NAO_COMPARECEU` |
+  | `motivo` | `String` | **sim** | `@NotBlank`; ausente ou em branco → `400` |
+
+- Diferença em relação a `/status`: aceita somente sessões cujo status já **não** é `AGENDADA` (`SESSION_NOT_FINAL`, 409 quando ainda for `AGENDADA`); `motivo` é obrigatório e armazenado no histórico com tipo `CORRECAO_STATUS`.
+- Response `200`: `SessionResponse`.
+- Erros: `400` motivo ausente/branco, `401`, `403`, `404`, `409` `SESSION_NOT_FINAL` ou destino inválido.
+- Payload de exemplo:
+
+  ```json
+  { "status": "REALIZADA", "motivo": "Status corrigido; a sessão foi realizada nesta data." }
+  ```
+
+### `PATCH /sessoes/{id}/reagendamento`
+
+- Role/autenticação: `PROFISSIONAL` autor com vínculo ativo; CSRF requerido.
+- Request (`RescheduleRequest`):
+
+  | Campo | Tipo | Obrigatório | Validação |
+  |---|---|---|---|
+  | `novoInicio` | `OffsetDateTime` (ISO-8601) | sim | `@FutureOrPresent` |
+  | `duracao` | `int` (minutos) | sim | `@Min(1)` |
+  | `motivo` | `String` | **sim** | `@NotBlank`; ausente ou em branco → `400` |
+
+- Regra: chama `session.update()` internamente; portanto, lança `SESSION_FINAL` (409) se o status não for `AGENDADA`. O histórico anterior de `dataHora` e `novoInicio` é registrado com tipo `REAGENDAMENTO`.
+- Response `200`: `SessionResponse` com `dataHora` atualizado.
+- Erros: `400` campo obrigatório ausente/inválido, `401`, `403`, `404`, `409` `SESSION_FINAL`.
+- Payload de exemplo:
+
+  ```json
+  { "novoInicio": "2026-11-22T10:00:00-03:00", "duracao": 50, "motivo": "Conflito de agenda; reagendado para semana seguinte." }
+  ```
+
+### `DELETE /sessoes/{id}`
+
+- Role/autenticação: `PROFISSIONAL` autor com vínculo ativo; CSRF requerido.
+- Request: sem body.
+- Response `204`: sem body.
+- Erros: `401`, `403` role/vínculo/autoria/CSRF, `404` sessão ausente.
+- Frontend: `features/Sessoes/services/index.ts`; update usa `tipoSessao`/`data`, incompatível.
+
+## Anotações
+
+Todas as rotas são relativas a `/api/criancas/{criancaId}/anotacoes`. Role `PROFISSIONAL` é exigida em criação, edição e exclusão. Leitura (`GET`) aceita qualquer role autenticada com vínculo. `visibilidade` aceita `PRIVADA` ou `COMPARTILHADA`.
+
+### `POST /criancas/{criancaId}/anotacoes`
+
+- Role/autenticação: `PROFISSIONAL` com vínculo ativo à criança (`requireCriancaWritable`); CSRF requerido.
+- Request (`CreateRequest`):
+
+  | Campo | Tipo | Obrigatório | Validação / default |
+  |---|---|---|---|
+  | `titulo` | `String` | não | máx. 100 caracteres; ausente ou em branco → servidor aplica `"Anotação"` |
+  | `conteudo` | `String` | **sim** | `@NotBlank`, mín. 10, máx. 3000 caracteres |
+  | `visibilidade` | enum `VisibilidadeAnotacao` | **sim** | `PRIVADA` ou `COMPARTILHADA` |
+  | `temas` | `String` | não | máx. 500 caracteres |
+  | `sessaoId` | `Long` | não | sessão deve pertencer à mesma criança **e** ao mesmo profissional autor; violação → `SESSION_CHILD_MISMATCH` (business rule) ou `403` |
+
+- Comportamento: anotação nasce sempre com `visibilidade=PRIVADA` internamente; se o request informar `COMPARTILHADA`, o serviço chama `atualizar()` na mesma transação para promover. Snapshot da criança (`snapshotCriancaId`, `snapshotCriancaNome`, `snapshotCapturadoEm`, `snapshotOrigem="CRIACAO"`) é capturado imediatamente.
+- Notificação e feed: se `visibilidade=COMPARTILHADA`, dispara notificação `ANOTACAO_CRIADA` e evento de feed `ANOTACAO_COMPARTILHADA` no círculo.
+- Response `201`: `AnotacaoResponse` — `{id,criancaId,criancaNome,autorProfissionalId,autorNome,autorEspecialidade,titulo,conteudo,temas,sessaoId,visibilidade,createdAt,updatedAt,isAutor}`.
+- Erros: `400` validação (conteúdo ausente/curto/longo, título longo, visibilidade nula), `401`, `403` role/vínculo/sessão/CSRF, `404` criança ausente.
+- Payload de criação privada:
+
+  ```json
+  {
+    "titulo": "Observação pós-sessão",
+    "conteudo": "A criança respondeu bem aos combinados visuais durante a atividade.",
+    "visibilidade": "PRIVADA",
+    "temas": "comunicação, rotina",
+    "sessaoId": 15
+  }
+  ```
+
+### `GET /criancas/{criancaId}/anotacoes` e `GET /criancas/{criancaId}/anotacoes/{anotacaoId}`
+
+- Role/autenticação: qualquer autenticado com vínculo; sem CSRF.
+- `GET` list — query params: `visibilidade` (enum; responsável não pode filtrar `PRIVADA`), `profissionalId` (Long), `busca` (string), `ordenacao` (`RECENTES|ANTIGAS`; default `RECENTES`).
+  - `PROFISSIONAL`: vê próprias privadas + compartilhadas autorizadas.
+  - `RESPONSAVEL`: vê somente compartilhadas; filtragem por `visibilidade=PRIVADA` retorna `400`.
+- `GET /{anotacaoId}`: valida `criancaId`, vínculo, papel e visibilidade; previne IDOR.
+- Response `200`: lista ou objeto único de `AnotacaoResponse`.
+- `isAutor` é conveniente para UX e não é mecanismo de autorização.
+
+### `PUT /criancas/{criancaId}/anotacoes/{anotacaoId}`
+
+- Role/autenticação: `PROFISSIONAL` autor com vínculo ativo (`requireCriancaWritable`); CSRF requerido. Lock pessimista aplicado.
+- Request (`UpdateRequest`; campos opcionais seguem a semântica efetiva do serviço):
+
+  | Campo | Tipo | Obrigatório | Validação / semântica |
+  |---|---|---|---|
+  | `titulo` | `String` | não | máx. 100 caracteres |
+  | `conteudo` | `String` | **sim** | `@NotBlank`, mín. 10, máx. 3000 caracteres |
+  | `visibilidade` | enum `VisibilidadeAnotacao` | **sim** | `PRIVADA` ou `COMPARTILHADA` |
+  | `temas` | `String` | não | máx. 500 caracteres |
+  | `motivoCorrecao` | `String` | condicional | máx. 500 caracteres; **obrigatório** quando a anotação já for `COMPARTILHADA` |
+
+  > `sessaoId` **não** integra o DTO de edição; não é possível alterar a sessão associada por esta rota.
+
+- Semântica efetiva da edição, para `PRIVADA → PRIVADA`, `PRIVADA → COMPARTILHADA` e correção de `COMPARTILHADA`:
+  - `titulo` nulo ou em branco preserva o título anterior; um valor não vazio substitui o anterior.
+  - `temas` nulo preserva os temas anteriores; uma string enviada substitui o valor, inclusive string vazia.
+  - `conteudo` é obrigatório e sempre substitui o anterior.
+  - `visibilidade` é obrigatória; a promoção é permitida e o retorno de compartilhada para privada é rejeitado.
+  - A presença de `PUT` na rota não implica limpeza dos campos opcionais omitidos: prevalece este comportamento do serviço.
+
+- Regras de negócio:
+  - `COMPARTILHADA → PRIVADA`: proibido — `SHARED_NOTE_IMMUTABLE_VISIBILITY` (business rule, 409).
+  - Correção de `COMPARTILHADA` sem `motivoCorrecao`: `CORRECTION_REASON_REQUIRED` (business rule, 409).
+  - Promoção `PRIVADA → COMPARTILHADA`: sem motivo obrigatório; dispara notificação `ANOTACAO_COMPARTILHADA` e evento de feed.
+  - Correção `COMPARTILHADA → COMPARTILHADA`: persiste versão anterior (`VersaoAnotacao`), evento de feed `ANOTACAO_CORRIGIDA`, notificação `ANOTACAO_EDITADA`.
+
+- Response `200`: `AnotacaoResponse` atualizado.
+- Erros: `400` validação, `401`, `403` role/vínculo/autoria/CSRF, `404`, `409` visibilidade imutável ou motivo ausente.
+
+- Payload de edição privada (sem correção):
+
+  ```json
+  {
+    "titulo": "Observação revisada",
+    "conteudo": "A criança respondeu bem, com menor resistência do que na sessão anterior.",
+    "visibilidade": "PRIVADA",
+    "temas": "comunicação, rotina"
+  }
+  ```
+
+- Payload de correção compartilhada (motivoCorrecao obrigatório):
+
+  ```json
+  {
+    "titulo": "Observação pós-sessão (corrigida)",
+    "conteudo": "Conteúdo corrigido após revisão clínica interna.",
+    "visibilidade": "COMPARTILHADA",
+    "temas": "comunicação",
+    "motivoCorrecao": "Erro na descrição da resposta comportamental; texto corrigido para refletir o observado."
+  }
+  ```
+
+### `GET /criancas/{criancaId}/anotacoes/{anotacaoId}/versoes`
+
+- Role/autenticação: qualquer autenticado com vínculo; sem CSRF. Revalida vínculo e visibilidade.
+- Response `200`: array de `VersaoResponse` — `{id,numero,titulo,conteudo,temas,motivoCorrecao,autorUsuarioId,criadoEm}`, ordenado por `numero` decrescente.
+- Cada versão representa o estado anterior à correção; somente correções de anotações compartilhadas geram versões.
+
+### `DELETE /criancas/{criancaId}/anotacoes/{anotacaoId}`
+
+- Role/autenticação: `PROFISSIONAL` autor com vínculo ativo; CSRF requerido.
+- Regra: anotação `COMPARTILHADA` não pode ser excluída — `SHARED_NOTE_PRESERVED` (business rule, 409).
+- Response `204`: sem body.
+- Erros: `401`, `403`, `404`, `409` exclusão de compartilhada.
+
+### `GET /anotacoes/arquivo-proprio`
+
+- Role/autenticação: `PROFISSIONAL` autenticado; sem CSRF. Rota independente de `criancaId`; retorna somente anotações de autoria do profissional autenticado, independente do vínculo atual com a criança.
+- Response `200`: array de `ArquivoResponse` — `{id,criancaId,criancaNome,snapshotCapturadoEm,snapshotOrigem,snapshotHistoricoConfiavel,titulo,conteudo,temas,sessaoId,visibilidade,createdAt,updatedAt}`.
+- `snapshotHistoricoConfiavel`: `true` quando `snapshotOrigem="CRIACAO"`; `false` quando `snapshotOrigem="MIGRACAO_V15"`. Valor `false` indica captura técnica do legado e não deve ser apresentado como verdade histórica ao profissional.
+- Arquivo é somente leitura; não há edição ou exclusão por esta rota.
+- Erros: `401`, `403` role não profissional, `404` perfil profissional ausente.
+
+## Histórico anterior — não normativo
+
+O conteúdo abaixo preserva a evolução do contrato. Afirmações de indisponibilidade, parcialidade, `offset`, DTOs antigos ou pendência posteriormente resolvida valem somente para a etapa em que foram escritas. Em caso de conflito, prevalece o contrato vigente acima e o código mergeado no PR #80.
+
 > Atualização de 10/10/2026: em `GET /criancas/{id}/circulo/membros`, `acoesPermitidas` contém `podeRemover`, `podeSair`, `requerTransferenciaGestao` e `podeTransferirGestao`. Para o último gestor, `podeSair=false` e `requerTransferenciaGestao=true`; a tentativa direta continua retornando `409 LAST_MANAGER`.
 >
 > Foto profissional: `POST /profissionais/me/foto` (`multipart/form-data`, parte `file`) substitui a foto do próprio perfil; `DELETE /profissionais/me/foto` remove; `GET /profissionais/fotos/{key}` entrega JPEG/PNG armazenado. Limites: 5 MiB e 64–4096 px. Bytes, assinatura e decodificação são validados; `PUT /profissionais/me` não aceita `fotoPerfilUrl`.
@@ -109,7 +422,7 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 
 **Cobertura do legado:** os quatro modelos permanecem fisicamente no Prisma somente como referência para a futura migração de dados. Seus consumers ativos usam os endpoints Java da Fase 3; não houve migração real de dados.
 
-## Estado de congelamento
+## Estado de congelamento da fotografia antiga (histórico superado)
 
 O contrato Java descrito neste documento registra o que está implementado e as pendências explicitamente marcadas. Auditoria, histórico e rate limit são transversais e acrescentam possíveis erros sem dispensar autorização no recurso. Convites nominais, bootstrap do primeiro gestor, arquivo pós-saída, fórmula agregada de progresso, foto e demais itens indicados como pendentes ainda podem exigir evolução de contrato; integração React, E2E e revisão jurídica/operacional também permanecem pendentes.
 
@@ -365,34 +678,6 @@ Todos os endpoints requerem autenticação. `criancaId` opcional limita consulta
 - Response `200`: array `{nome,progresso}` agregado por criança; erros `401/403/404`.
 - Frontend: service `getProgressoPorCrianca`; compatibilidade de shape precisa ser confirmada nos tipos de apresentação.
 
-## Sessões
-
-### `POST /sessoes`
-
-- Role/autenticação: `PROFISSIONAL` com vínculo ativo à criança; CSRF requerido.
-- Request: `{criancaId,tipo,dataHora:"ISO-8601 com offset",duracao,descricao?,observacoes?}`.
-- Response `201`: `{id,dataHora,duracao,status,tipo,descricao,observacoes,criancaId}`.
-- Erros: `400` body inválido/data/duração, `401`, `403` role/vínculo/CSRF.
-- Regra: profissional vem do principal; estado inicial definido pelo domínio.
-- Frontend: `features/Sessoes/services/index.ts`; divergência: envia `tipoSessao` e `data: Date`, mas Java espera `tipo` e `dataHora` ISO string.
-
-### `GET /sessoes`, `GET /sessoes/resumo`
-
-- Role/autenticação: qualquer autenticado. Profissional vê sessões próprias; responsável vê apenas sessões de crianças vinculadas ativas. Filtro `criancaId` também valida relação.
-- Request list: `criancaId,status,tipo,periodo,search`; período `TODOS|HOJE|SEMANA|MES`. Resumo sem parâmetros.
-- Response list `200`: array de SessionResponse. Resumo: `{sessoesHoje,sessoesConcluidas,sessoesEstaSemana,sessoesPendentes}`.
-- Erros: `400` enum/período inválido, `401`, `403` relação/CSRF quando aplicável, `404` criança ausente.
-- Regra: resumo usa role para escopo; responsável não é resolvido como profissional.
-- Frontend: serviços de Sessões chamam rotas certas, mas tipo de resumo usa `sessoes_hoje` etc.; filtros/tipos da UI ainda carregam `tipoSessao` e formato antigo.
-
-### `PUT /sessoes/{id}`, `PATCH /sessoes/{id}/status`, `DELETE /sessoes/{id}`
-
-- Role/autenticação: `PROFISSIONAL` com vínculo ativo à criança associada à sessão; CSRF requerido.
-- Request PUT: `{tipo,dataHora,duracao,descricao?,observacoes?}` (sem criancaId). PATCH: `{status}`. DELETE sem body.
-- Response PUT/PATCH `200`: SessionResponse. DELETE `204`.
-- Erros: `400` request inválido, `401`, `403` role/vínculo/CSRF, `404` sessão ausente.
-- Frontend: `features/Sessoes/services/index.ts`; update usa `tipoSessao`/`data`, incompatível.
-
 ## Conexões profissionais
 
 Todos os endpoints exigem autenticação e role `PROFISSIONAL`; o ID do profissional solicitante é obtido do principal.
@@ -481,7 +766,7 @@ O run `37031485540` validou `frontend` e `backend-java` no commit funcional `39a
 - `GET /progresso/resumo-atual` e `/evolucao-historica?meses=3|6|12` são contratos distintos; ausência de registro é `metasSemDados`, não zero.
 - Sessões não expõem `observacoes` privadas fora do autor. Estados canônicos: `AGENDADA|REALIZADA|CANCELADA|NAO_COMPARECEU`.
 - Anotação usa `titulo`, `conteudo`, `temas`, `sessaoId`; correção compartilhada requer `motivoCorrecao`; `GET .../arquivo-proprio` retorna apenas autoria própria.
-- `GET /criancas/{id}/feed?size=&offset=` ordena por instante e identificador, sem janela temporal arbitrária.
+- Correção posterior da proposta histórica: `GET /criancas/{id}/feed?size=&antes=&antesId=` usa cursor por instante e identificador; `offset` nunca integrou o contrato vigente.
 - `PUT /profissionais/me` não aceita `fotoPerfilUrl`; foto é mutação separada e serializada pelo mesmo lock pessimista.
 
 Instantes são ISO-8601/UTC; cálculo local usa `America/Bahia` como fallback, sem inferir todos os municípios por UF. Política definitiva de retenção e implantação AWS não integram este contrato funcional.
