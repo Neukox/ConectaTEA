@@ -42,7 +42,7 @@ export default function DashboardStatsProfisionalView({
     {
       card: {
         label: 'Metas Ativas',
-        valor: data.totalMetas,
+        valor: data.metasAtivas,
         sub:
           data.totalMetasEsteMes > 0
             ? `+${data.totalMetasEsteMes} esta semana`
@@ -54,11 +54,11 @@ export default function DashboardStatsProfisionalView({
     {
       card: {
         label: 'Taxa de Progresso',
-        valor: `${Math.round(data.taxaProgresso)}%`,
+        valor: data.progressoAtual.media == null ? 'Indisponível' : `${Math.round(data.progressoAtual.media)}%`,
         sub:
-          data.taxaProgressoEsteMes > 0
-            ? `+${Math.round(data.taxaProgressoEsteMes)}% este mês`
-            : '0% este mês',
+          data.progressoAtual.metasSemDados > 0
+            ? `${data.progressoAtual.metasSemDados} sem dados`
+            : `${data.progressoAtual.metasComDados} com dados`,
       },
       hint: 'Porcentagem média de progresso nas metas.',
       icon: IoMdTrendingUp,

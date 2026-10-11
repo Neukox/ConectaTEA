@@ -39,7 +39,7 @@ class VinculoServiceTest {
             org.mockito.Mockito.mock(SolicitacaoTokenVinculoRepository.class);
     private final VinculoService service = new VinculoService(
             tokens, children, links, consents, null, null, requests,
-            null, "2026-10", "Acompanhamento terapêutico");
+            null, org.mockito.Mockito.mock(br.com.conectatea.dashboard.application.FeedService.class), "2026-10", "Acompanhamento terapêutico");
 
     @Test
     void nonNominalCodeCreatesPendingRequestWithoutGrantingAccess() {

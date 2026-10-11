@@ -210,6 +210,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   await profPage.getByRole('button', { name: 'Nova anotação' }).click()
   const annotationDialog = profPage.getByRole('dialog')
   await expect(annotationDialog.getByLabel('Criança', { exact: true })).toHaveValue(String(childId))
+  await annotationDialog.getByLabel('Título').fill(`Registro compartilhado ${run}`)
   await annotationDialog.getByLabel('Conteúdo').fill(sharedAnnotationText)
   await annotationDialog.getByLabel('Compartilhada', { exact: false }).check()
   const sharedAnnotationCreated = profPage.waitForResponse(

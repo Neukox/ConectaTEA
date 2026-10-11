@@ -15,6 +15,11 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.OffsetDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Map;
+import java.util.function.Function;
 import br.com.conectatea.shared.time.LocalTimeZoneResolver;
 import br.com.conectatea.crianca.domain.StatusAcompanhamento;
 import java.util.List;
@@ -38,6 +43,8 @@ public class DashboardController {
     private final br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository professionalLinks;
     private final Clock clock;
     private final LocalTimeZoneResolver timeZones;
+    private final br.com.conectatea.progresso.infrastructure.ProgressoRepository progress;
+    private final br.com.conectatea.notificacao.infrastructure.NotificacaoRepository notifications;
 
     public DashboardController(
             ProfissionalRepository professionals,
@@ -46,7 +53,9 @@ public class DashboardController {
             SessaoRepository sessions,
             ConexaoRepository connections,
             br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository professionalLinks,
-            Clock clock, LocalTimeZoneResolver timeZones) {
+            Clock clock, LocalTimeZoneResolver timeZones,
+            br.com.conectatea.progresso.infrastructure.ProgressoRepository progress,
+            br.com.conectatea.notificacao.infrastructure.NotificacaoRepository notifications) {
         this.professionals = professionals;
         this.children = children;
         this.metas = metas;
@@ -54,6 +63,7 @@ public class DashboardController {
         this.connections = connections;
         this.professionalLinks = professionalLinks;
         this.clock=clock; this.timeZones=timeZones;
+        this.progress=progress;this.notifications=notifications;
     }
 
     @GetMapping("/profissional")
@@ -85,11 +95,13 @@ public class DashboardController {
                 activeGoals,
                 professionalGoals.stream().filter(item -> item.getCreatedAt() != null
                         && !item.getCreatedAt().isBefore(monthStart)).count(),
-                averageProgress(professionalGoals),
-                averageProgress(professionalGoals.stream()
+                currentProgress(professionalGoals),
+                currentProgress(professionalGoals.stream()
                         .filter(item -> item.getCreatedAt() != null
                                 && !item.getCreatedAt().isBefore(monthStart))
-                        .toList()));
+                        .toList()),
+                countWeekSessions(childIds,zone),
+                notifications.countByDestinatarioUsuarioIdAndLidaFalse(((AuthenticatedUser)authentication.getPrincipal()).id()));
     }
 
     @GetMapping("/profissional/criancas")
@@ -120,13 +132,13 @@ public class DashboardController {
         var linkedChildren = children.findLinkedToGuardian(user.id()).stream().filter(c->c.getStatusAcompanhamento()==StatusAcompanhamento.EM_ACOMPANHAMENTO).toList();
         var ids = linkedChildren.stream().map(Crianca::getId).toList();
         var goals = ids.isEmpty() ? List.<Meta>of() : metas.findByCriancaIdIn(ids);
-        var upcomingSessions = (ids.isEmpty() ? List.<br.com.conectatea.sessao.domain.Sessao>of()
-                : sessions.findByCriancaIdIn(ids)).stream()
-                .filter(item -> item.getStatus() == StatusSessao.AGENDADA)
-                .filter(item -> item.getDataHora().toInstant().isAfter(clock.instant()))
-                .count();
+        var activeGoals=goals.stream().filter(g->g.getStatus()==StatusMeta.EM_ANDAMENTO).toList();
+        var zone=timeZones.resolve(null);var now=OffsetDateTime.ofInstant(clock.instant(),zone);
+        var upcomingSessions=ids.isEmpty()?0:sessions.countByCriancaIdInAndStatusAndDataHoraGreaterThanEqual(ids,StatusSessao.AGENDADA,now);
+        var summary=currentProgress(goals);
         return new GuardianDashboard(
-                linkedChildren.size(), goals.size(), upcomingSessions, averageProgress(goals));
+                linkedChildren.size(), activeGoals.size(), countWeekSessions(ids,zone), upcomingSessions,
+                notifications.countByDestinatarioUsuarioIdAndLidaFalse(user.id()),summary);
     }
 
     private Long currentProfessional(Authentication authentication) {
@@ -134,9 +146,16 @@ public class DashboardController {
         return professionals.findByUsuarioId(user.id()).orElseThrow().getId();
     }
 
-    private double averageProgress(List<Meta> goals) {
-        return goals.stream().mapToInt(Meta::getProgresso).average().orElse(0);
+    private ProgressSummary currentProgress(List<Meta> goals) {
+        var active=goals.stream().filter(g->g.getStatus()==StatusMeta.EM_ANDAMENTO).toList();
+        var records=active.isEmpty()?List.<br.com.conectatea.progresso.domain.Progresso>of():progress.findByMetaIdInOrderByDataAsc(active.stream().map(Meta::getId).toList());
+        Map<Long,br.com.conectatea.progresso.domain.Progresso> latest=records.stream().collect(Collectors.toMap(br.com.conectatea.progresso.domain.Progresso::getMetaId,Function.identity(),(a,b)->b));
+        var known=active.stream().filter(g->latest.containsKey(g.getId())).toList();
+        Double average=known.isEmpty()?null:known.stream().mapToInt(g->latest.get(g.getId()).getProgressoAtual()).average().orElseThrow();
+        return new ProgressSummary(average,known.size(),active.size()-known.size(),goals.stream().filter(g->g.getStatus()==StatusMeta.PAUSADA).count(),goals.stream().filter(g->g.getStatus()==StatusMeta.CONCLUIDA).count());
     }
+
+    private long countWeekSessions(List<Long> childIds,java.time.ZoneId zone){if(childIds.isEmpty())return 0;var today=LocalDate.ofInstant(clock.instant(),zone);var monday=today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));return sessions.countByCriancaIdInAndStatusAndDataHoraGreaterThanEqualAndDataHoraLessThan(childIds,StatusSessao.AGENDADA,monday.atStartOfDay(zone).toOffsetDateTime(),monday.plusWeeks(1).atStartOfDay(zone).toOffsetDateTime());}
 
     public record ProfessionalDashboard(
             int totalCriancas,
@@ -146,16 +165,22 @@ public class DashboardController {
             int totalMetas,
             int metasAtivas,
             long totalMetasEsteMes,
-            double taxaProgresso,
-            double taxaProgressoEsteMes) {
+            ProgressSummary progressoAtual,
+            ProgressSummary progressoAtualEsteMes,
+            long sessoesSemana,
+            long notificacoesNaoLidas) {
     }
 
     public record GuardianDashboard(
             int totalCriancas,
-            int totalMetas,
+            int metasAtivas,
+            long sessoesSemana,
             long sessoesProximas,
-            double taxaProgresso) {
+            long notificacoesNaoLidas,
+            ProgressSummary progressoAtual) {
     }
+
+    public record ProgressSummary(Double media,int metasComDados,int metasSemDados,long metasPausadas,long metasConcluidas){}
 
     public record ChildDashboard(
             Long id,

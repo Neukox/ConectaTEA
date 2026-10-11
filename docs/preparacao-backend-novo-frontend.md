@@ -244,6 +244,13 @@ Próximos passos concretos: reexecutar Testcontainers e E2E com Docker ativo; co
 | Banco | V15 aditiva com snapshot, origem, constraints, índice e visibilidade do feed | V1→V15 limpa e V7→V15 populada em PostgreSQL 16 | validado; rollback é de aplicação, sem remoção destrutiva do histórico |
 
 A coorte de cada ponto histórico usa `[início local do mês, início local do mês seguinte)`; o mês atual termina em `Clock.instant()`. Meta concluída antes do início do ponto fica fora; conclusão dentro do ponto contribui com 100%; pausa no limite exclui contribuição e é contada separadamente. Ausência de progresso permanece `metasSemDados`.
+
+## Continuidade V16 — dashboards, gestão no feed e validação
+
+- Dashboard: os campos atuais seguem a semântica `/progresso/resumo-atual`: média aritmética das metas em andamento com dado (peso igual por meta), média `null` sem amostra, contagens com/sem dado e estados pausado/concluído separados. Semana local é segunda a segunda, com limite final exclusivo. Sessões próximas começam no Clock atual; não lidas incluem notificações ocultadas do sino.
+- Eventos: convite nominal aceito e solicitação por código/QR aprovada projetam `MEMBRO_ENTROU`/CIRCULO via serviços de domínio; saída voluntária projeta `MEMBRO_SAIU`/CIRCULO; transferência e remoção projetam `GESTAO_TRANSFERIDA` e `MEMBRO_REMOVIDO`/GESTORES; aprovação do primeiro gestor é projetada transacionalmente do histórico por trigger V16. Leitura de GESTORES permanece restrita a gestores atuais da criança. Sem backfill sem prova persistida.
+- Migration: `V16__first_manager_feed_event.sql` adiciona trigger de projeção do evento de aprovação do primeiro gestor. É aditiva e transacional; rollback da aplicação não desfaz migration nem remove histórico. Para upgrade, execute Flyway normalmente; não reverta removendo tabela/trigger de eventos.
+- Evidência desta execução: `mvnw.cmd -B clean test` está em execução; migrations V1–V16 e `ddl-auto=validate` já iniciaram com sucesso em PostgreSQL 16 via Testcontainers. `npm.cmd run lint` aprovou com 0 erros/5 avisos; `npm.cmd run build` aprovou. O Playwright ainda depende da inicialização coordenada de backend e frontend, e será registrado com resultado real.
 # Execução complementar aprovada — 10/10/2026
 
 As decisões do prompt de execução substituem pendências equivalentes deste documento. A implementação aditiva está em `V14__frontend_contract_completion.sql`: bootstrap administrativo do primeiro gestor sem promoção legada, estados da criança, sessão/meta, versões de anotação, feed e fila de limpeza de fotos. A ordem global de locks de gestão é: (1) vínculos ativos da criança por ID, (2) convite/solicitação por ID, (3) vínculo-alvo. Leituras usam consultas sem lock de escrita.

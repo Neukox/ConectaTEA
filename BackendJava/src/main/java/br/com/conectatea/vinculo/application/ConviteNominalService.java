@@ -2,6 +2,7 @@ package br.com.conectatea.vinculo.application;
 
 import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
+import br.com.conectatea.dashboard.application.FeedService;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.shared.domain.BusinessRuleException;
@@ -34,18 +35,20 @@ public class ConviteNominalService {
     private final Clock clock;
     private final String consentVersion;
     private final String consentPurpose;
+    private final FeedService feed;
 
     public ConviteNominalService(ConviteCirculoRepository invites,
             VinculoResponsavelRepository guardians,
             VinculoProfissionalRepository professionalLinks,
             ProfissionalRepository professionals, UsuarioRepository users,
             CriancaRepository children, HistoricoVinculoRepository history,
-            ConsentimentoRepository consents, AuditLogService audits, Clock clock,
+            ConsentimentoRepository consents, AuditLogService audits, Clock clock, FeedService feed,
             @Value("${app.consent.version:1.0}") String consentVersion,
             @Value("${app.consent.purpose:Acompanhamento terapêutico da criança}") String consentPurpose) {
         this.invites=invites; this.guardians=guardians; this.professionalLinks=professionalLinks;
         this.professionals=professionals; this.users=users; this.children=children;
         this.history=history; this.consents=consents; this.audits=audits; this.clock=clock;
+        this.feed=feed;
         this.consentVersion=consentVersion; this.consentPurpose=consentPurpose;
     }
 
@@ -103,6 +106,8 @@ public class ConviteNominalService {
         history.save(new HistoricoVinculo(invite.getCriancaId(),actor.id(),invite.getPapel()==PapelCirculo.PROFISSIONAL?null:actor.id(),professionalId,"CONVITE_NOMINAL_ACEITO","VINCULADO",invite.getPapel().name()));
         invite.aceitar(now);
         audit(actor.id(),"CONVITE_NOMINAL_ACEITO",invite,professionalId,"papel="+invite.getPapel().name());
+        feed.registrar(invite.getCriancaId(),actor.id(),"MEMBRO_ENTROU","CONVITE_CIRCULO",invite.getId(),
+                "Novo membro no círculo","Um convite nominal foi aceito.",true);
         return view(invite);
     }
 

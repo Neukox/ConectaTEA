@@ -6,9 +6,20 @@ export interface DadosDashboard {
   profissionaisAtivos: number
   profissionaisAtivosEsteMes: number
   totalMetas: number
+  metasAtivas: number
   totalMetasEsteMes: number
-  taxaProgresso: number
-  taxaProgressoEsteMes: number
+  progressoAtual: ResumoProgressoAtual
+  progressoAtualEsteMes: ResumoProgressoAtual
+  sessoesSemana: number
+  notificacoesNaoLidas: number
+}
+
+export interface ResumoProgressoAtual {
+  media: number | null
+  metasComDados: number
+  metasSemDados: number
+  metasPausadas: number
+  metasConcluidas: number
 }
 
 export interface DadosCriancasDashboard {
@@ -28,7 +39,9 @@ export interface DadosMetasDashboard {
 
 export interface DadosDashboardResponsavel {
   totalCriancas: number
-  totalMetas: number
+  metasAtivas: number
+  sessoesSemana: number
   sessoesProximas: number
-  taxaProgresso: number
+  notificacoesNaoLidas: number
+  progressoAtual: ResumoProgressoAtual
 }

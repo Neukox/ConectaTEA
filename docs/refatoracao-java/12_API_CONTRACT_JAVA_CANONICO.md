@@ -502,3 +502,11 @@ Instantes são ISO-8601/UTC; cálculo local usa `America/Bahia` como fallback, s
 - `CIRCULO` exige vínculo atual com a criança. `GESTORES` exige adicionalmente vínculo atual `RESPONSAVEL_GESTOR` naquela mesma criança; a avaliação ocorre evento a evento também no feed agregado.
 - Eventos restritos emitidos: `GESTAO_TRANSFERIDA` e `MEMBRO_REMOVIDO`. A descrição é mínima e não contém contatos, provas administrativas ou dados clínicos privados.
 - O ponto mensal de progresso usa limite final exclusivo no fuso resolvido. A sequência é ordenada por instante e ID. Conclusão anterior exclui a meta até eventual reabertura; reabertura no ponto inicia nova fase, e conclusão ou pausa posterior prevalece conforme a última transição.
+
+### Contrato de dashboards e eventos de gestão (V16)
+
+`GET /dashboard/profissional` e `GET /dashboard/responsavel` fornecem contagens de metas EM_ANDAMENTO, sessões AGENDADA da semana local (segunda inclusiva até a segunda seguinte exclusiva), notificações não lidas (também as ocultadas do sino) e resumo atual. A média geral, quando disponível, é aritmética entre metas EM_ANDAMENTO que têm registros, com peso igual por meta. `media: null` junto de `metasComDados`/`metasSemDados` distingue ausência de amostra do valor 0. Metas pausadas e concluídas são contadas à parte. Sessões futuras contam desde o Clock atual.
+
+Feed de dashboard usa `size=5`, detalhe `size=10`. `id` é a ocorrência para cursor junto a `instante`; `recursoTipo + recursoId` abre o recurso. `CIRCULO` depende de vínculo atual. `GESTORES` requer vínculo atual `RESPONSAVEL_GESTOR` na criança do evento, inclusive no agregado.
+
+Catálogo de gestão: `PRIMEIRO_GESTOR_APROVADO` é GESTORES e nasce do histórico por trigger V16; `GESTAO_TRANSFERIDA` e `MEMBRO_REMOVIDO` são GESTORES; `MEMBRO_ENTROU` no aceite nominal ou aprovação de código/QR e `MEMBRO_SAIU` em saída voluntária são CIRCULO. Somente texto mínimo é projetado. Operações anteriores sem ocorrência persistida não recebem backfill inventado.

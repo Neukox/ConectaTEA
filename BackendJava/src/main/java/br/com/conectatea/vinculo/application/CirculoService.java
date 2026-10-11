@@ -130,6 +130,8 @@ public class CirculoService {
         link.desvincular("SAIDA_VOLUNTARIA");
         audits.record(actor.id(), "VINCULO_ENCERRADO", "VINCULO_PROFISSIONAL", link.getId(),
                 childId, profile.getId(), "SUCESSO", "motivo=SAIDA_VOLUNTARIA");
+        feed.registrar(childId,actor.id(),"MEMBRO_SAIU","VINCULO_PROFISSIONAL",link.getId(),
+                "Membro saiu do círculo","Um profissional encerrou seu vínculo.",true);
     }
 
     @Transactional
@@ -214,6 +216,8 @@ public class CirculoService {
                 "VINCULO_ENCERRADO", "DESVINCULADO", reason));
         audits.record(actorId, "VINCULO_ENCERRADO", "VINCULO_RESPONSAVEL", own.getId(),
                 childId, null, "SUCESSO", "motivo=" + reason);
+        feed.registrar(childId,actorId,"MEMBRO_SAIU","VINCULO_RESPONSAVEL",own.getId(),
+                "Membro saiu do círculo","Um responsável encerrou seu vínculo.",true);
     }
 
     private void recordRemoval(Long actorId, Long childId, Long guardianId, Long professionalId,

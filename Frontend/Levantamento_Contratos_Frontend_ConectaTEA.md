@@ -50,6 +50,19 @@ Validação desta tranche: `mvn clean test` executou 128 testes, sem falhas ou t
 
 ### Atualização V15
 
+### Atualização V16 — dashboards, gestão no feed e validação
+
+`GET /dashboard/profissional` e `GET /dashboard/responsavel` entregam `totalCriancas`, `metasAtivas`, `sessoesSemana`, `notificacoesNaoLidas` e `progressoAtual`; o dashboard responsável inclui também `sessoesProximas`. O resumo atual inclui somente metas EM_ANDAMENTO com progresso conhecido, cada meta com peso igual, e informa `metasComDados`, `metasSemDados`, `metasPausadas` e `metasConcluidas`. Média `null` é ausência de amostra; progresso real 0 permanece 0. Semana usa segunda-feira local até a segunda seguinte exclusiva. Notificações não lidas incluem as ocultadas do sino.
+
+| Bloco | Endpoint e campos | Permissão/ação | Vazio/erro | Estado desta tranche |
+|---|---|---|---|---|
+| Dashboard profissional | `/dashboard/profissional`: totais de crianças/equipe/metas, `progressoAtual`, semana e não lidas | profissional autenticado e vínculos atuais | contagens 0; média null com amostra explícita; erro HTTP | implementação/build; E2E browser pendente |
+| Dashboard responsável | `/dashboard/responsavel`: crianças em acompanhamento, metas ativas, semana/próximas sessões, não lidas, progresso | responsável e vínculos atuais | mesmos estados explícitos | implementação/build; E2E browser pendente |
+| Feed agregado | `/dashboard/feed?size=5&antes=&antesId=` | CIRCULO por vínculo atual; GESTORES só gestor atual da criança do evento | lista vazia e cursor validado | teste PostgreSQL de cursor/visibilidade |
+| Detalhe e feed | `/criancas/{id}`, `/criancas/{id}/feed?size=10` | autorização revalidada ao abrir recurso | erro contratual de acesso ou listas vazias | cobertura backend anterior; E2E browser pendente |
+
+Eventos de gestão: primeiro gestor aprovado (`PRIMEIRO_GESTOR_APROVADO`, GESTORES, trigger transacional V16 sobre histórico); aceite nominal e aprovação código/QR (`MEMBRO_ENTROU`, CIRCULO); transferência e remoção (`GESTAO_TRANSFERIDA`/`MEMBRO_REMOVIDO`, GESTORES); saída voluntária (`MEMBRO_SAIU`, CIRCULO). Convite emitido/cancelado e solicitação recusada não alteram o círculo e não geram feed. O resumo do evento é mínimo, sem contato ou prova administrativa. Não há backfill fictício.
+
 O Docker foi iniciado e a lacuna acima foi revalidada: `mvnw.cmd -B clean test` executou 132 testes, sem falhas, erros ou ignorados, em PostgreSQL 16. Flyway validou instalação limpa V1→V15, upgrade populado V7→V15 e `ddl-auto=validate`.
 
 - P05 Progresso: consumir séries por categoria; não calcular uma média geral no cliente.

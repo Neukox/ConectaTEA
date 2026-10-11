@@ -1,6 +1,7 @@
 package br.com.conectatea.vinculo.application;
 
 import br.com.conectatea.auditoria.application.AuditLogService;
+import br.com.conectatea.dashboard.application.FeedService;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.usuario.domain.TipoUsuario;
@@ -49,6 +50,7 @@ public class VinculoService {
     private final AuditLogService audits;
     private final SolicitacaoTokenVinculoRepository requests;
     private final UsuarioRepository users;
+    private final FeedService feed;
     private final SecureRandom random = new SecureRandom();
     private final String consentVersion;
     private final String consentPurpose;
@@ -63,6 +65,7 @@ public class VinculoService {
             AuditLogService audits,
             SolicitacaoTokenVinculoRepository requests,
             UsuarioRepository users,
+            FeedService feed,
             @Value("${app.consent.version:1.0}") String consentVersion,
             @Value("${app.consent.purpose:Acompanhamento terapêutico da criança}")
                     String consentPurpose) {
@@ -74,6 +77,7 @@ public class VinculoService {
         this.audits = audits;
         this.requests = requests;
         this.users = users;
+        this.feed = feed;
         this.consentVersion = consentVersion;
         this.consentPurpose = consentPurpose;
     }
@@ -81,7 +85,7 @@ public class VinculoService {
     public VinculoService(TokenVinculoRepository tokens, CriancaRepository children,
             VinculoResponsavelRepository links, ConsentimentoRepository consents,
             String consentVersion, String consentPurpose) {
-        this(tokens, children, links, consents, null, null, null, null, consentVersion, consentPurpose);
+        this(tokens, children, links, consents, null, null, null, null, null, consentVersion, consentPurpose);
     }
 
     @Transactional
@@ -183,6 +187,8 @@ public class VinculoService {
                 token.getProfissionalId(), "SOLICITACAO_VINCULO_APROVADA", "VINCULADO", null);
         audit(manager.id(), "SOLICITACAO_VINCULO_APROVADA", "SOLICITACAO_VINCULO",
                 request.getId(), childId, token.getProfissionalId(), null);
+        feed.registrar(childId,manager.id(),"MEMBRO_ENTROU","SOLICITACAO_VINCULO",request.getId(),
+                "Novo membro no círculo","Uma solicitação de entrada foi aprovada.",true);
         return new LinkRequest(request.getId(), childId, request.getStatus());
     }
 
