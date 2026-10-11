@@ -28,8 +28,8 @@ public class DashboardFeedController {
                 :children.findLinkedToGuardian(user.id()).stream().map(Crianca::getId).toList();
         if(ids.isEmpty())return new FeedController.Page(List.of(),false,null,null);
         var placeholders=String.join(",",Collections.nCopies(ids.size(),"?"));
-        var sql="SELECT criado_em instante,id recurso_id,tipo,recurso_tipo,titulo,resumo,id FROM eventos_feed WHERE compartilhado=true AND visibilidade='CIRCULO' AND crianca_id IN ("+placeholders+")";
-        var args=new ArrayList<Object>(ids);
+        var sql="SELECT criado_em instante,recurso_id,tipo,recurso_tipo,titulo,resumo,id FROM eventos_feed e WHERE compartilhado=true AND crianca_id IN ("+placeholders+") AND (visibilidade='CIRCULO' OR (visibilidade='GESTORES' AND EXISTS (SELECT 1 FROM vinculos_responsaveis_criancas v WHERE v.crianca_id=e.crianca_id AND v.responsavel_id=? AND v.status='VINCULADO' AND v.papel='RESPONSAVEL_GESTOR')))";
+        var args=new ArrayList<Object>(ids);args.add(user.id());
         if(antes!=null){sql+=" AND (criado_em < ? OR (criado_em = ? AND id < ?))";args.add(Timestamp.from(antes));args.add(Timestamp.from(antes));args.add(antesId);}
         sql+=" ORDER BY criado_em DESC,id DESC LIMIT ?";args.add(size+1);
         var items=jdbc.query(sql,(rs,n)->new FeedController.Item(rs.getString("tipo"),rs.getString("recurso_tipo"),rs.getLong("recurso_id"),rs.getString("titulo"),rs.getString("resumo"),rs.getTimestamp("instante").toInstant(),rs.getLong("id")),args.toArray());

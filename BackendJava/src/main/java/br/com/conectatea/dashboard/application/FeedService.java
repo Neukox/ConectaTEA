@@ -20,8 +20,18 @@ public class FeedService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void registrar(Long criancaId, Long atorUsuarioId, String tipo, String recursoTipo, Long recursoId, String titulo, String resumo, boolean compartilhado) {
+        registrar(criancaId, atorUsuarioId, tipo, recursoTipo, recursoId, titulo, resumo, compartilhado, "CIRCULO");
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void registrarGestores(Long criancaId, Long atorUsuarioId, String tipo, String recursoTipo,
+                                  Long recursoId, String titulo, String resumo) {
+        registrar(criancaId, atorUsuarioId, tipo, recursoTipo, recursoId, titulo, resumo, true, "GESTORES");
+    }
+
+    private void registrar(Long criancaId, Long atorUsuarioId, String tipo, String recursoTipo, Long recursoId, String titulo, String resumo, boolean compartilhado, String visibilidade) {
         repository.save(new EventoFeed(criancaId, atorUsuarioId, tipo, recursoTipo, recursoId,
-                limitar(titulo, LIMITE_TITULO, "Evento"), resumir(resumo), compartilhado));
+                limitar(titulo, LIMITE_TITULO, "Evento"), resumir(resumo), compartilhado, visibilidade));
     }
 
     /** O feed é uma projeção; o texto integral permanece no recurso e no histórico. */

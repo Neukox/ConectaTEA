@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.crianca.domain.Crianca;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
+import br.com.conectatea.dashboard.application.FeedService;
 import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
@@ -34,11 +36,12 @@ class CirculoServiceTest {
     private final CriancaRepository children = mock(CriancaRepository.class);
     private final VinculoProfissionalRepository professionalLinks = mock(VinculoProfissionalRepository.class);
     private final UsuarioRepository users = mock(UsuarioRepository.class);
+    private final FeedService feed = mock(FeedService.class);
     private final CirculoService service = new CirculoService(guardians,
             professionalLinks, mock(ProfissionalRepository.class),
             users, mock(AuthorizationService.class), children,
             mock(HistoricoVinculoRepository.class), mock(AuditLogService.class),
-            mock(SolicitacaoTokenVinculoRepository.class));
+            mock(SolicitacaoTokenVinculoRepository.class), feed);
 
     @Test
     void lastManagerCannotLeave() {
@@ -80,6 +83,8 @@ class CirculoServiceTest {
 
         assertThat(current.getPapel()).isEqualTo(PapelCirculo.RESPONSAVEL);
         assertThat(target.getPapel()).isEqualTo(PapelCirculo.RESPONSAVEL_GESTOR);
+        verify(feed).registrarGestores(10L,1L,"GESTAO_TRANSFERIDA","VINCULO_RESPONSAVEL",
+                target.getId(),"Gestão transferida","A gestão da criança foi transferida.");
     }
 
     @Test

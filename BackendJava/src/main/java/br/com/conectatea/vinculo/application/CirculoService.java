@@ -2,6 +2,7 @@ package br.com.conectatea.vinculo.application;
 
 import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
+import br.com.conectatea.dashboard.application.FeedService;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
@@ -37,17 +38,19 @@ public class CirculoService {
     private final HistoricoVinculoRepository history;
     private final AuditLogService audits;
     private final SolicitacaoTokenVinculoRepository requests;
+    private final FeedService feed;
 
     public CirculoService(VinculoResponsavelRepository guardians,
             VinculoProfissionalRepository professionalsLinks,
             ProfissionalRepository professionals, UsuarioRepository users,
             AuthorizationService authorization, CriancaRepository children,
             HistoricoVinculoRepository history, AuditLogService audits,
-            SolicitacaoTokenVinculoRepository requests) {
+            SolicitacaoTokenVinculoRepository requests, FeedService feed) {
         this.guardians = guardians; this.professionalsLinks = professionalsLinks;
         this.professionals = professionals; this.users = users; this.authorization = authorization;
         this.children = children; this.history = history; this.audits = audits;
         this.requests = requests;
+        this.feed = feed;
     }
 
     @Transactional(readOnly = true)
@@ -110,6 +113,8 @@ public class CirculoService {
                 "GESTAO_TRANSFERIDA", "RESPONSAVEL_GESTOR", null));
         audits.record(actor.id(), "GESTAO_TRANSFERIDA", "VINCULO_RESPONSAVEL", target.getId(),
                 childId, null, "SUCESSO", "destinatarioUsuarioId=" + targetGuardianUserId);
+        feed.registrarGestores(childId, actor.id(), "GESTAO_TRANSFERIDA", "VINCULO_RESPONSAVEL",
+                target.getId(), "Gestão transferida", "A gestão da criança foi transferida.");
     }
 
     @Transactional
@@ -217,6 +222,8 @@ public class CirculoService {
                 "MEMBRO_REMOVIDO", "DESVINCULADO", "tipo=" + type));
         audits.record(actorId, "MEMBRO_REMOVIDO", "VINCULO_" + type, linkId,
                 childId, professionalId, "SUCESSO", null);
+        feed.registrarGestores(childId, actorId, "MEMBRO_REMOVIDO", "VINCULO_" + type,
+                linkId, "Membro removido", "Um vínculo do círculo foi encerrado.");
     }
 
     private void requireActiveChild(Long childId) {

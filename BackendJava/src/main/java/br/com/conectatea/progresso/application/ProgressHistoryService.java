@@ -36,13 +36,14 @@ public class ProgressHistoryService {
                     if(meta.getCategoria()!=category)continue;
                     var created=meta.getDataInicio().atStartOfDay(zone).toInstant();
                     if(!created.isBefore(end))continue;
-                    var state=stateAt(eventsByMeta.getOrDefault(meta.getId(),List.of()),end);
-                    var concludedBefore=lastEvent(eventsByMeta.getOrDefault(meta.getId(),List.of()),"CONCLUIDA",start).isPresent() && stateAt(eventsByMeta.getOrDefault(meta.getId(),List.of()),start)==StatusMeta.CONCLUIDA;
-                    if(concludedBefore)continue;
-                    changes.addAll(changesIn(meta,eventsByMeta.getOrDefault(meta.getId(),List.of()),start,end,zone));
+                    var metaEvents=eventsByMeta.getOrDefault(meta.getId(),List.of());
+                    var stateAtStart=stateAt(metaEvents,start);
+                    var reopenedInPoint=hasEvent(metaEvents,"REABERTA",start,end);
+                    if(stateAtStart==StatusMeta.CONCLUIDA&&!reopenedInPoint)continue;
+                    var state=stateAt(metaEvents,end);
+                    changes.addAll(changesIn(meta,metaEvents,start,end,zone));
                     if(state==StatusMeta.PAUSADA){paused++;continue;}
-                    var completed=lastEvent(eventsByMeta.getOrDefault(meta.getId(),List.of()),"CONCLUIDA",end);
-                    if(completed.isPresent()&&!completed.get().getData().isBefore(start)){values.add(100);continue;}
+                    if(state==StatusMeta.CONCLUIDA){values.add(100);continue;}
                     var latest=progressByMeta.getOrDefault(meta.getId(),List.of()).stream().filter(p->p.getData().isBefore(end)).reduce((a,b)->b);
                     if(latest.isPresent())values.add(latest.get().getProgressoAtual());else missing++;
                 }
@@ -57,6 +58,7 @@ public class ProgressHistoryService {
 
     private StatusMeta stateAt(List<EventoMeta> events,Instant boundary){var state=StatusMeta.EM_ANDAMENTO;for(var event:events){if(!event.getData().isBefore(boundary))break;state=switch(event.getTipo()){case "PAUSA"->StatusMeta.PAUSADA;case "RETOMADA","REABERTA"->StatusMeta.EM_ANDAMENTO;case "CONCLUIDA"->StatusMeta.CONCLUIDA;default->state;};}return state;}
     private Optional<EventoMeta> lastEvent(List<EventoMeta> events,String type,Instant boundary){return events.stream().filter(e->e.getTipo().equals(type)&&e.getData().isBefore(boundary)).reduce((a,b)->b);}
+    private boolean hasEvent(List<EventoMeta> events,String type,Instant start,Instant end){return events.stream().anyMatch(e->e.getTipo().equals(type)&&!e.getData().isBefore(start)&&e.getData().isBefore(end));}
     private List<Change> changesIn(Meta meta,List<EventoMeta> events,Instant start,Instant end,ZoneId zone){var changes=new ArrayList<Change>();var created=meta.getDataInicio().atStartOfDay(zone).toInstant();if(!created.isBefore(start)&&created.isBefore(end))changes.add(new Change("ENTRADA",meta.getId(),created));for(var e:events)if(!e.getData().isBefore(start)&&e.getData().isBefore(end)&&Set.of("PAUSA","RETOMADA","REABERTA","CONCLUIDA").contains(e.getTipo()))changes.add(new Change(e.getTipo(),meta.getId(),e.getData()));return changes;}
     public record Change(String tipo,Long metaId,Instant instante){}
     public record Point(String mes,Double average,int amostra,int metasSemDados,int metasPausadas,List<Change> alteracoes,boolean composicaoAlterada){}

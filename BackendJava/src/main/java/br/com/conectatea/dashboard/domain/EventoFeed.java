@@ -29,6 +29,8 @@ public class EventoFeed {
     
     private boolean compartilhado;
 
+    private String visibilidade;
+
     @Column(name = "criado_em")
     private Instant criadoEm;
 
@@ -36,6 +38,10 @@ public class EventoFeed {
     }
 
     public EventoFeed(Long criancaId, Long atorUsuarioId, String tipo, String recursoTipo, Long recursoId, String titulo, String resumo, boolean compartilhado) {
+        this(criancaId, atorUsuarioId, tipo, recursoTipo, recursoId, titulo, resumo, compartilhado, "CIRCULO");
+    }
+
+    public EventoFeed(Long criancaId, Long atorUsuarioId, String tipo, String recursoTipo, Long recursoId, String titulo, String resumo, boolean compartilhado, String visibilidade) {
         this.criancaId = criancaId;
         this.atorUsuarioId = atorUsuarioId;
         this.tipo = tipo;
@@ -44,6 +50,7 @@ public class EventoFeed {
         this.titulo = titulo;
         this.resumo = resumo;
         this.compartilhado = compartilhado;
+        this.visibilidade = visibilidade;
         this.criadoEm = Instant.now();
     }
 
@@ -56,5 +63,6 @@ public class EventoFeed {
     public String getTitulo() { return titulo; }
     public String getResumo() { return resumo; }
     public boolean isCompartilhado() { return compartilhado; }
+    public String getVisibilidade() { return visibilidade; }
     public Instant getCriadoEm() { return criadoEm; }
 }

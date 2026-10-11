@@ -12,13 +12,19 @@ public class FeedController{
         if ((antes == null) != (antesId == null)) throw new IllegalArgumentException("antes e antesId devem ser informados juntos");
         
         String sql = """
-            SELECT criado_em instante, id recurso_id, tipo, recurso_tipo, titulo, resumo, id
+            SELECT criado_em instante, recurso_id, tipo, recurso_tipo, titulo, resumo, id
             FROM eventos_feed 
-            WHERE crianca_id = ? AND compartilhado = true AND visibilidade='CIRCULO'
+            WHERE crianca_id = ? AND compartilhado = true
+              AND (visibilidade='CIRCULO' OR (visibilidade='GESTORES' AND EXISTS (
+                SELECT 1 FROM vinculos_responsaveis_criancas v
+                WHERE v.crianca_id=eventos_feed.crianca_id AND v.responsavel_id=?
+                  AND v.status='VINCULADO' AND v.papel='RESPONSAVEL_GESTOR'
+              )))
         """;
         
         List<Object> args = new ArrayList<>();
         args.add(criancaId);
+        args.add(((AuthenticatedUser)authentication.getPrincipal()).id());
         
         if (antes != null && antesId != null) {
             sql += " AND (criado_em < ? OR (criado_em = ? AND id < ?)) ";
