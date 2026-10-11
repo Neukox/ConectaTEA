@@ -287,8 +287,14 @@ export default function CadastrarCriancas() {
 
           {/* Lista de Crianças */}
           {isLoading ? (
-            <div className='py-8 text-center'>
-              <div className='mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-green-600'></div>
+            <div
+              role='status'
+              className='py-8 text-center'
+            >
+              <div
+                aria-hidden='true'
+                className='mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-green-600'
+              ></div>
               <p className='mt-2 text-gray-500'>Carregando crianças...</p>
             </div>
           ) : criancasFiltradas.length === 0 ? (

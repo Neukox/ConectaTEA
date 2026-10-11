@@ -52,8 +52,15 @@ export default function MetasPage() {
         <div className='mt-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:px-8'>
           <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <div className='relative w-full md:max-w-xl'>
+              <label
+                htmlFor='busca-metas'
+                className='sr-only'
+              >
+                Buscar metas por nome da criança ou título
+              </label>
               <input
-                type='text'
+                id='busca-metas'
+                type='search'
                 placeholder='Buscar metas por nome da criança ou título...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
