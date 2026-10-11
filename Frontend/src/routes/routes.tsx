@@ -28,6 +28,8 @@ import DashboardResponsavel from '../pages/Responsavel/Dashboard'
 import DashboardRedirect from '../components/DashboardRedirect'
 import MeusVinculos from '../pages/Responsavel/MeusVinculos'
 import AnotacoesResponsavel from '../pages/Responsavel/Anotacoes/Anotacoes'
+import DetalheCriancaResponsavel from '../pages/Responsavel/DetalheCrianca'
+import NotificacoesPage from '../pages/Notificacoes/NotificacoesPage'
 
 export default function AppRoutes() {
   return (
@@ -174,6 +176,15 @@ export default function AppRoutes() {
         }
       />
 
+      <Route
+        path='/profissional/notificacoes'
+        element={
+          <ProtectedRoute allowedRoles={['PROFISSIONAL']}>
+            <NotificacoesPage basePath='/profissional' />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Rotas do Responsável */}
       <Route
         path='/responsavel/dashboard'
@@ -206,6 +217,24 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['RESPONSAVEL']}>
             <AnotacoesResponsavel />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path='/responsavel/criancas/:id'
+        element={
+          <ProtectedRoute allowedRoles={['RESPONSAVEL']}>
+            <DetalheCriancaResponsavel />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path='/responsavel/notificacoes'
+        element={
+          <ProtectedRoute allowedRoles={['RESPONSAVEL']}>
+            <NotificacoesPage basePath='/responsavel' />
           </ProtectedRoute>
         }
       />
