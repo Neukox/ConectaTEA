@@ -134,6 +134,8 @@ public class ApiExceptionHandler {
             String message,
             HttpServletRequest request,
             Map<String, String> fields) {
+        Object requestId = request.getAttribute(
+                br.com.conectatea.security.RequestCorrelationFilter.REQUEST_ATTRIBUTE);
         var body = new ApiError(
                 Instant.now(),
                 status.value(),
@@ -141,7 +143,8 @@ public class ApiExceptionHandler {
                 code,
                 message,
                 request.getRequestURI(),
-                fields);
+                fields,
+                requestId instanceof String value ? value : null);
         return ResponseEntity.status(status).body(body);
     }
 
@@ -152,7 +155,8 @@ public class ApiExceptionHandler {
             String code,
             String message,
             String path,
-            Map<String, String> fields) {
+            Map<String, String> fields,
+            String requestId) {
     }
 }
 

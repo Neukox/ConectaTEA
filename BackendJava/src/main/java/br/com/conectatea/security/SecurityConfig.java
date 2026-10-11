@@ -38,6 +38,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    RequestCorrelationFilter requestCorrelationFilter() {
+        return new RequestCorrelationFilter();
+    }
+
+    @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -50,7 +55,8 @@ public class SecurityConfig {
                 .toList());
         configuration.setAllowedMethods(
                 Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Content-Type", "X-XSRF-TOKEN"));
+        configuration.setAllowedHeaders(Arrays.asList("Content-Type", "X-XSRF-TOKEN", "X-Request-Id"));
+        configuration.setExposedHeaders(Arrays.asList("X-Request-Id"));
         configuration.setAllowCredentials(true);
 
         var source = new UrlBasedCorsConfigurationSource();
@@ -63,6 +69,7 @@ public class SecurityConfig {
             HttpSecurity http,
             JwtAuthenticationFilter jwt,
             RateLimitFilter rateLimit,
+            RequestCorrelationFilter correlation,
             ObjectMapper objectMapper) throws Exception {
         var csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrf.setCookiePath("/");
@@ -98,6 +105,7 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated())
                 .addFilterBefore(rateLimit, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(correlation, RateLimitFilter.class)
                 .addFilterAfter(jwt, RateLimitFilter.class)
                 .build();
     }
@@ -111,6 +119,7 @@ public class SecurityConfig {
             String path) throws IOException {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        Object requestId = response.getHeader(RequestCorrelationFilter.REQUEST_ID_HEADER);
         var body = new LinkedHashMap<String, Object>();
         body.put("timestamp", Instant.now());
         body.put("status", status);
@@ -118,6 +127,9 @@ public class SecurityConfig {
         body.put("code", code);
         body.put("message", message);
         body.put("path", path);
+        if (requestId != null) {
+            body.put("requestId", requestId);
+        }
         objectMapper.writeValue(response.getOutputStream(), body);
     }
 }
