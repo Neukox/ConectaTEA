@@ -5,8 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
+import br.com.conectatea.profissional.domain.Profissional;
 import br.com.conectatea.crianca.domain.Crianca;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.dashboard.application.FeedService;
@@ -20,6 +22,7 @@ import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
 import br.com.conectatea.vinculo.domain.PapelCirculo;
 import br.com.conectatea.vinculo.domain.StatusVinculo;
 import br.com.conectatea.vinculo.domain.VinculoResponsavelCrianca;
+import br.com.conectatea.vinculo.domain.VinculoProfissionalCrianca;
 import br.com.conectatea.vinculo.infrastructure.VinculoProfissionalRepository;
 import br.com.conectatea.vinculo.infrastructure.VinculoResponsavelRepository;
 import br.com.conectatea.vinculo.infrastructure.HistoricoVinculoRepository;
@@ -35,13 +38,15 @@ class CirculoServiceTest {
     private final VinculoResponsavelRepository guardians = mock(VinculoResponsavelRepository.class);
     private final CriancaRepository children = mock(CriancaRepository.class);
     private final VinculoProfissionalRepository professionalLinks = mock(VinculoProfissionalRepository.class);
+    private final ProfissionalRepository professionals = mock(ProfissionalRepository.class);
     private final UsuarioRepository users = mock(UsuarioRepository.class);
     private final FeedService feed = mock(FeedService.class);
+    private final SolicitacaoTokenVinculoRepository requests = mock(SolicitacaoTokenVinculoRepository.class);
     private final CirculoService service = new CirculoService(guardians,
-            professionalLinks, mock(ProfissionalRepository.class),
+            professionalLinks, professionals,
             users, mock(AuthorizationService.class), children,
             mock(HistoricoVinculoRepository.class), mock(AuditLogService.class),
-            mock(SolicitacaoTokenVinculoRepository.class), feed);
+            requests, feed);
 
     @Test
     void lastManagerCannotLeave() {
@@ -128,6 +133,21 @@ class CirculoServiceTest {
     }
 
     @Test
+    void professionalAccountDeactivationEndsEveryActiveLink() {
+        var profile = professional(31L, 3L, null, null);
+        var first = professionalLink(201L, 31L, 10L);
+        var second = professionalLink(202L, 31L, 11L);
+        when(professionals.findByUsuarioId(3L)).thenReturn(Optional.of(profile));
+        when(professionalLinks.findAllByProfissionalIdAndStatus(31L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(first, second));
+
+        service.deactivateProfessional(3L);
+
+        assertThat(first.getStatus()).isEqualTo(StatusVinculo.DESVINCULADO);
+        assertThat(second.getStatus()).isEqualTo(StatusVinculo.DESVINCULADO);
+    }
+
+    @Test
     void transferRejectsUnlinkedAndLegacyTarget() {
         var current = guardian(1L, true);
         when(guardians.lockActiveByChild(10L, StatusVinculo.VINCULADO)).thenReturn(List.of(current));
@@ -160,6 +180,91 @@ class CirculoServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    @Test
+    void composesOnlyActiveMembersWithOptionalProfileDataAndStableOrder() {
+        var manager = guardian(1L, true, "Mãe", 101L);
+        var common = guardian(2L, false, null, 102L);
+        var managerUser = account(1L, "Zélia", TipoUsuario.RESPONSAVEL);
+        var commonUser = account(2L, "Ana", TipoUsuario.RESPONSAVEL);
+        var psychologistUser = account(3L, "Bruna", TipoUsuario.PROFISSIONAL);
+        var therapistUser = account(4L, "Ana", TipoUsuario.PROFISSIONAL);
+        var psychologist = professional(31L, 3L, "Psicologia", "/api/profissionais/fotos/bruna");
+        var therapist = professional(32L, 4L, null, null);
+        var psychologistLink = professionalLink(201L, 31L, 10L);
+        var therapistLink = professionalLink(202L, 32L, 10L);
+
+        when(guardians.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(common, manager));
+        when(professionalLinks.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(psychologistLink, therapistLink));
+        when(professionals.findAllById(List.of(31L, 32L))).thenReturn(List.of(psychologist, therapist));
+        when(users.findAllById(List.of(2L, 1L, 3L, 4L)))
+                .thenReturn(List.of(managerUser, commonUser, psychologistUser, therapistUser));
+
+        var response = service.members(user(1L), 10L);
+
+        assertThat(response.criancaId()).isEqualTo(10L);
+        assertThat(response.gestorAtual()).isTrue();
+        assertThat(response.membros()).extracting(CirculoService.MemberResponse::nome)
+                .containsExactly("Zélia", "Ana", "Ana", "Bruna");
+        assertThat(response.membros()).extracting(CirculoService.MemberResponse::papel)
+                .containsExactly(PapelCirculo.RESPONSAVEL_GESTOR, PapelCirculo.RESPONSAVEL,
+                        PapelCirculo.PROFISSIONAL, PapelCirculo.PROFISSIONAL);
+        assertThat(response.membros().get(0).parentesco()).isEqualTo("Mãe");
+        assertThat(response.membros().get(2).especialidade()).isNull();
+        assertThat(response.membros().get(2).fotoPerfilUrl()).isNull();
+        assertThat(response.membros().get(3).especialidade()).isEqualTo("Psicologia");
+        assertThat(response.membros().get(3).fotoPerfilUrl()).isEqualTo("/api/profissionais/fotos/bruna");
+        assertThat(response.membros().get(1).acoesPermitidas().podeRemover()).isTrue();
+        assertThat(response.membros().get(2).acoesPermitidas().podeRemover()).isTrue();
+        verifyNoInteractions(requests);
+    }
+
+    @Test
+    void commonGuardianAndProfessionalCannotManageAndCanOnlyLeaveTheirOwnLink() {
+        var manager = guardian(1L, true, null, 101L);
+        var common = guardian(2L, false, null, 102L);
+        var professional = professional(31L, 3L, null, null);
+        var professionalLink = professionalLink(201L, 31L, 10L);
+        when(guardians.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(manager, common));
+        when(professionalLinks.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO))
+                .thenReturn(List.of(professionalLink));
+        when(professionals.findAllById(List.of(31L))).thenReturn(List.of(professional));
+        when(users.findAllById(List.of(1L, 2L, 3L))).thenReturn(List.of(
+                account(1L, "Gestor", TipoUsuario.RESPONSAVEL),
+                account(2L, "Comum", TipoUsuario.RESPONSAVEL),
+                account(3L, "Profissional", TipoUsuario.PROFISSIONAL)));
+
+        var commonView = service.members(user(2L), 10L).membros();
+        assertThat(commonView).allSatisfy(member -> assertThat(member.acoesPermitidas().podeRemover()).isFalse());
+        assertThat(commonView).filteredOn(member -> member.usuarioId().equals(2L)).singleElement()
+                .satisfies(member -> assertThat(member.acoesPermitidas().podeSair()).isTrue());
+
+        var professionalView = service.members(
+                new AuthenticatedUser(3L, "pro@example.test", TipoUsuario.PROFISSIONAL), 10L).membros();
+        assertThat(professionalView).allSatisfy(member -> assertThat(member.acoesPermitidas().podeRemover()).isFalse());
+        assertThat(professionalView).filteredOn(member -> member.usuarioId().equals(3L)).singleElement()
+                .satisfies(member -> assertThat(member.acoesPermitidas().podeSair()).isTrue());
+    }
+
+    @Test
+    void legacyRoleIsExposedAsCommonGuardianWithoutManagementPrivilege() {
+        var legacy = guardian(2L, false, null, 102L);
+        ReflectionTestUtils.setField(legacy, "papel", null);
+        when(guardians.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO)).thenReturn(List.of(legacy));
+        when(professionalLinks.findAllByCriancaIdAndStatus(10L, StatusVinculo.VINCULADO)).thenReturn(List.of());
+        when(users.findAllById(List.of(2L))).thenReturn(List.of(account(2L, "Legado", TipoUsuario.RESPONSAVEL)));
+
+        var response = service.members(user(2L), 10L);
+
+        assertThat(response.gestorAtual()).isFalse();
+        assertThat(response.membros()).singleElement().satisfies(member -> {
+            assertThat(member.papel()).isEqualTo(PapelCirculo.RESPONSAVEL);
+            assertThat(member.acoesPermitidas().podeRemover()).isFalse();
+        });
+    }
+
     private void activeChild() {
         when(children.findById(10L)).thenReturn(Optional.of(new Crianca(
                 "Criança", LocalDate.of(2018, 1, 1), null, null, null, null)));
@@ -168,6 +273,32 @@ class CirculoServiceTest {
     private VinculoResponsavelCrianca guardian(Long userId, boolean manager) {
         var link = new VinculoResponsavelCrianca(userId, 10L);
         if (manager) link.tornarGestor();
+        return link;
+    }
+
+    private VinculoResponsavelCrianca guardian(Long userId, boolean manager, String relationship, Long id) {
+        var link = guardian(userId, manager);
+        link.informarParentesco(relationship);
+        ReflectionTestUtils.setField(link, "id", id);
+        return link;
+    }
+
+    private Usuario account(Long id, String name, TipoUsuario type) {
+        var account = new Usuario(name, name.toLowerCase() + "@example.test", "hash", null, null, type);
+        ReflectionTestUtils.setField(account, "id", id);
+        return account;
+    }
+
+    private Profissional professional(Long id, Long userId, String specialty, String photo) {
+        var profile = new Profissional(userId, "PROF-" + id);
+        profile.update(specialty, null, null, null, null, photo);
+        ReflectionTestUtils.setField(profile, "id", id);
+        return profile;
+    }
+
+    private VinculoProfissionalCrianca professionalLink(Long id, Long professionalId, Long childId) {
+        var link = new VinculoProfissionalCrianca(professionalId, childId);
+        ReflectionTestUtils.setField(link, "id", id);
         return link;
     }
 

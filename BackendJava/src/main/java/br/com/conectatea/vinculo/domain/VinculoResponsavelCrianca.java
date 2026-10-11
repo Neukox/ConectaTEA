@@ -61,7 +61,11 @@ public class VinculoResponsavelCrianca extends AuditableEntity {
     }
 
     public Long getId() { return id; }
+    public String getParentesco() { return parentesco; }
     public PapelCirculo getPapel() { return papel; }
+    public void informarParentesco(String parentesco) {
+        this.parentesco = parentesco == null || parentesco.isBlank() ? null : parentesco.trim();
+    }
     public void tornarGestor() { papel = PapelCirculo.RESPONSAVEL_GESTOR; }
     public void tornarResponsavel() { papel = PapelCirculo.RESPONSAVEL; }
     public boolean isGestor() { return papel == PapelCirculo.RESPONSAVEL_GESTOR; }

@@ -10,7 +10,7 @@ Estado vigente após o merge do PR #80 (`41c7889`), revisado em 11/10/2026. Esta
 |---|---|---|---|
 | P01 Dashboard profissional | `/dashboard/profissional?timezone=`, `/dashboard/feed` | Indicadores/fuso cobertos; feed/cursor/visibilidade em PostgreSQL | composição visual completa |
 | P02 Crianças profissional | CRUD, `/estado`, `/arquivamento` | campos, estados, autorização e Flyway cobertos | filtros/edição no visual final |
-| P03 Detalhe/Círculo profissional | detalhe, membros, metas, sessões, anotações, feed | blocos e autorização implementados/testados | homologação das abas e URL direta |
+| P03 Detalhe/Círculo profissional | detalhe, membros, metas, sessões, anotações, feed | composição dinâmica por vínculos ativos, campos opcionais, ordem e autorização cobertos | layout responsivo/animações, homologação das abas e URL direta |
 | P04 Metas | CRUD, progresso, pausa/retomada, conclusão/reabertura | transições, autoria e histórico cobertos | integração visual das ações/erros |
 | P05 Progresso | `/resumo-atual`, `/evolucao-historica` | serviço canônico, coorte, categorias e desempate PostgreSQL cobertos | gráficos/estados sem dados no visual final |
 | P06 Sessões | CRUD, detalhe, status, correção, reagendamento | campos, autoria e privacidade implementados/testados | homologação visual; concorrência HTTP específica |
@@ -19,7 +19,7 @@ Estado vigente após o merge do PR #80 (`41c7889`), revisado em 11/10/2026. Esta
 | P09 Perfil/configurações | usuário, perfil, foto, locais, redes, áreas | foto/rollback/storage local cobertos em PostgreSQL | tela completa e storage AWS |
 | R01 Dashboard responsável | `/dashboard/responsavel?timezone=`, feed | múltiplas crianças, semana exclusiva, próximas sessões e fuso cobertos | composição visual completa |
 | R02 Minhas crianças | `/criancas`, `/vinculos/me` | vínculo ativo, arquivo e autorização implementados | busca/filtros no visual final |
-| R03 Detalhe/Círculo responsável | detalhe, membros, solicitações, gestão, feed | gestor/comum, perda de gestão e autorização por criança cobertos | homologação das abas/ações |
+| R03 Detalhe/Círculo responsável | detalhe, membros, solicitações, gestão, feed | gestor/comum, ações calculadas, perda de gestão, ordem e autorização por criança cobertos | layout responsivo/animações e homologação das abas/ações |
 | R04 Vincular | código/QR, nominal, solicitações, primeiro gestor | V16; replay, elegibilidade, recusa e rollback PostgreSQL cobertos | experiência visual e procedimento administrativo de produção |
 | R05 Anotações compartilhadas | lista/detalhe/versões | privadas excluídas; vínculo, snapshot e visibilidade cobertos | homologação visual e política final de retenção |
 | R06 Notificações responsável | histórico, sino, leitura, badge | isolamento por destinatário/autorização coberto | navegação/estados visuais |
@@ -51,6 +51,7 @@ Atualizada em 10/10/2026 a partir da matriz local não rastreada fornecida no wo
 ## Decisões consolidadas
 
 - Conta pessoal e gestão da criança são independentes. `RESPONSAVEL_GESTOR`, `RESPONSAVEL` e `PROFISSIONAL` são papéis do vínculo.
+- O círculo de cuidado é lido em `GET /criancas/{id}/circulo/membros`: somente vínculos ativos compõem os cartões; pendências ficam fora. A resposta traz IDs estáveis, nome, tipo, papel, foto/especialidade/parentesco opcionais e ações autorizadas pelo servidor. A ordem é gestores, responsáveis e profissionais, depois nome e IDs. O frontend consulta ao abrir e após cada mutação confirmada, e recalcula localmente posições e animações; não há geometria no contrato nem no banco.
 - O primeiro gestor nasce somente de pedido de responsável legal confirmado e decisão de operador com capacidade administrativa específica. Email confirmado prova posse do endereço, não autoridade sobre a criança.
 - Convite nominal exige destinatário autenticado/confirmado e aceite; código/QR cria solicitação pendente. Vínculos antigos não são promovidos.
 - Criança usa `PENDENTE_CLASSIFICACAO`, `EM_ACOMPANHAMENTO`, `PAUSADO` ou `ENCERRADO`; arquivamento é ortogonal, preserva leitura histórica e bloqueia escrita.

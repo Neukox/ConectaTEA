@@ -17,6 +17,8 @@ public interface VinculoProfissionalRepository extends JpaRepository<VinculoProf
     Optional<VinculoProfissionalCrianca> findByProfissionalIdAndCriancaIdAndStatus(
             Long profissionalId, Long criancaId, StatusVinculo status);
     Optional<VinculoProfissionalCrianca> findByProfissionalIdAndCriancaId(Long profissionalId, Long criancaId);
+    List<VinculoProfissionalCrianca> findAllByProfissionalIdAndStatus(
+            Long profissionalId, StatusVinculo status);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select v from VinculoProfissionalCrianca v where v.id=:id and v.criancaId=:childId and v.status=:status")
     Optional<VinculoProfissionalCrianca> findByIdAndChildForUpdate(

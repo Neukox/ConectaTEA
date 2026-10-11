@@ -16,6 +16,11 @@ public class CirculoController {
     public CirculoController(CirculoService service) { this.service = service; }
 
     @GetMapping("/membros")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "Lista a composição atual do círculo de cuidado",
+            description = "Exige vínculo ativo. Retorna somente vínculos ativos, em ordem estável: gestores, responsáveis e profissionais; depois nome, usuário e vínculo.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Composição atual; membros pode ser uma lista vazia")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Usuário sem vínculo ativo com a criança")
     public CirculoService.CircleResponse members(Authentication authentication,
                                                   @PathVariable Long criancaId) {
         return service.members(principal(authentication), criancaId);
