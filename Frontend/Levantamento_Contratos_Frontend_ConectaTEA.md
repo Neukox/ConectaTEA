@@ -56,4 +56,5 @@ O Docker foi iniciado e a lacuna acima foi revalidada: `mvnw.cmd -B clean test` 
 - P07 Anotações: formulário envia `titulo`, `conteudo`, `temas`, `sessaoId` na criação e `motivoCorrecao` ao corrigir compartilhada. Versões: `GET /criancas/{id}/anotacoes/{notaId}/versoes`.
 - P01/R01 Dashboard: feed agregado em `GET /dashboard/feed?size=5`; cursor opcional usa `antes` e `antesId` juntos.
 - P03/R03 Detalhe: feed individual em `GET /criancas/{id}/feed?size=10`; carregar mais repassa ambos os campos do cursor.
+- P01/R01/P03/R03: navegar com `recursoTipo + recursoId`; nunca usar `id` para abrir o recurso. `id` é exclusivo da ocorrência e serve ao cursor com `instante`. Eventos `GESTORES` aparecem apenas ao gestor atual da criança correspondente, inclusive no agregado.
 - Arquivo profissional: `GET /anotacoes/arquivo-proprio`, somente leitura. `snapshotHistoricoConfiavel=false` exige sinalização discreta de limitação do legado, sem buscar o nome atual.

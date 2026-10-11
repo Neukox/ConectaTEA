@@ -495,3 +495,10 @@ Instantes são ISO-8601/UTC; cálculo local usa `America/Bahia` como fallback, s
 - `GET /criancas/{criancaId}/anotacoes/{anotacaoId}/versoes` revalida vínculo e visibilidade. Correção compartilhada produz uma versão anterior e `ANOTACAO_CORRIGIDA` atomicamente.
 - `GET /dashboard/feed?size=5&antes=&antesId=` agrega somente eventos `CIRCULO` das crianças atualmente autorizadas. O cursor exige instante e ID juntos.
 - Arquivo próprio inclui `snapshotCapturadoEm`, `snapshotOrigem` e `snapshotHistoricoConfiavel`. `MIGRACAO_V15` informa captura técnica do legado e nunca é apresentada como verdade histórica.
+
+### Identidade, visibilidade do feed e coorte
+
+- Em itens do feed, `id` é o ID único do evento e deve ser usado com `instante` no cursor; `recursoId` é o ID persistido do recurso indicado por `recursoTipo` e deve ser usado para navegação.
+- `CIRCULO` exige vínculo atual com a criança. `GESTORES` exige adicionalmente vínculo atual `RESPONSAVEL_GESTOR` naquela mesma criança; a avaliação ocorre evento a evento também no feed agregado.
+- Eventos restritos emitidos: `GESTAO_TRANSFERIDA` e `MEMBRO_REMOVIDO`. A descrição é mínima e não contém contatos, provas administrativas ou dados clínicos privados.
+- O ponto mensal de progresso usa limite final exclusivo no fuso resolvido. A sequência é ordenada por instante e ID. Conclusão anterior exclui a meta até eventual reabertura; reabertura no ponto inicia nova fase, e conclusão ou pausa posterior prevalece conforme a última transição.
