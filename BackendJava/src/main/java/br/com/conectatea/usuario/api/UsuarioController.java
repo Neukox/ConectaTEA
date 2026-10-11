@@ -95,6 +95,8 @@ public class UsuarioController {
         var principal = (AuthenticatedUser) authentication.getPrincipal();
         if (principal.tipo() == TipoUsuario.RESPONSAVEL) {
             circle.deactivateGuardian(principal.id());
+        } else {
+            circle.deactivateProfessional(principal.id());
         }
         current(authentication).desativar();
     }

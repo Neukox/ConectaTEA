@@ -4,6 +4,7 @@ import br.com.conectatea.auditoria.application.AuditLogService;
 import br.com.conectatea.crianca.infrastructure.CriancaRepository;
 import br.com.conectatea.dashboard.application.FeedService;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
+import br.com.conectatea.profissional.application.ProfileImageUrlResolver;
 import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.shared.domain.BusinessRuleException;
@@ -19,6 +20,7 @@ import br.com.conectatea.vinculo.infrastructure.HistoricoVinculoRepository;
 import br.com.conectatea.vinculo.infrastructure.SolicitacaoTokenVinculoRepository;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -26,9 +28,17 @@ import java.util.stream.Collectors;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class CirculoService {
+    private static final Logger log = LoggerFactory.getLogger(CirculoService.class);
+    private static final Comparator<MemberResponse> MEMBER_ORDER = Comparator
+            .comparingInt((MemberResponse member) -> roleOrder(member.papel()))
+            .thenComparing(MemberResponse::nome, String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(MemberResponse::usuarioId)
+            .thenComparing(MemberResponse::vinculoId);
     private final VinculoResponsavelRepository guardians;
     private final VinculoProfissionalRepository professionalsLinks;
     private final ProfissionalRepository professionals;
@@ -39,18 +49,21 @@ public class CirculoService {
     private final AuditLogService audits;
     private final SolicitacaoTokenVinculoRepository requests;
     private final FeedService feed;
+    private final ProfileImageUrlResolver profileImageUrls;
 
     public CirculoService(VinculoResponsavelRepository guardians,
             VinculoProfissionalRepository professionalsLinks,
             ProfissionalRepository professionals, UsuarioRepository users,
             AuthorizationService authorization, CriancaRepository children,
             HistoricoVinculoRepository history, AuditLogService audits,
-            SolicitacaoTokenVinculoRepository requests, FeedService feed) {
+            SolicitacaoTokenVinculoRepository requests, FeedService feed,
+            ProfileImageUrlResolver profileImageUrls) {
         this.guardians = guardians; this.professionalsLinks = professionalsLinks;
         this.professionals = professionals; this.users = users; this.authorization = authorization;
         this.children = children; this.history = history; this.audits = audits;
         this.requests = requests;
         this.feed = feed;
+        this.profileImageUrls = profileImageUrls;
     }
 
     @Transactional(readOnly = true)
@@ -72,8 +85,14 @@ public class CirculoService {
         var result = new ArrayList<MemberResponse>();
         guardianLinks.forEach(link -> {
             var user = userById.get(link.getResponsavelId());
-            result.add(new MemberResponse(link.getId(), user.getId(), user.getNome(),
-                    link.getPapel(), "RESPONSAVEL",
+            if (user == null) {
+                log.warn("Vínculo ativo de responsável {} da criança {} referencia usuário ausente {}",
+                        link.getId(), childId, link.getResponsavelId());
+                return;
+            }
+            var role = link.getPapel() == null ? PapelCirculo.RESPONSAVEL : link.getPapel();
+            result.add(new MemberResponse(childId, link.getId(), user.getId(), user.getNome(),
+                    "RESPONSAVEL", role, null, null, link.getParentesco(),
                     new AllowedActions(actorManager && !user.getId().equals(actor.id())
                                     && (!link.isGestor() || managerCount > 1),
                             user.getId().equals(actor.id()) && (!link.isGestor() || managerCount > 1),
@@ -83,11 +102,24 @@ public class CirculoService {
         });
         professionalLinks.forEach(link -> {
             var profile = profileById.get(link.getProfissionalId());
+            if (profile == null) {
+                log.warn("Vínculo ativo de profissional {} da criança {} referencia perfil ausente {}",
+                        link.getId(), childId, link.getProfissionalId());
+                return;
+            }
             var user = userById.get(profile.getUsuarioId());
-            result.add(new MemberResponse(link.getId(), user.getId(), user.getNome(),
-                    PapelCirculo.PROFISSIONAL, "PROFISSIONAL",
+            if (user == null) {
+                log.warn("Perfil profissional {} do vínculo ativo {} da criança {} referencia usuário ausente {}",
+                        profile.getId(), link.getId(), childId, profile.getUsuarioId());
+                return;
+            }
+            result.add(new MemberResponse(childId, link.getId(), user.getId(), user.getNome(),
+                    "PROFISSIONAL", PapelCirculo.PROFISSIONAL,
+                    profileImageUrls.resolve(profile.getFotoPerfilUrl()),
+                    profile.getEspecialidade(), null,
                     new AllowedActions(actorManager, user.getId().equals(actor.id()), false, false)));
         });
+        result.sort(MEMBER_ORDER);
         return new CircleResponse(childId, actorManager, result);
     }
 
@@ -169,6 +201,24 @@ public class CirculoService {
         }
     }
 
+    @Transactional
+    public void deactivateProfessional(Long professionalUserId) {
+        var profile = professionals.findByUsuarioId(professionalUserId).orElseThrow();
+        var activeLinks = professionalsLinks.findAllByProfissionalIdAndStatus(
+                profile.getId(), StatusVinculo.VINCULADO);
+        for (var link : activeLinks) {
+            link.desvincular("CONTA_DESATIVADA");
+            history.save(new HistoricoVinculo(link.getCriancaId(), professionalUserId, null,
+                    profile.getId(), "VINCULO_ENCERRADO", "DESVINCULADO", "CONTA_DESATIVADA"));
+            audits.record(professionalUserId, "VINCULO_ENCERRADO", "VINCULO_PROFISSIONAL",
+                    link.getId(), link.getCriancaId(), profile.getId(), "SUCESSO",
+                    "motivo=CONTA_DESATIVADA");
+            feed.registrar(link.getCriancaId(), professionalUserId, "MEMBRO_SAIU",
+                    "VINCULO_PROFISSIONAL", link.getId(), "Membro saiu do círculo",
+                    "Um profissional encerrou seu vínculo.", true);
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<RequestResponse> pendingRequests(AuthenticatedUser actor, Long childId) {
         requireManager(actor, childId);
@@ -235,9 +285,28 @@ public class CirculoService {
         if (child.isArquivada()) throw new BusinessRuleException("CHILD_ARCHIVED", "Criança arquivada não permite gestão do círculo");
     }
 
+    private static int roleOrder(PapelCirculo role) {
+        return switch (role) {
+            case RESPONSAVEL_GESTOR -> 0;
+            case RESPONSAVEL -> 1;
+            case PROFISSIONAL -> 2;
+        };
+    }
+
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Composição atual do círculo, formada somente por vínculos ativos")
     public record CircleResponse(Long criancaId, boolean gestorAtual, List<MemberResponse> membros) {}
-    public record MemberResponse(Long vinculoId, Long usuarioId, String nome, PapelCirculo papel,
-                                 String tipo, AllowedActions acoesPermitidas) {}
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Membro ativo, ordenado por papel, nome e identificadores")
+    public record MemberResponse(
+            Long criancaId,
+            Long vinculoId,
+            Long usuarioId,
+            String nome,
+            @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"RESPONSAVEL", "PROFISSIONAL"}) String tipo,
+            PapelCirculo papel,
+            @io.swagger.v3.oas.annotations.media.Schema(nullable = true) String fotoPerfilUrl,
+            @io.swagger.v3.oas.annotations.media.Schema(nullable = true) String especialidade,
+            @io.swagger.v3.oas.annotations.media.Schema(nullable = true) String parentesco,
+            AllowedActions acoesPermitidas) {}
     public record AllowedActions(boolean podeRemover, boolean podeSair,
                                  boolean requerTransferenciaGestao, boolean podeTransferirGestao) {}
     public record RequestResponse(Long solicitacaoId, Long criancaId, String status, Instant criadaEm,
