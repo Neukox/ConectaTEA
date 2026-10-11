@@ -8,8 +8,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 public interface AnotacaoRepository extends JpaRepository<Anotacao, Long> {
+    @Query("select a from Anotacao a where a.autor.usuarioId=:userId order by a.createdAt desc,a.id desc") List<Anotacao> findArchiveByAuthorUserId(@Param("userId") Long userId);
     @Query("""
             select a from Anotacao a
             join fetch a.crianca c
@@ -38,4 +41,8 @@ public interface AnotacaoRepository extends JpaRepository<Anotacao, Long> {
     Optional<Anotacao> findByIdAndCriancaId(
             @Param("id") Long id,
             @Param("criancaId") Long criancaId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Anotacao a join fetch a.crianca join fetch a.autor where a.id=:id and a.crianca.id=:criancaId")
+    Optional<Anotacao> findByIdAndCriancaIdForUpdate(@Param("id") Long id,@Param("criancaId") Long criancaId);
 }

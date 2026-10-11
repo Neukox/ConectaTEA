@@ -10,6 +10,7 @@ export const ANOTACOES_MOCK: Anotacao[] = [
     autorProfissionalId: PROFISSIONAL_ATUAL_ID,
     autorNome: 'Dra. Marina Costa',
     autorEspecialidade: 'Psicologia',
+    titulo: 'Evolução da sessão',
     conteudo:
       'Demonstrou boa adaptação à mudança de rotina e respondeu bem aos combinados visuais durante o encontro.',
     visibilidade: 'COMPARTILHADA',
@@ -24,6 +25,7 @@ export const ANOTACOES_MOCK: Anotacao[] = [
     autorProfissionalId: PROFISSIONAL_ATUAL_ID,
     autorNome: 'Dra. Marina Costa',
     autorEspecialidade: 'Psicologia',
+    titulo: 'Registro privado',
     conteudo:
       'Lembrete profissional para revisar a estratégia de antecipação na próxima sessão.',
     visibilidade: 'PRIVADA',
@@ -38,6 +40,7 @@ export const ANOTACOES_MOCK: Anotacao[] = [
     autorProfissionalId: 202,
     autorNome: 'Dr. Rafael Lima',
     autorEspecialidade: 'Fonoaudiologia',
+    titulo: 'Comunicação',
     conteudo:
       'A comunicação por escolhas foi incorporada com segurança. A família pode reforçar oferecendo duas alternativas por vez.',
     visibilidade: 'COMPARTILHADA',
@@ -52,6 +55,7 @@ export const ANOTACOES_MOCK: Anotacao[] = [
     autorProfissionalId: 303,
     autorNome: 'Dra. Camila Rocha',
     autorEspecialidade: 'Terapia ocupacional',
+    titulo: 'Rotina',
     conteudo:
       'Sofia participou do planejamento da atividade e sinalizou quando precisava de uma pausa.',
     visibilidade: 'COMPARTILHADA',
@@ -66,6 +70,7 @@ export const ANOTACOES_MOCK: Anotacao[] = [
     autorProfissionalId: PROFISSIONAL_ATUAL_ID,
     autorNome: 'Dra. Marina Costa',
     autorEspecialidade: 'Psicologia',
+    titulo: 'Planejamento',
     conteudo:
       'Organizar materiais de apoio para observar preferências na próxima atividade estruturada.',
     visibilidade: 'PRIVADA',

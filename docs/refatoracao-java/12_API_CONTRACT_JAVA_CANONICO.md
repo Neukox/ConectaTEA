@@ -1,5 +1,20 @@
 # Contrato canônico da API Java — fotografia da implementação
 
+> Atualização de 10/10/2026: em `GET /criancas/{id}/circulo/membros`, `acoesPermitidas` contém `podeRemover`, `podeSair`, `requerTransferenciaGestao` e `podeTransferirGestao`. Para o último gestor, `podeSair=false` e `requerTransferenciaGestao=true`; a tentativa direta continua retornando `409 LAST_MANAGER`.
+>
+> Foto profissional: `POST /profissionais/me/foto` (`multipart/form-data`, parte `file`) substitui a foto do próprio perfil; `DELETE /profissionais/me/foto` remove; `GET /profissionais/fotos/{key}` entrega JPEG/PNG armazenado. Limites: 5 MiB e 64–4096 px. Bytes, assinatura e decodificação são validados; `PUT /profissionais/me` não aceita `fotoPerfilUrl`.
+> O `PUT /profissionais/me` não possui mais `fotoPerfilUrl`. A URL retornada é absoluta e configurável por `PUBLIC_API_URL`; sem essa variável, usa a origem HTTP observada e o context-path `/api`. Troca e remoção usam lock do perfil, persistência explícita e limpeza de arquivo sincronizada ao commit.
+
+## Verificação de email e convite nominal (V12)
+
+- `POST /auth/email-verification/request`: público, `{email}`, resposta neutra e rate limit por IP.
+- `POST /auth/email-verification/confirm`: público, `{token}`, consumo único; token inválido/expirado/usado retorna `400 INVALID_EMAIL_VERIFICATION_TOKEN`.
+- `GET /auth/email-verification/status`: autenticado, `{confirmado,confirmadoEm}`.
+- `POST /vinculos/convites`: gestor ativo, `{criancaId,destinatarioEmail,papel}` com `RESPONSAVEL|PROFISSIONAL`; retorna token uma única vez e `PENDENTE_ACEITE`.
+- `POST /vinculos/convites/aceitar`: destinatário autenticado com email confirmado; revalida gestor, criança e conta antes de ativar o vínculo.
+- `GET /vinculos/convites/me`, `GET /vinculos/convites/criancas/{id}` e `DELETE /vinculos/convites/criancas/{id}/{conviteId}` consultam/cancelam conforme destinatário ou gestor.
+- Primeiro gestor permanece indisponível até aprovação da prova de autoridade; confirmação de email não a substitui.
+
 **Estado atual:** este é o contrato textual do único backend ativo. O OpenAPI em `/api/v3/api-docs` e a Swagger UI refletem os controllers Java; trechos explicitamente históricos ao final registram divergências já resolvidas.
 
 ## Recursos profissionais — Fase 3
@@ -60,7 +75,7 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 | Tokens | `POST /api/criancas/{id}/tokens-vinculo` | PROFISSIONAL | sim / sim | vínculo profissional ativo e não arquivada | 200 | implementado; QR/regra unitária; integração PostgreSQL no CI; não homologado |
 | Tokens | `DELETE /api/criancas/{childId}/tokens-vinculo/{tokenId}` | PROFISSIONAL | sim / sim | vínculo ativo e token pertencente ao profissional/criança | 204 | implementado; testes de domínio parciais; não homologado |
 | Vínculos | `GET /api/vinculos/tokens/{codigo}/preview` | qualquer role autenticada | sim / não | valida token; não cria vínculo | 200 | implementado; preview no fluxo frontend, E2E pendente; não homologado |
-| Vínculos | `POST /api/vinculos/confirmar` | RESPONSAVEL | sim / sim | cria/reativa vínculo para o principal responsável | 200 | implementado; replay/concorrência exercitados no PostgreSQL CI; E2E completo pendente |
+| Vínculos | `POST /api/vinculos/confirmar` | RESPONSAVEL | sim / sim | consome código não nominal e cria solicitação pendente; não concede acesso | 200 | implementado; replay/concorrência exercitados com PostgreSQL; E2E completo pendente |
 | Vínculos | `GET /api/vinculos/me` | RESPONSAVEL | sim / não | vínculos ativos do principal; crianças não arquivadas | 200 | implementado; sem homologação frontend/backend |
 | Vínculos | `DELETE /api/vinculos/criancas/{id}` | RESPONSAVEL | sim / sim | encerra apenas vínculo do principal | 204 | implementado; regra parcial; E2E pendente |
 | Metas | `POST /api/metas` | PROFISSIONAL | sim / sim | vínculo ativo com `criancaId` | 201 | implementado; regras de domínio testadas; não homologado |
@@ -96,7 +111,7 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 
 ## Estado de congelamento
 
-O contrato Java descrito neste documento está **estabilizado para migração do frontend**. Auditoria, histórico e rate limit são transversais e não alteraram os bodies de sucesso existentes; acrescentaram apenas o possível erro `429` nos endpoints sensíveis. Não há pendência funcional conhecida no backend principal que exija mudança relevante de rota, request ou response. Isso não significa homologação: integração React, E2E, cobertura adicional e revisão jurídica/operacional permanecem pendentes.
+O contrato Java descrito neste documento registra o que está implementado e as pendências explicitamente marcadas. Auditoria, histórico e rate limit são transversais e acrescentam possíveis erros sem dispensar autorização no recurso. Convites nominais, bootstrap do primeiro gestor, arquivo pós-saída, fórmula agregada de progresso, foto e demais itens indicados como pendentes ainda podem exigir evolução de contrato; integração React, E2E e revisão jurídica/operacional também permanecem pendentes.
 
 ## Auth
 
@@ -234,6 +249,20 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 
 ## Vínculos, tokens e consentimento
 
+### Círculo de Cuidado e solicitações — contrato vigente pós-V11
+
+- `GET /criancas/{criancaId}/circulo/membros`: qualquer membro ativo; lista somente vínculos infantis, nunca conexões sociais, e inclui `vinculoId`, `usuarioId`, `papel`, `tipo` e `acoesPermitidas`.
+- `PATCH /criancas/{criancaId}/circulo/gestao`: responsável gestor; request `{responsavelUsuarioId}`; `204`. Bloqueia alvo inativo ou legado não classificado e serializa a transferência por lock pessimista.
+- `DELETE /criancas/{criancaId}/circulo/membros/me`: membro ativo; `204`. Profissional pode sair; último gestor recebe `409 LAST_MANAGER`.
+- `POST /vinculos/confirmar`: código não nominal não cria vínculo. Response `{solicitacaoId,criancaId,status:"PENDENTE"}`; o token é consumido atomicamente para impedir replay.
+- `PATCH /vinculos/criancas/{childId}/solicitacoes/{requestId}`: gestor decide `{aprovar:boolean}`. Aprovação cria/reativa vínculo como responsável comum e registra consentimento; recusa exige novo convite.
+- Vínculos responsáveis anteriores à V11 permanecem com `papel=null`; isso significa “legado não classificado”, jamais gestor. Convite nominal/email confirmado e bootstrap do primeiro gestor ainda não estão ativos.
+- `GET /criancas/{criancaId}/circulo/solicitacoes`: somente gestor ativo; retorna solicitações pendentes com IDs, estado, instante e identificação do solicitante.
+- `GET /vinculos/solicitacoes/me`: responsável consulta somente as próprias solicitações, inclusive decisão e identificação mínima da criança.
+- `DELETE /criancas/{criancaId}/circulo/membros/{vinculoId}?tipo=RESPONSAVEL|PROFISSIONAL`: somente gestor; `LAST_MANAGER`, `USE_LEAVE_FLOW`, `MEMBER_NOT_ACTIVE` e `INVALID_MEMBER_TYPE` são conflitos `409`.
+- As duas rotas de saída (`/circulo/membros/me` e a compatível `/vinculos/criancas/{id}`) compartilham lock e regra `LAST_MANAGER`. Desativação de conta responsável também passa pela mesma proteção.
+- Transferência para o próprio ator retorna `409 CANNOT_TRANSFER_TO_SELF`; destino precisa estar ativo, vinculado e classificado como `RESPONSAVEL`.
+
 ### `GET /vinculos/tokens/{codigo}/preview`
 
 - Role/autenticação: código é somente leitura; apesar de não ter restrição de role no controller, a configuração global exige JWT.
@@ -243,14 +272,14 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 - Regra: token aleatório guardado como SHA-256; expiração é marcada ao ser detectada. A consulta não consome token.
 - Frontend: `src/api/protected/axiosVinculacao.ts` usa a mesma rota e DTO; divergência operacional: cliente/comentário assume validação pública, mas servidor requer usuário autenticado.
 
-### `POST /vinculos/confirmar`
+### `POST /vinculos/confirmar` (vigente após V11)
 
 - Role/autenticação: `RESPONSAVEL`; CSRF requerido.
 - Request: `{codigo,consentimentoAceito:true}`.
-- Response `200`: Preview `{id,nome,dataNascimento,genero}`.
+- Response `200`: `{solicitacaoId,criancaId,status:"PENDENTE"}`.
 - Erros: `400` aceite ausente/request inválido, `401`, `403` role/CSRF, `404` token inválido, `410` token indisponível.
-- Regra: ator é o responsável autenticado. Token é bloqueado para uso único; cria ou reativa vínculo, grava consentimento e consome token transacionalmente. Revinculação é reativada.
-- Frontend: `axiosVinculacao.ts` usa a rota e request compatíveis.
+- Regra: ator é o responsável autenticado. Token é bloqueado e consumido para uso único, mas posse não concede acesso: cria solicitação pendente. Somente decisão posterior de gestor cria/reativa vínculo e grava consentimento.
+- Frontend: `axiosVinculacao.ts` precisa tratar estado pendente e não navegar para dados da criança após a confirmação.
 
 ### `GET /vinculos/me`, `DELETE /vinculos/criancas/{id}`
 
@@ -270,11 +299,11 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 - Regra: código de uso único expira em sete dias; QR é gerado sob demanda, não persistido. Cancelamento é permitido ao profissional proprietário.
 - Frontend: `axiosCadastroCrianca.ts` ainda chama `GET /criancas/{id}/codigo-vinculo` e espera `codigoParaVinculo/qrcodeParaVinculo`; deve migrar para POST e os novos nomes.
 
-### Consentimento (efeito de `POST /vinculos/confirmar`)
+### Consentimento (efeito da aprovação da solicitação)
 
-- Não há endpoint independente de consentimento. O POST de confirmação grava responsável, criança, profissional, instante, IP, User-Agent, versão e finalidade configuradas (`app.consent.version`/`app.consent.purpose`, defaults disponíveis na aplicação).
-- A resposta é o Preview, não um recibo de consentimento. Não há rota de revogação. O registro técnico não representa declaração de conformidade jurídica.
-- Consumidor: `axiosVinculacao.ts`. Não há divergência relevante de request; UI/termo e versão precisam permanecer sincronizados com configuração antes de produção.
+- Não há endpoint independente de consentimento. `POST /vinculos/confirmar` reserva o token e preserva IP/User-Agent na solicitação; somente `PATCH /vinculos/criancas/{childId}/solicitacoes/{requestId}` com aprovação do gestor cria o vínculo e grava o consentimento com versão/finalidade configuradas.
+- A resposta da confirmação é `{solicitacaoId,criancaId,status:"PENDENTE"}`, não Preview nem recibo de consentimento. Não há rota de revogação. O registro técnico não representa declaração de conformidade jurídica.
+- Consumidor: `axiosVinculacao.ts`. Gabriel deve adaptar a navegação para o estado pendente; UI/termo e versão precisam permanecer sincronizados com configuração antes de produção.
 
 ## Metas
 
@@ -293,7 +322,7 @@ O contrato Java descrito neste documento está **estabilizado para migração do
 - Request: list aceita `criancaId,categoria,prioridade,status,periodo,search`; períodos `TODOS|HOJE|SEMANA|MES|ATRASADAS`. Resumo sem parâmetros. Get usa `id`.
 - Response list `200`: array de MetaResponse. Resumo: `{totalMetas,metasEmAndamento,metasVencendo,metasConcluidas}`. Get: MetaResponse.
 - Erros: `400` enum/período inválido, `401`, `403` acesso/role/contexto sem child, `404` meta ausente.
-- Regra: status temporal é derivado na leitura; 100% conclui, 90–99% quase concluída e vencimento em até 7 dias classifica VENCENDO, conforme regras de domínio atuais.
+- Regra vigente desde a preparação do novo frontend (#66): o estado de trabalho é `EM_ANDAMENTO`, `PAUSADA` ou `CONCLUIDA`; prazo próximo/atrasado é sinalizado separadamente. Progresso 100% não conclui automaticamente enquanto a regra de conclusão/reabertura estiver pendente. Consulte `docs/preparacao-backend-novo-frontend.md` para os endpoints de pausa/retomada e compatibilidade da V8.
 - Frontend: `axiosMetas.ts` chama list/resumo/get; contrato de resumo compatível. A listagem atual não inclui `criancaId` na interface de filtros e componente de responsável precisa fornecê-lo.
 
 ### `PUT /metas/{id}`, `PATCH /metas/{id}/progresso`, `DELETE /metas/{id}`
@@ -443,3 +472,41 @@ O inventário histórico acima permanece para registrar o estado anterior. Na re
 As correções adicionais foram: dashboards associados à role correta; constants de rotas inexistentes removidas; mutation de meta aguardando a resposta HTTP; invalidações de cache relacionadas; progresso recente respeitando filtro; e `dataHora` de sessão emitido como ISO-8601 com offset local explícito. `tipoSessao`, `data` e `horario` permanecem somente no modelo de formulário e são transformados para `{tipo,dataHora}` antes do request.
 
 O run `37031485540` validou `frontend` e `backend-java` no commit funcional `39a8248`. Isso comprova CI estático/unitário, não substitui a fase E2E real ainda pendente.
+# Complemento canônico — novo frontend (10/10/2026)
+
+- `POST /criancas/cadastro-responsavel` cria criança pendente e pedido administrativo, sem acesso ativo.
+- `GET|PATCH /administracao/pedidos-primeiro-gestor[/{id}]` exige `usuarios.administrador=true`; decisão registra referência mínima e operador.
+- `PATCH /criancas/{id}/estado` e `/arquivamento` são exclusivos de gestor. Arquivada continua legível por vínculo e rejeita mutações.
+- `PATCH /metas/{id}/conclusao` exige `resumoResultado`; `/reabertura` exige `motivo`, `novoPrazo` e `progressoInicial` 0–99.
+- `GET /progresso/resumo-atual` e `/evolucao-historica?meses=3|6|12` são contratos distintos; ausência de registro é `metasSemDados`, não zero.
+- Sessões não expõem `observacoes` privadas fora do autor. Estados canônicos: `AGENDADA|REALIZADA|CANCELADA|NAO_COMPARECEU`.
+- Anotação usa `titulo`, `conteudo`, `temas`, `sessaoId`; correção compartilhada requer `motivoCorrecao`; `GET .../arquivo-proprio` retorna apenas autoria própria.
+- `GET /criancas/{id}/feed?size=&offset=` ordena por instante e identificador, sem janela temporal arbitrária.
+- `PUT /profissionais/me` não aceita `fotoPerfilUrl`; foto é mutação separada e serializada pelo mesmo lock pessimista.
+
+Instantes são ISO-8601/UTC; cálculo local usa `America/Bahia` como fallback, sem inferir todos os municípios por UF. Política definitiva de retenção e implantação AWS não integram este contrato funcional.
+
+## Correções de contrato de 10/10/2026
+
+- `GET /anotacoes/arquivo-proprio` possui um único mapping canônico, em `ArquivoProprioController`.
+- `resumoResultado` de conclusão de meta aceita até 2.000 caracteres e permanece integral na meta e no histórico. `eventos_feed.resumo` é somente uma projeção de apresentação de até 500 caracteres; quando reduzida, termina em `…`.
+- `GET /progresso/evolucao-historica` aceita `timezone` IANA opcional. Valor inválido retorna `400 INVALID_ARGUMENT`; ausência usa `America/Bahia`. A API não deduz fuso por UF.
+- A resposta de evolução expõe `categorias.{CATEGORIA}.{pontos,tendenciaPontosPercentuais,historicoInsuficiente}`. Cada ponto contém `average`, `amostra`, `metasSemDados`, `metasPausadas`, `alteracoes` e `composicaoAlterada`.
+- `GET /criancas/{criancaId}/anotacoes/{anotacaoId}/versoes` revalida vínculo e visibilidade. Correção compartilhada produz uma versão anterior e `ANOTACAO_CORRIGIDA` atomicamente.
+- `GET /dashboard/feed?size=5&antes=&antesId=` agrega somente eventos `CIRCULO` das crianças atualmente autorizadas. O cursor exige instante e ID juntos.
+- Arquivo próprio inclui `snapshotCapturadoEm`, `snapshotOrigem` e `snapshotHistoricoConfiavel`. `MIGRACAO_V15` informa captura técnica do legado e nunca é apresentada como verdade histórica.
+
+### Identidade, visibilidade do feed e coorte
+
+- Em itens do feed, `id` é o ID único do evento e deve ser usado com `instante` no cursor; `recursoId` é o ID persistido do recurso indicado por `recursoTipo` e deve ser usado para navegação.
+- `CIRCULO` exige vínculo atual com a criança. `GESTORES` exige adicionalmente vínculo atual `RESPONSAVEL_GESTOR` naquela mesma criança; a avaliação ocorre evento a evento também no feed agregado.
+- Eventos restritos emitidos: `GESTAO_TRANSFERIDA` e `MEMBRO_REMOVIDO`. A descrição é mínima e não contém contatos, provas administrativas ou dados clínicos privados.
+- O ponto mensal de progresso usa limite final exclusivo no fuso resolvido. A sequência é ordenada por instante e ID. Conclusão anterior exclui a meta até eventual reabertura; reabertura no ponto inicia nova fase, e conclusão ou pausa posterior prevalece conforme a última transição.
+
+### Contrato de dashboards e eventos de gestão (V16)
+
+`GET /dashboard/profissional` e `GET /dashboard/responsavel` fornecem contagens de metas EM_ANDAMENTO, sessões AGENDADA da semana local (segunda inclusiva até a segunda seguinte exclusiva), notificações não lidas (também as ocultadas do sino) e resumo atual. A média geral, quando disponível, é aritmética entre metas EM_ANDAMENTO que têm registros, com peso igual por meta. `media: null` junto de `metasComDados`/`metasSemDados` distingue ausência de amostra do valor 0. Metas pausadas e concluídas são contadas à parte. Sessões futuras contam desde o Clock atual.
+
+Feed de dashboard usa `size=5`, detalhe `size=10`. `id` é a ocorrência para cursor junto a `instante`; `recursoTipo + recursoId` abre o recurso. `CIRCULO` depende de vínculo atual. `GESTORES` requer vínculo atual `RESPONSAVEL_GESTOR` na criança do evento, inclusive no agregado.
+
+Catálogo de gestão: `PRIMEIRO_GESTOR_APROVADO` é GESTORES e nasce do histórico por trigger V16; `GESTAO_TRANSFERIDA` e `MEMBRO_REMOVIDO` são GESTORES; `MEMBRO_ENTROU` no aceite nominal ou aprovação de código/QR e `MEMBRO_SAIU` em saída voluntária são CIRCULO. Somente texto mínimo é projetado. Operações anteriores sem ocorrência persistida não recebem backfill inventado.

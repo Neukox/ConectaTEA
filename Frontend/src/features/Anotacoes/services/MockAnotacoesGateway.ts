@@ -74,6 +74,7 @@ export class MockAnotacoesGateway implements AnotacoesGateway {
       autorProfissionalId: PROFISSIONAL_ATUAL_ID,
       autorNome: 'Dra. Marina Costa',
       autorEspecialidade: 'Psicologia',
+      titulo: input.titulo,
       conteudo: input.conteudo,
       visibilidade: input.visibilidade,
       createdAt: now,

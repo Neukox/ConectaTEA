@@ -1,0 +1,1 @@
+package br.com.conectatea.sessao.infrastructure; import br.com.conectatea.sessao.domain.HistoricoSessao; import org.springframework.data.jpa.repository.JpaRepository; public interface HistoricoSessaoRepository extends JpaRepository<HistoricoSessao,Long>{}

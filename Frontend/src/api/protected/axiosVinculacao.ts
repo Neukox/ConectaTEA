@@ -13,7 +13,11 @@ interface ConfirmarVinculoRequest {
   consentimentoAceito: boolean
 }
 
-type ConfirmarVinculoResponse = ValidarCodigoResponse
+export interface ConfirmarVinculoResponse {
+  solicitacaoId: number
+  criancaId: number
+  status: 'PENDENTE' | 'APROVADA' | 'RECUSADA'
+}
 
 export const vinculacaoAPI = {
   /**
@@ -29,9 +33,9 @@ export const vinculacaoAPI = {
   },
 
   /**
-   * Confirma a vinculação da criança ao responsável
+   * Envia a solicitação de vínculo para aprovação do responsável gestor
    * @param dados - ID da criança e aceito de consentimento
-   * @returns Dados do vínculo criado
+   * @returns Dados e estado da solicitação; PENDENTE não concede acesso
    */
   async confirmarVinculo(
     dados: ConfirmarVinculoRequest,

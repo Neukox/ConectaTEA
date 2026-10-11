@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
 @Configuration
 @EnableAsync
 @EnableConfigurationProperties({AppProperties.class, PasswordResetProperties.class,
-        BrevoProperties.class, NotificationProperties.class})
+        BrevoProperties.class, NotificationProperties.class, EmailVerificationProperties.class})
 public class ApplicationConfig {
     @Bean
     Clock clock() {

@@ -26,4 +26,7 @@ public final class NotificacaoDtos {
     @Schema(name = "NotificacoesLidasResponse")
     public record ReadAllResponse(@Schema(example = "3") int updated) {
     }
+
+    public record ClearBellResponse(@Schema(example = "3") int hidden) {
+    }
 }

@@ -1,7 +1,44 @@
 import { test, expect } from '@playwright/test'
+import pg from 'pg'
 
 const API = process.env.E2E_API_URL || 'http://127.0.0.1:3000/api'
 const PASSWORD = 'ConectaTEA-E2E-2026!'
+const { Client } = pg
+const seededManagerLinks = []
+
+async function withDatabase(action) {
+  const client = new Client({
+    connectionString: process.env.E2E_DATABASE_URL,
+  })
+  await client.connect()
+  try {
+    return await action(client)
+  } finally {
+    await client.end()
+  }
+}
+
+async function seedAuthorizedManager(managerUserId, childId) {
+  const result = await withDatabase((client) => client.query(
+    `INSERT INTO vinculos_responsaveis_criancas
+       (responsavel_id, crianca_id, principal, status, data_vinculo, papel)
+     VALUES ($1, $2, true, 'VINCULADO', now(), 'RESPONSAVEL_GESTOR')
+     RETURNING id`,
+    [managerUserId, childId],
+  ))
+  const linkId = Number(result.rows[0].id)
+  seededManagerLinks.push(linkId)
+  return linkId
+}
+
+test.afterEach(async () => {
+  if (seededManagerLinks.length === 0) return
+  const ownedIds = seededManagerLinks.splice(0)
+  await withDatabase((client) => client.query(
+    'DELETE FROM vinculos_responsaveis_criancas WHERE id = ANY($1::bigint[])',
+    [ownedIds],
+  ))
+})
 
 function id() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -69,6 +106,10 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
     nome: `Responsavel E2E ${run}`,
     email: `resp-${run}@example.test`,
   }
+  const gestor = {
+    nome: `Responsavel Gestor E2E ${run}`,
+    email: `gestor-${run}@example.test`,
+  }
   const intruso = {
     nome: `Responsavel IDOR ${run}`,
     email: `idor-${run}@example.test`,
@@ -134,6 +175,14 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   const childId = childBody.crianca.id
   await expect(profPage.getByText(nomeCrianca, { exact: true })).toBeVisible()
 
+  const gestorContext = await browser.newContext()
+  const gestorPage = await gestorContext.newPage()
+  await register(gestorPage, gestor.nome, gestor.email, 'RESPONSAVEL')
+  await login(gestorPage, gestor.email, 'RESPONSAVEL')
+  const gestorMe = await api(gestorPage, '/auth/me')
+  expect(gestorMe.status).toBe(200)
+  await seedAuthorizedManager(gestorMe.json.user.id, childId)
+
   await profPage.goto('/profissional/metas')
   await profPage.getByRole('button', { name: 'Nova Meta' }).click()
   const metaDialog = profPage.getByRole('dialog')
@@ -161,6 +210,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   await profPage.getByRole('button', { name: 'Nova anotação' }).click()
   const annotationDialog = profPage.getByRole('dialog')
   await expect(annotationDialog.getByLabel('Criança', { exact: true })).toHaveValue(String(childId))
+  await annotationDialog.getByLabel('Título').fill(`Registro compartilhado ${run}`)
   await annotationDialog.getByLabel('Conteúdo').fill(sharedAnnotationText)
   await annotationDialog.getByLabel('Compartilhada', { exact: false }).check()
   const sharedAnnotationCreated = profPage.waitForResponse(
@@ -187,7 +237,19 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   })
   expect(updatedAnnotation.status).toBe(200)
   expect(updatedAnnotation.json.visibilidade).toBe('COMPARTILHADA')
-  const deletedAnnotation = await api(profPage, `/criancas/${childId}/anotacoes/${temporaryAnnotation.json.id}`, 'DELETE')
+  // Regra aprovada: anotação compartilhada não admite exclusão comum (Contexto.md §8)
+  const deleteSharedForbidden = await api(profPage, `/criancas/${childId}/anotacoes/${temporaryAnnotation.json.id}`, 'DELETE')
+  expect(deleteSharedForbidden.status).toBe(409)
+  expect(deleteSharedForbidden.json.code).toBe('SHARED_NOTE_PRESERVED')
+  // Para deleção válida: anotação privada pode ser excluída pelo autor
+  const deletableAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    titulo: `Anotacao privada ${run}`,
+    conteudo: `Anotacao para deletar E2E ${run}`,
+    temas: 'e2e,privada',
+    visibilidade: 'PRIVADA',
+  })
+  expect(deletableAnnotation.status).toBe(201)
+  const deletedAnnotation = await api(profPage, `/criancas/${childId}/anotacoes/${deletableAnnotation.json.id}`, 'DELETE')
   expect(deletedAnnotation.status).toBe(204)
 
   const progress = await api(profPage, `/metas/${metaBody.id}/progresso`, 'PATCH', {
@@ -252,10 +314,99 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
 
   const confirm = respPage.waitForResponse((r) => r.url().endsWith('/api/vinculos/confirmar') && r.request().method() === 'POST')
   await respPage.getByRole('button', { name: 'Aceitar e Confirmar' }).click()
-  expect((await confirm).status()).toBe(200)
-  await expect(respPage.getByText('Vínculo Criado com Sucesso!')).toBeVisible()
+  const confirmResponse = await confirm
+  expect(confirmResponse.status()).toBe(200)
+  const linkRequest = await confirmResponse.json()
+  expect(linkRequest).toMatchObject({ criancaId: childId, status: 'PENDENTE' })
+  expect(linkRequest.solicitacaoId).toBeTruthy()
+  await expect(respPage.getByRole('heading', { name: 'Solicitação enviada' })).toBeVisible()
+  await expect(respPage.getByText(/^Sua solicitação aguarda aprovação do responsável gestor/)).toBeVisible()
+  expect((await api(respPage, `/criancas/${childId}`)).status).toBe(403)
 
+  const selfApproval = await api(
+    respPage,
+    `/vinculos/criancas/${childId}/solicitacoes/${linkRequest.solicitacaoId}`,
+    'PATCH',
+    { aprovar: true },
+  )
+  expect(selfApproval.status).toBe(403)
   await login(profPage, profissional.email, 'PROFISSIONAL')
+  const professionalApproval = await api(
+    profPage,
+    `/vinculos/criancas/${childId}/solicitacoes/${linkRequest.solicitacaoId}`,
+    'PATCH',
+    { aprovar: true },
+  )
+  expect(professionalApproval.status).toBe(403)
+
+  const pendingAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    conteudo: `Atualizacao durante solicitacao pendente ${run}`,
+    visibilidade: 'COMPARTILHADA',
+  })
+  expect(pendingAnnotation.status).toBe(201)
+  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(0)
+
+  const commonGuardianContext = await browser.newContext()
+  const commonGuardianPage = await commonGuardianContext.newPage()
+  const commonGuardian = {
+    nome: `Responsavel Comum E2E ${run}`,
+    email: `comum-${run}@example.test`,
+  }
+  await register(commonGuardianPage, commonGuardian.nome, commonGuardian.email, 'RESPONSAVEL')
+  await login(commonGuardianPage, commonGuardian.email, 'RESPONSAVEL')
+  const commonGuardianMe = await api(commonGuardianPage, '/auth/me')
+  const commonLinkId = await withDatabase(async (client) => {
+    const result = await client.query(
+      `INSERT INTO vinculos_responsaveis_criancas
+         (responsavel_id, crianca_id, principal, status, data_vinculo, papel)
+       VALUES ($1, $2, false, 'VINCULADO', now(), 'RESPONSAVEL') RETURNING id`,
+      [commonGuardianMe.json.user.id, childId],
+    )
+    return Number(result.rows[0].id)
+  })
+  seededManagerLinks.push(commonLinkId)
+  const commonApproval = await api(
+    commonGuardianPage,
+    `/vinculos/criancas/${childId}/solicitacoes/${linkRequest.solicitacaoId}`,
+    'PATCH',
+    { aprovar: true },
+  )
+  expect(commonApproval.status).toBe(403)
+  await commonGuardianContext.close()
+
+  const approval = await api(
+    gestorPage,
+    `/vinculos/criancas/${childId}/solicitacoes/${linkRequest.solicitacaoId}`,
+    'PATCH',
+    { aprovar: true },
+  )
+  expect(approval.status).toBe(200)
+  expect(approval.json.status).toBe('APROVADA')
+  expect((await api(respPage, `/criancas/${childId}`)).status).toBe(200)
+
+  const childStatus = await api(gestorPage, `/criancas/${childId}/estado`, 'PATCH', {
+    status: 'EM_ACOMPANHAMENTO',
+    motivo: 'Classificação inicial validada no E2E',
+  })
+  expect(childStatus.status).toBe(200)
+
+  const selfTransfer = await api(
+    gestorPage,
+    `/criancas/${childId}/circulo/gestao`,
+    'PATCH',
+    { responsavelUsuarioId: gestorMe.json.user.id },
+  )
+  expect(selfTransfer.status).toBe(409)
+  expect(selfTransfer.json.code).toBe('CANNOT_TRANSFER_TO_SELF')
+
+  const legacyManagerLeave = await api(gestorPage, `/vinculos/criancas/${childId}`, 'DELETE')
+  expect(legacyManagerLeave.status).toBe(409)
+  expect(legacyManagerLeave.json.code).toBe('LAST_MANAGER')
+
+  const circleManagerLeave = await api(gestorPage, `/criancas/${childId}/circulo/membros/me`, 'DELETE')
+  expect(circleManagerLeave.status).toBe(409)
+  expect(circleManagerLeave.json.code).toBe('LAST_MANAGER')
+
   const notificationAnnotation = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
     conteudo: `Atualizacao compartilhada para notificacao ${run}`,
     visibilidade: 'COMPARTILHADA',
@@ -280,34 +431,41 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
     `/criancas/${childId}/anotacoes/${notificationAnnotation.json.id}`, 'PUT', {
       conteudo: `Atualizacao compartilhada editada ${run}`,
       visibilidade: 'COMPARTILHADA',
+      motivoCorrecao: 'Correcao de teste E2E',
     })
   expect(editedShared.status).toBe(200)
 
+  // Regra: compartilhada não volta a privada
+  const sharedToPrivateForbidden = await api(profPage,
+    `/criancas/${childId}/anotacoes/${notificationAnnotation.json.id}`, 'PUT', {
+      conteudo: `Tentativa de privatizar ${run}`,
+      visibilidade: 'PRIVADA',
+    })
+  expect(sharedToPrivateForbidden.status).toBe(409)
+  expect(sharedToPrivateForbidden.json.code).toBe('SHARED_NOTE_IMMUTABLE_VISIBILITY')
+
+  // Compartilhamento válido: PRIVADA -> COMPARTILHADA
   const privateToSharedBase = await api(profPage, `/criancas/${childId}/anotacoes`, 'POST', {
+    titulo: `Compartilhamento E2E ${run}`,
     conteudo: `Base privada para compartilhar ${run}`,
+    temas: 'e2e,compartilhamento',
     visibilidade: 'PRIVADA',
   })
   expect(privateToSharedBase.status).toBe(201)
-  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(1)
   const privateToShared = await api(profPage,
     `/criancas/${childId}/anotacoes/${privateToSharedBase.json.id}`, 'PUT', {
       conteudo: `Agora compartilhada com cuidado ${run}`,
       visibilidade: 'COMPARTILHADA',
     })
   expect(privateToShared.status).toBe(200)
-  const sharedToPrivate = await api(profPage,
-    `/criancas/${childId}/anotacoes/${privateToSharedBase.json.id}`, 'PUT', {
-      conteudo: `Agora privada novamente ${run}`,
-      visibilidade: 'PRIVADA',
-    })
-  expect(sharedToPrivate.status).toBe(200)
-  const deleteSharedNotification = await api(profPage,
-    `/criancas/${childId}/anotacoes/${notificationAnnotation.json.id}`, 'DELETE')
-  expect(deleteSharedNotification.status).toBe(204)
-  expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(4)
+
+  // Contagem: 1 editedShared + 1 privateToShared (anotation criada antes do vinculo não gera notif)
+  const guardianAnnotationsBefore = await api(respPage, '/notificacoes/nao-lidas/count')
+  expect(guardianAnnotationsBefore.status).toBe(200)
+  expect(guardianAnnotationsBefore.json.count).toBe(2)
   const readAllNotifications = await api(respPage, '/notificacoes/lidas', 'PATCH')
   expect(readAllNotifications.status).toBe(200)
-  expect(readAllNotifications.json.updated).toBe(4)
+  expect(readAllNotifications.json.updated).toBe(2)
   expect((await api(respPage, '/notificacoes/nao-lidas/count')).json.count).toBe(0)
 
   const guardianAnnotations = await api(respPage, `/criancas/${childId}/anotacoes`)
@@ -324,7 +482,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   const dashboardResp = await api(respPage, '/dashboard/responsavel')
   expect(dashboardResp.status).toBe(200)
   expect(dashboardResp.json.totalCriancas).toBe(1)
-  expect(dashboardResp.json.totalMetas).toBeGreaterThanOrEqual(1)
+  expect(dashboardResp.json.metasAtivas).toBeGreaterThanOrEqual(1)
 
   const replay = await api(respPage, `/vinculos/tokens/${encodeURIComponent(token.codigo)}/preview`)
   expect(replay.status).toBe(410)
@@ -377,6 +535,7 @@ test('fluxo principal React + Java + PostgreSQL', async ({ browser }) => {
   expect(afterUnlink.status).toBe(403)
 
   await prof2Context.close()
+  await gestorContext.close()
   await respContext.close()
   await profContext.close()
 })

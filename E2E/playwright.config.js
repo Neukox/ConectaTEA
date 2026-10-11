@@ -13,9 +13,9 @@ export default defineConfig({
     : [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
     baseURL: process.env.E2E_BASE_URL || 'http://127.0.0.1:5173',
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    trace: process.env.E2E_DISABLE_ARTIFACTS === 'true' ? 'off' : 'retain-on-failure',
+    screenshot: process.env.E2E_DISABLE_ARTIFACTS === 'true' ? 'off' : 'only-on-failure',
+    video: process.env.E2E_DISABLE_ARTIFACTS === 'true' ? 'off' : 'retain-on-failure',
   },
   projects: [{
     name: 'chromium',

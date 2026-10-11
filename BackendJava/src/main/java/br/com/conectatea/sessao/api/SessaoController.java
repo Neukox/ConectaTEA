@@ -7,7 +7,11 @@ import br.com.conectatea.security.AuthorizationService;
 import br.com.conectatea.sessao.domain.Sessao;
 import br.com.conectatea.sessao.domain.StatusSessao;
 import br.com.conectatea.sessao.domain.TipoSessao;
+import br.com.conectatea.sessao.domain.ModalidadeSessao;
 import br.com.conectatea.sessao.infrastructure.SessaoRepository;
+import br.com.conectatea.sessao.infrastructure.HistoricoSessaoRepository;
+import br.com.conectatea.sessao.domain.HistoricoSessao;
+import br.com.conectatea.dashboard.application.FeedService;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -41,16 +45,20 @@ public class SessaoController {
     private final CriancaRepository children;
     private final ProfissionalRepository professionals;
     private final AuthorizationService authorization;
+    private final FeedService feedService;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private HistoricoSessaoRepository sessionHistory;
 
     public SessaoController(
             SessaoRepository sessions,
             CriancaRepository children,
             ProfissionalRepository professionals,
-            AuthorizationService authorization) {
+            AuthorizationService authorization,
+            FeedService feedService) {
         this.sessions = sessions;
         this.children = children;
         this.professionals = professionals;
         this.authorization = authorization;
+        this.feedService = feedService;
     }
 
     @PostMapping
@@ -61,11 +69,14 @@ public class SessaoController {
             Authentication authentication,
             @Valid @RequestBody CreateSessionRequest request) {
         var user = (AuthenticatedUser) authentication.getPrincipal();
-        authorization.requireCrianca(user, request.criancaId());
+        authorization.requireCriancaWritable(user, request.criancaId());
         var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
-        return SessionResponse.from(sessions.save(new Sessao(
+        var saved=sessions.save(new Sessao(
                 request.dataHora(), request.duracao(), request.tipo(), request.descricao(),
-                request.observacoes(), request.criancaId(), professional.getId())));
+                request.observacoes(), request.criancaId(), professional.getId()));
+        saved.details(request.modalidade(),request.localInstrucoes(),request.objetivos(),request.anotacaoId());
+        feedService.registrar(saved.getCriancaId(), user.id(), "SESSAO_AGENDADA", "SESSAO", saved.getId(), saved.getDescricao() != null ? saved.getDescricao() : "Sessão agendada", null, true);
+        return SessionResponse.from(saved, true);
     }
 
     @GetMapping
@@ -85,9 +96,18 @@ public class SessaoController {
                 .filter(item -> matchesPeriod(item, periodo))
                 .filter(item -> normalized.isBlank()
                         || contains(item.getDescricao(), normalized)
-                        || contains(item.getObservacoes(), normalized))
-                .map(SessionResponse::from)
+                        || (user.tipo() == TipoUsuario.PROFISSIONAL
+                            && contains(item.getObservacoes(), normalized)))
+                .map(item -> SessionResponse.from(item, isAuthor(user,item)))
                 .toList();
+    }
+
+    @GetMapping("/{id}")
+    public SessionResponse get(Authentication authentication, @PathVariable Long id) {
+        var user = (AuthenticatedUser) authentication.getPrincipal();
+        var session = sessions.findById(id).orElseThrow();
+        authorization.requireCriancaWritable(user, session.getCriancaId());
+        return SessionResponse.from(session, isAuthor(user,session));
     }
 
     @GetMapping("/resumo")
@@ -99,7 +119,7 @@ public class SessaoController {
         return new SessionSummary(
                 all.stream().filter(item -> item.getDataHora().toLocalDate()
                         .equals(now.toLocalDate())).count(),
-                all.stream().filter(item -> item.getStatus() == StatusSessao.CONCLUIDA).count(),
+                all.stream().filter(item -> item.getStatus() == StatusSessao.REALIZADA).count(),
                 all.stream().filter(item -> !item.getDataHora().toLocalDate().isBefore(start)
                         && !item.getDataHora().toLocalDate().isAfter(end)).count(),
                 all.stream().filter(item -> item.getStatus() == StatusSessao.AGENDADA).count());
@@ -113,12 +133,11 @@ public class SessaoController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateSessionRequest request) {
         var session = sessions.findById(id).orElseThrow();
-        authorization.requireCrianca(
-                (AuthenticatedUser) authentication.getPrincipal(), session.getCriancaId());
+        requireAuthor(authentication, session);
         session.update(
                 request.dataHora(), request.duracao(), request.tipo(),
                 request.descricao(), request.observacoes());
-        return SessionResponse.from(session);
+        return SessionResponse.from(session, true);
     }
 
     @PatchMapping("/{id}/status")
@@ -129,11 +148,24 @@ public class SessaoController {
             @PathVariable Long id,
             @Valid @RequestBody StatusRequest request) {
         var session = sessions.findById(id).orElseThrow();
-        authorization.requireCrianca(
-                (AuthenticatedUser) authentication.getPrincipal(), session.getCriancaId());
+        requireAuthor(authentication, session);
+        var before=session.getStatus();
         session.status(request.status());
-        return SessionResponse.from(session);
+        if(sessionHistory!=null)sessionHistory.save(new HistoricoSessao(id,((AuthenticatedUser)authentication.getPrincipal()).id(),"STATUS",before.name(),request.status().name(),null,null,request.motivo()));
+        
+        if (request.status() == StatusSessao.REALIZADA || request.status() == StatusSessao.CANCELADA) {
+            String feedTipo = request.status() == StatusSessao.REALIZADA ? "SESSAO_REALIZADA" : "SESSAO_CANCELADA";
+            feedService.registrar(session.getCriancaId(), ((AuthenticatedUser)authentication.getPrincipal()).id(), feedTipo, "SESSAO", session.getId(), session.getDescricao() != null ? session.getDescricao() : "Sessão", request.motivo(), true);
+        }
+        
+        return SessionResponse.from(session, true);
     }
+
+    @PatchMapping("/{id}/correcao") @PreAuthorize("hasRole('PROFISSIONAL')") @Transactional
+    public SessionResponse correct(Authentication authentication,@PathVariable Long id,@Valid @RequestBody CorrectionRequest request){var session=sessions.findById(id).orElseThrow();requireAuthor(authentication,session);var before=session.getStatus();session.correct(request.status());if(sessionHistory!=null)sessionHistory.save(new HistoricoSessao(id,((AuthenticatedUser)authentication.getPrincipal()).id(),"CORRECAO_STATUS",before.name(),request.status().name(),null,null,request.motivo()));return SessionResponse.from(session,true);}
+
+    @PatchMapping("/{id}/reagendamento") @PreAuthorize("hasRole('PROFISSIONAL')") @Transactional
+    public SessionResponse reschedule(Authentication authentication,@PathVariable Long id,@Valid @RequestBody RescheduleRequest request){var session=sessions.findById(id).orElseThrow();requireAuthor(authentication,session);var before=session.getDataHora();session.update(request.novoInicio(),request.duracao(),session.getTipo(),session.getDescricao(),session.getObservacoes());if(sessionHistory!=null)sessionHistory.save(new HistoricoSessao(id,((AuthenticatedUser)authentication.getPrincipal()).id(),"REAGENDAMENTO",null,null,before,request.novoInicio(),request.motivo()));return SessionResponse.from(session,true);}
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -141,9 +173,18 @@ public class SessaoController {
     @Transactional
     public void delete(Authentication authentication, @PathVariable Long id) {
         var session = sessions.findById(id).orElseThrow();
-        authorization.requireCrianca(
-                (AuthenticatedUser) authentication.getPrincipal(), session.getCriancaId());
+        requireAuthor(authentication, session);
         sessions.delete(session);
+    }
+
+    private void requireAuthor(Authentication authentication, Sessao session) {
+        var user = (AuthenticatedUser) authentication.getPrincipal();
+        authorization.requireCriancaWritable(user, session.getCriancaId());
+        var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
+        if (!session.getProfissionalId().equals(professional.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Somente o profissional autor pode alterar a sessão");
+        }
     }
 
     private List<Sessao> allowedSessions(AuthenticatedUser user, Long childId) {
@@ -153,7 +194,9 @@ public class SessaoController {
         }
         if (user.tipo() == TipoUsuario.PROFISSIONAL) {
             var professional = professionals.findByUsuarioId(user.id()).orElseThrow();
-            return sessions.findByProfissionalId(professional.getId());
+            var linkedChildren = children.findLinkedToProfessional(professional.getId());
+            var childIds = linkedChildren.stream().map(br.com.conectatea.crianca.domain.Crianca::getId).toList();
+            return childIds.isEmpty() ? List.of() : sessions.findByCriancaIdIn(childIds);
         }
         return children.findLinkedToGuardian(user.id()).stream()
                 .flatMap(child -> sessions.findByCriancaId(child.getId()).stream())
@@ -166,9 +209,11 @@ public class SessaoController {
         }
         var date = session.getDataHora().toLocalDate();
         var today = OffsetDateTime.now().toLocalDate();
+        var weekStart = today.with(DayOfWeek.MONDAY);
+        var weekEnd = weekStart.plusDays(6);
         return switch (period.toUpperCase(Locale.ROOT)) {
             case "HOJE" -> date.equals(today);
-            case "SEMANA" -> !date.isBefore(today) && !date.isAfter(today.plusDays(7));
+            case "SEMANA" -> !date.isBefore(weekStart) && !date.isAfter(weekEnd);
             case "MES" -> !date.isBefore(today) && !date.isAfter(today.plusMonths(1));
             default -> throw new IllegalArgumentException("periodo inválido");
         };
@@ -177,6 +222,7 @@ public class SessaoController {
     private boolean contains(String value, String search) {
         return value != null && value.toLowerCase(Locale.ROOT).contains(search);
     }
+    private boolean isAuthor(AuthenticatedUser user,Sessao session){return user.tipo()==TipoUsuario.PROFISSIONAL&&professionals.findByUsuarioId(user.id()).map(p->p.getId().equals(session.getProfissionalId())).orElse(false);}
 
     public record CreateSessionRequest(
             @NotNull Long criancaId,
@@ -184,7 +230,12 @@ public class SessaoController {
             @NotNull @FutureOrPresent OffsetDateTime dataHora,
             @Min(1) int duracao,
             String descricao,
-            String observacoes) {
+            String observacoes,
+            ModalidadeSessao modalidade,
+            String localInstrucoes,
+            String objetivos,
+            Long anotacaoId) {
+        public CreateSessionRequest(Long criancaId,TipoSessao tipo,OffsetDateTime dataHora,int duracao,String descricao,String observacoes){this(criancaId,tipo,dataHora,duracao,descricao,observacoes,ModalidadeSessao.PRESENCIAL,null,null,null);}
     }
 
     public record UpdateSessionRequest(
@@ -195,8 +246,11 @@ public class SessaoController {
             String observacoes) {
     }
 
-    public record StatusRequest(@NotNull StatusSessao status) {
+    public record StatusRequest(@NotNull StatusSessao status,String motivo) {
+        public StatusRequest(StatusSessao status){this(status,null);}
     }
+    public record CorrectionRequest(@NotNull StatusSessao status,@jakarta.validation.constraints.NotBlank String motivo){}
+    public record RescheduleRequest(@NotNull @FutureOrPresent OffsetDateTime novoInicio,@Min(1) int duracao,@jakarta.validation.constraints.NotBlank String motivo){}
 
     public record SessionResponse(
             Long id,
@@ -206,12 +260,18 @@ public class SessaoController {
             TipoSessao tipo,
             String descricao,
             String observacoes,
-            Long criancaId) {
-        static SessionResponse from(Sessao session) {
+            Long criancaId,
+            Long autorProfissionalId,
+            ModalidadeSessao modalidade,
+            String localInstrucoes,
+            String objetivos,
+            Long anotacaoId) {
+        static SessionResponse from(Sessao session, boolean includeInternalNotes) {
             return new SessionResponse(
                     session.getId(), session.getDataHora(), session.getDuracao(),
                     session.getStatus(), session.getTipo(), session.getDescricao(),
-                    session.getObservacoes(), session.getCriancaId());
+                    includeInternalNotes ? session.getObservacoes() : null,
+                    session.getCriancaId(), session.getProfissionalId(),session.getModalidade(),session.getLocalInstrucoes(),session.getObjetivos(),session.getAnotacaoId());
         }
     }
 
