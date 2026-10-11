@@ -58,12 +58,16 @@ Atualização final de 11/10/2026: os dashboards aceitam `timezone` IANA opciona
 
 | Bloco | Endpoint e campos | Permissão/ação | Vazio/erro | Estado desta tranche |
 |---|---|---|---|---|
-| Dashboard profissional | `/dashboard/profissional`: totais de crianças/equipe/metas, `progressoAtual`, semana e não lidas | profissional autenticado e vínculos atuais | contagens 0; média null com amostra explícita; erro HTTP | implementação/build; E2E browser pendente |
-| Dashboard responsável | `/dashboard/responsavel`: crianças em acompanhamento, metas ativas, semana/próximas sessões, não lidas, progresso | responsável e vínculos atuais | mesmos estados explícitos | implementação/build; E2E browser pendente |
+| Dashboard profissional | `/dashboard/profissional`: totais de crianças/equipe/metas, `progressoAtual`, semana e não lidas | profissional autenticado e vínculos atuais | contagens 0; média null com amostra explícita; erro HTTP | implementação, contexto Spring e E2E browser validados |
+| Dashboard responsável | `/dashboard/responsavel`: crianças em acompanhamento, metas ativas, semana/próximas sessões, não lidas, progresso | responsável e vínculos atuais | mesmos estados explícitos | implementação, contexto Spring e E2E browser validados |
 | Feed agregado | `/dashboard/feed?size=5&antes=&antesId=` | CIRCULO por vínculo atual; GESTORES só gestor atual da criança do evento | lista vazia e cursor validado | teste PostgreSQL de cursor/visibilidade |
 | Detalhe e feed | `/criancas/{id}`, `/criancas/{id}/feed?size=10` | autorização revalidada ao abrir recurso | erro contratual de acesso ou listas vazias | cobertura backend anterior; E2E browser pendente |
 
 Eventos de gestão: primeiro gestor aprovado (`PRIMEIRO_GESTOR_APROVADO`, GESTORES, trigger transacional V16 sobre histórico); aceite nominal e aprovação código/QR (`MEMBRO_ENTROU`, CIRCULO); transferência e remoção (`GESTAO_TRANSFERIDA`/`MEMBRO_REMOVIDO`, GESTORES); saída voluntária (`MEMBRO_SAIU`, CIRCULO). Convite emitido/cancelado e solicitação recusada não alteram o círculo e não geram feed. O resumo do evento é mínimo, sem contato ou prova administrativa. Não há backfill fictício.
+
+Validação complementar de 11/10/2026: `LocalTimeZoneResolver` possui um único construtor de produção, portanto o Spring sempre injeta `app.time-zone`/`APP_TIME_ZONE`. Testes com contexto Spring real cobrem configuração Manaus, fallback Bahia, override IANA, rejeição de configuração e parâmetro inválidos e virada semanal no fuso configurado. Em PostgreSQL, a decisão administrativa cobre aprovação, recusa definitiva, inelegibilidade e rollback provocado; a verificação posterior ao rollback ocorre em nova transação e confirma ausência de vínculo, decisão, histórico, auditoria de sucesso e evento. A visibilidade `GESTORES` é recalculada por criança no feed agregado e é revogada com a perda da gestão.
+
+O fluxo E2E React + Java + PostgreSQL foi confirmado tanto na CI do SHA `55befb2945bfcd3e1862620aa81f4a9d5fc6d608` quanto localmente em banco PostgreSQL 16 descartável: 1/1 cenário Playwright aprovado, incluindo validação de health, OpenAPI e Swagger antes do navegador.
 
 O Docker foi iniciado e a lacuna acima foi revalidada: `mvnw.cmd -B clean test` executou 132 testes, sem falhas, erros ou ignorados, em PostgreSQL 16. Flyway validou instalação limpa V1→V15, upgrade populado V7→V15 e `ddl-auto=validate`.
 

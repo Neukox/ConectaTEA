@@ -7,7 +7,7 @@ import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
 class LocalTimeZoneResolverTest {
-    private final LocalTimeZoneResolver resolver = new LocalTimeZoneResolver();
+    private final LocalTimeZoneResolver resolver = new LocalTimeZoneResolver("America/Bahia");
 
     @Test
     void usaBahiaSomenteComoFallbackSemInformacaoConfiavel() {

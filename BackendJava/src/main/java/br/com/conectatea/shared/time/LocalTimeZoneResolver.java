@@ -15,10 +15,6 @@ public class LocalTimeZoneResolver {
         this.configuredZone = parse(configuredTimezone, "app.time-zone");
     }
 
-    LocalTimeZoneResolver() {
-        this.configuredZone = FALLBACK;
-    }
-
     public ZoneId resolve(String timezone) {
         if (timezone == null || timezone.isBlank()) {
             return configuredZone;
