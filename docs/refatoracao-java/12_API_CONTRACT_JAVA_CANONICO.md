@@ -1,5 +1,54 @@
 # Contrato canônico da API Java — fotografia da implementação
 
+## Contrato vigente após o PR #80
+
+Base: `/api`; JSON `camelCase`; datas civis `YYYY-MM-DD`; instantes ISO-8601. Autenticação por cookie HttpOnly `jwt`; mutações autenticadas exigem CSRF (`XSRF-TOKEN`/`X-XSRF-TOKEN`). Erros usam `{timestamp,status,error,code,message,path,fields?}`. O principal autenticado define o ator; IDs no request nunca substituem autorização relacional.
+
+### Crianças e Círculo
+
+- `POST /criancas` e `PUT /criancas/{id}` usam `nome`, `dataNascimento`, campos clínicos opcionais e `escola`, `escolaridade`, `cidade`, `uf`, `interesses`, `nivelSuporte`. Lista: `GET /criancas` → `{items,total}`; detalhe: `GET /criancas/{id}` → DTO direto.
+- Estados: `PENDENTE_CLASSIFICACAO|EM_ACOMPANHAMENTO|PAUSADO|ENCERRADO`. `PATCH /criancas/{id}/estado` recebe `{status,motivo}`; `PATCH /criancas/{id}/arquivamento` recebe `{arquivada,motivo}`. Arquivamento preserva histórico, mas bloqueia mutações de domínio.
+- `GET /criancas/{id}/circulo/membros`, `GET /criancas/{id}/circulo/solicitacoes`, `PATCH /criancas/{id}/circulo/gestao`, `DELETE /criancas/{id}/circulo/membros/me` e `DELETE .../membros/{vinculoId}?tipo=` aplicam o papel vigente e protegem o último gestor.
+- Código/QR: preview autenticado, `POST /vinculos/confirmar` cria solicitação `PENDENTE`; gestor decide em `PATCH /vinculos/criancas/{childId}/solicitacoes/{requestId}`. Convite nominal usa `/vinculos/convites`, exige destinatário correto com email confirmado e aceite.
+- Primeiro gestor: `POST /criancas/cadastro-responsavel` ou `POST /criancas/{id}/cadastro-responsavel` cria pedido sem acesso; `GET|PATCH /administracao/pedidos-primeiro-gestor[/{id}]` exige operador com `administrador=true`. Aprovação revalida solicitante ativo/confirmado e criança não arquivada, cria `RESPONSAVEL_GESTOR`, histórico, auditoria e um evento restrito. Recusa é definitiva para o pedido.
+
+### Metas e progresso
+
+- Meta: `EM_ANDAMENTO|PAUSADA|CONCLUIDA`. CRUD e `/progresso` permanecem; ações explícitas: `PATCH /metas/{id}/pausa` `{motivo}`, `/retomada` `{dataFim?,motivo?}`, `/conclusao` `{resumoResultado}` (máx. 2.000) e `/reabertura` `{motivo,novoPrazo,progressoInicial}` (0–99). Somente o autor profissional altera; leitura continua relacional.
+- `GET /progresso/resumo-atual?criancaId=` retorna `{categorias,metasEmAndamento,metasPausadas,metasConcluidas,metasComDados,metasSemDados}`. Categorias contêm `{media,metasComDados,metasSemDados}`. Só metas em andamento entram na média; ausência é `null`, zero registrado é zero e cada meta com dado tem peso igual. O último registro é escolhido por `(data DESC,id DESC)`.
+- `GET /progresso/evolucao-historica?criancaId=&meses=3|6|12&timezone=` retorna séries mensais por categoria, amostra, metas sem dados/pausadas, alterações de composição, tendência em pontos percentuais e sinalização de histórico insuficiente/legado. Limites mensais são locais e exclusivos no fim.
+- `/resumo`, `/recentes`, `/historico`, `/distribuicao-categoria`, `/evolucao-categoria` e `/crianca` permanecem por compatibilidade; novos gráficos devem usar `resumo-atual` e `evolucao-historica`.
+
+### Sessões, anotações e notificações
+
+- Sessão recebe `criancaId,tipo,dataHora,duracao,descricao?,observacoes?`; estados `AGENDADA|REALIZADA|CANCELADA|NAO_COMPARECEU`. Há CRUD, `GET /sessoes/{id}`, `/status`, `/correcao` e `/reagendamento`. Apenas o autor muta; responsável não recebe `observacoes` privadas.
+- Anotação usa `titulo,conteudo,temas,sessaoId?,visibilidade`. Rotas CRUD ficam em `/criancas/{criancaId}/anotacoes`; `GET .../{anotacaoId}/versoes` expõe versões autorizadas. Compartilhada não volta a privada, não admite exclusão comum e correção exige `motivoCorrecao`.
+- `GET /anotacoes/arquivo-proprio` é somente leitura e independente do vínculo atual. O DTO informa snapshot, `snapshotCapturadoEm`, `snapshotOrigem` e `snapshotHistoricoConfiavel`; `MIGRACAO_V15/false` não deve ser apresentado como verdade histórica.
+- Notificações: `GET /notificacoes` (histórico), `/nao-lidas/count`, `/sino`; `PATCH /sino/limpar`, `/{id}/lida`, `/lidas`. Ocultar do sino não marca como lida nem apaga histórico.
+
+### Feed e paginação
+
+- Individual: `GET /criancas/{criancaId}/feed?size=10&antes=&antesId=`; `size` é 1–50. Agregado: `GET /dashboard/feed?size=5&antes=&antesId=`; `size` é 1–5.
+- Resposta: `{items,hasMore,nextAntes,nextAntesId}`. Item: `{tipo,recursoTipo,recursoId,titulo,resumo,instante,id}`. Ordenação é `(instante DESC,id DESC)`; quando `hasMore=true`, o próximo request envia juntos `nextAntes` como `antes` e `nextAntesId` como `antesId`. Não existe paginação por `offset`.
+- `id` é o identificador único da ocorrência e integra o cursor. Navegação usa `recursoTipo + recursoId`; tipos diferentes podem compartilhar `recursoId`.
+- `CIRCULO` exige vínculo atual com a criança. `GESTORES` exige adicionalmente vínculo atual `RESPONSAVEL_GESTOR` na criança do evento, inclusive no agregado. Perda de gestão revoga a leitura. Textos do feed são projeções mínimas e não contêm prova, referência ou motivo administrativo.
+
+### Dashboards e fuso
+
+- `GET /dashboard/profissional?timezone=` retorna `{totalCriancas,criancasEsteMes,profissionaisAtivos,profissionaisAtivosEsteMes,totalMetas,metasAtivas,totalMetasEsteMes,progressoAtual,progressoAtualEsteMes,sessoesSemana,notificacoesNaoLidas,fusoUtilizado}`.
+- `GET /dashboard/responsavel?timezone=` retorna `{totalCriancas,metasAtivas,sessoesSemana,sessoesProximas,notificacoesNaoLidas,progressoAtual,fusoUtilizado}`. `progressoAtual` contém `{media,metasComDados,metasSemDados,metasPausadas,metasConcluidas}`.
+- `timezone`, quando presente, deve ser IANA válido; inválido retorna `400 INVALID_ARGUMENT`. Omissão usa `APP_TIME_ZONE`, validado na inicialização, com fallback `America/Bahia`. O dashboard agregado usa um único calendário para todas as crianças: semana `[segunda local,segunda seguinte)`, mês por limites locais e próximas sessões a partir do `Clock` atual. Não há fuso individual persistido nem inferência por UF.
+
+### Perfil, OpenAPI e estado de validação
+
+- Perfil próprio usa `/users/me`, `/profissionais/me`; foto é `POST/DELETE /profissionais/me/foto` e `GET /profissionais/fotos/{key}`. Locais, redes sociais e áreas de atuação têm coleções próprias sob `/profissionais/me`.
+- OpenAPI: `/api/v3/api-docs`; Swagger: `/api/swagger-ui/index.html` e `/api/docs`. A CI valida presença de `openapi`, `info`, `paths` e `cookieAuth`, não equivalência exaustiva com todos os consumidores TypeScript.
+- Evidência revisada: [CI 38138130356](https://github.com/Neukox/ConectaTEA/actions/runs/38138130356), SHA `32d3a90834ddfa3ce14b510c2b8a3fbdb814ca49`: backend 169/169, frontend aprovado e um cenário E2E React + Java + PostgreSQL aprovado. Isso não homologa as 15 telas.
+
+## Histórico anterior — não normativo
+
+O conteúdo abaixo preserva a evolução do contrato. Afirmações de indisponibilidade, parcialidade, `offset`, DTOs antigos ou pendência posteriormente resolvida valem somente para a etapa em que foram escritas. Em caso de conflito, prevalece o contrato vigente acima e o código mergeado no PR #80.
+
 > Atualização de 10/10/2026: em `GET /criancas/{id}/circulo/membros`, `acoesPermitidas` contém `podeRemover`, `podeSair`, `requerTransferenciaGestao` e `podeTransferirGestao`. Para o último gestor, `podeSair=false` e `requerTransferenciaGestao=true`; a tentativa direta continua retornando `409 LAST_MANAGER`.
 >
 > Foto profissional: `POST /profissionais/me/foto` (`multipart/form-data`, parte `file`) substitui a foto do próprio perfil; `DELETE /profissionais/me/foto` remove; `GET /profissionais/fotos/{key}` entrega JPEG/PNG armazenado. Limites: 5 MiB e 64–4096 px. Bytes, assinatura e decodificação são validados; `PUT /profissionais/me` não aceita `fotoPerfilUrl`.
@@ -109,7 +158,7 @@ Rotas relativas a `/api`, autenticadas e camelCase. `/profissionais/me/**` exige
 
 **Cobertura do legado:** os quatro modelos permanecem fisicamente no Prisma somente como referência para a futura migração de dados. Seus consumers ativos usam os endpoints Java da Fase 3; não houve migração real de dados.
 
-## Estado de congelamento
+## Estado de congelamento da fotografia antiga (histórico superado)
 
 O contrato Java descrito neste documento registra o que está implementado e as pendências explicitamente marcadas. Auditoria, histórico e rate limit são transversais e acrescentam possíveis erros sem dispensar autorização no recurso. Convites nominais, bootstrap do primeiro gestor, arquivo pós-saída, fórmula agregada de progresso, foto e demais itens indicados como pendentes ainda podem exigir evolução de contrato; integração React, E2E e revisão jurídica/operacional também permanecem pendentes.
 
@@ -481,7 +530,7 @@ O run `37031485540` validou `frontend` e `backend-java` no commit funcional `39a
 - `GET /progresso/resumo-atual` e `/evolucao-historica?meses=3|6|12` são contratos distintos; ausência de registro é `metasSemDados`, não zero.
 - Sessões não expõem `observacoes` privadas fora do autor. Estados canônicos: `AGENDADA|REALIZADA|CANCELADA|NAO_COMPARECEU`.
 - Anotação usa `titulo`, `conteudo`, `temas`, `sessaoId`; correção compartilhada requer `motivoCorrecao`; `GET .../arquivo-proprio` retorna apenas autoria própria.
-- `GET /criancas/{id}/feed?size=&offset=` ordena por instante e identificador, sem janela temporal arbitrária.
+- Correção posterior da proposta histórica: `GET /criancas/{id}/feed?size=&antes=&antesId=` usa cursor por instante e identificador; `offset` nunca integrou o contrato vigente.
 - `PUT /profissionais/me` não aceita `fotoPerfilUrl`; foto é mutação separada e serializada pelo mesmo lock pessimista.
 
 Instantes são ISO-8601/UTC; cálculo local usa `America/Bahia` como fallback, sem inferir todos os municípios por UF. Política definitiva de retenção e implantação AWS não integram este contrato funcional.

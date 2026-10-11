@@ -1,5 +1,48 @@
 # Preparação do backend para o novo frontend
 
+## Estado atual após o PR #80
+
+O merge `41c7889103d44f19576878fba86135a078f99316` incorpora a preparação Java/PostgreSQL até V16. Estão implementados os contratos de estados infantis, Círculo, convites nominal e código/QR, aprovação administrativa do primeiro gestor, conclusão/reabertura de metas, séries por categoria, sessões ampliadas, versões/arquivo de anotações, feed individual/agregado, dashboards e fuso configurável. O contrato vigente está em [`refatoracao-java/12_API_CONTRACT_JAVA_CANONICO.md`](refatoracao-java/12_API_CONTRACT_JAVA_CANONICO.md) e a situação das telas em [`../Frontend/Levantamento_Contratos_Frontend_ConectaTEA.md`](../Frontend/Levantamento_Contratos_Frontend_ConectaTEA.md).
+
+### Evidência consolidada
+
+- SHA preparado: `32d3a90834ddfa3ce14b510c2b8a3fbdb814ca49`.
+- [GitHub Actions 38138130356](https://github.com/Neukox/ConectaTEA/actions/runs/38138130356): `success`; jobs `backend-java`, `frontend` e `e2e` aprovados.
+- Backend: 169 testes, zero falhas, erros ou ignorados. A cobertura inclui PostgreSQL 16, instalação limpa e upgrade populado até V16, Hibernate `ddl-auto=validate`, autorização, concorrência e rollbacks.
+- E2E: um cenário React + Java + PostgreSQL aprovado. Ele confirma o fluxo codificado e a orquestração real, não as 15 telas nem homologação funcional humana.
+- OpenAPI/Swagger: a CI consulta JSON/UI e verifica estrutura básica e `cookieAuth`; não há evidência de comparação exaustiva de todos os DTOs com todos os clientes TypeScript.
+
+### Entregas vigentes
+
+- Progresso atual centralizado em `LatestProgressService`, com desempate `(data,id)`, zero distinto de ausência, estados fora da média e pesos iguais por meta. Séries mensais por categoria expõem amostra, composição e tendência.
+- Fuso injetado por `APP_TIME_ZONE`, IANA validado, fallback `America/Bahia` e override IANA por request. Não existe resolução individual persistida nem inferência por UF; agregados usam um único calendário.
+- Primeiro gestor decidido por operador administrativo, com elegibilidade, histórico, auditoria e evento V16 transacionais. Recusa/replay/rollback e visibilidade restrita foram testados em PostgreSQL.
+- Feed usa cursor `(antes,antesId)`, nunca offset; separa `id` da ocorrência de `recursoId` e revalida `CIRCULO`/`GESTORES` por criança.
+- Metas têm pausa/retomada/conclusão/reabertura; sessões têm estados finais, correção e reagendamento; anotações têm título/temas/sessão, versões e arquivo próprio com snapshots.
+
+### Limitações atuais
+
+- A integração visual e homologação das 15 telas #63–#78 não estão comprovadas pelo único cenário E2E; #79 permanece parcial para sua matriz completa.
+- Política final de retenção/expurgo e responsabilidades operacionais ainda precisam de decisão. O snapshot V15 resolve preservação técnica, não a governança jurídica final.
+- O storage local de fotos é adequado a desenvolvimento/teste. Storage durável, secrets, backups, observabilidade, RPO/RTO, domínio/TLS e demais decisões AWS seguem em #52–#61.
+- IA continua fora da preparação: fornecedor, governança, consentimento, retenção, limites e custos permanecem em #15.
+- Portanto, esta preparação não declara prontidão para uso real com famílias.
+
+### Rastreabilidade da #62
+
+| Critério | Evidência | Estado |
+|---|---|---|
+| Matriz das 15 telas e contratos atuais | matriz Frontend + contrato canônico | consolidado documentalmente; integração visual pendente |
+| Banco versionado e compatível | V8–V16 + `FlywaySchemaIntegrationTest` | instalação limpa/upgrade populado cobertos |
+| Autorização e regras #8/#10 | testes de círculo, feed, primeiro gestor, autoria e snapshots | núcleo implementado; retenção/operação real pendentes |
+| OpenAPI e consumidores | testes OpenAPI, build frontend e inspeção dos clientes | estrutura/build validados; equivalência exaustiva não comprovada |
+| E2E #79 | um cenário real aprovado | parcial; não cobre 15 telas nem todos os papéis/erros |
+| Produção e IA | nenhuma implantação nesta entrega | pendentes em #52–#61 e #15 |
+
+## Histórico incremental — não normativo
+
+As seções seguintes preservam os relatos por etapa/commit. Expressões como “bloqueado”, “parcial”, “em execução” ou “pendente de revalidação” descrevem o momento histórico e foram superadas quando contradizem o estado atual acima.
+
 Data: 2026-10-10
 
 ## Incremento de email e convites nominais — V12

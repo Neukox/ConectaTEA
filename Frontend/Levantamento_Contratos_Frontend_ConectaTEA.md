@@ -1,4 +1,50 @@
-# Matriz de contratos do novo frontend — decisões aprovadas
+# Matriz consolidada dos contratos do novo frontend
+
+Estado vigente após o merge do PR #80 (`41c7889`), revisado em 11/10/2026. Esta seção substitui as classificações incrementais preservadas no histórico ao final. O contrato técnico vigente está em [`../docs/refatoracao-java/12_API_CONTRACT_JAVA_CANONICO.md`](../docs/refatoracao-java/12_API_CONTRACT_JAVA_CANONICO.md).
+
+## Estado atual das 15 telas
+
+“API/banco validado” não significa tela homologada. O E2E conhecido percorre um fluxo real, não as 15 telas.
+
+| Tela | Contratos principais | Estado de API/banco e testes | Pendência real |
+|---|---|---|---|
+| P01 Dashboard profissional | `/dashboard/profissional?timezone=`, `/dashboard/feed` | Indicadores/fuso cobertos; feed/cursor/visibilidade em PostgreSQL | composição visual completa |
+| P02 Crianças profissional | CRUD, `/estado`, `/arquivamento` | campos, estados, autorização e Flyway cobertos | filtros/edição no visual final |
+| P03 Detalhe/Círculo profissional | detalhe, membros, metas, sessões, anotações, feed | blocos e autorização implementados/testados | homologação das abas e URL direta |
+| P04 Metas | CRUD, progresso, pausa/retomada, conclusão/reabertura | transições, autoria e histórico cobertos | integração visual das ações/erros |
+| P05 Progresso | `/resumo-atual`, `/evolucao-historica` | serviço canônico, coorte, categorias e desempate PostgreSQL cobertos | gráficos/estados sem dados no visual final |
+| P06 Sessões | CRUD, detalhe, status, correção, reagendamento | campos, autoria e privacidade implementados/testados | homologação visual; concorrência HTTP específica |
+| P07 Anotações profissional | CRUD, versões, arquivo próprio | snapshots, lock e concorrência PostgreSQL cobertos | revisão visual completa |
+| P08 Notificações profissional | histórico, sino, limpar, leitura, badge | semânticas e contratos HTTP cobertos | navegação visual para todos os destinos |
+| P09 Perfil/configurações | usuário, perfil, foto, locais, redes, áreas | foto/rollback/storage local cobertos em PostgreSQL | tela completa e storage AWS |
+| R01 Dashboard responsável | `/dashboard/responsavel?timezone=`, feed | múltiplas crianças, semana exclusiva, próximas sessões e fuso cobertos | composição visual completa |
+| R02 Minhas crianças | `/criancas`, `/vinculos/me` | vínculo ativo, arquivo e autorização implementados | busca/filtros no visual final |
+| R03 Detalhe/Círculo responsável | detalhe, membros, solicitações, gestão, feed | gestor/comum, perda de gestão e autorização por criança cobertos | homologação das abas/ações |
+| R04 Vincular | código/QR, nominal, solicitações, primeiro gestor | V16; replay, elegibilidade, recusa e rollback PostgreSQL cobertos | experiência visual e procedimento administrativo de produção |
+| R05 Anotações compartilhadas | lista/detalhe/versões | privadas excluídas; vínculo, snapshot e visibilidade cobertos | homologação visual e política final de retenção |
+| R06 Notificações responsável | histórico, sino, leitura, badge | isolamento por destinatário/autorização coberto | navegação/estados visuais |
+
+## Evidência consolidada
+
+- CI do SHA `32d3a90834ddfa3ce14b510c2b8a3fbdb814ca49`: [run 38138130356](https://github.com/Neukox/ConectaTEA/actions/runs/38138130356), sucesso nos jobs backend, frontend e E2E. Backend: 169 testes, zero falhas, erros ou ignorados; E2E React + Java + PostgreSQL: um cenário aprovado.
+- A cobertura inclui instalação limpa e upgrade populado até V16, Hibernate `ddl-auto=validate`, autorização, locks e rollbacks. A CI verifica a estrutura básica do OpenAPI/Swagger; não comprova comparação exaustiva com todos os clientes TypeScript.
+- Ainda não há prova de integração visual/homologação das 15 telas. Retenção final, AWS/storage de produção e fornecedor/governança de IA permanecem pendentes; não há prontidão declarada para famílias reais.
+
+## Rastreabilidade da #62
+
+| Critério | Entrega/evidência | Estado |
+|---|---|---|
+| Contratos, DTOs, enums, filtros, autorização e erros | contrato canônico, controllers/records e esta matriz | preparação técnica consolidada |
+| Flyway/constraints/índices/legado | V8–V16 e `FlywaySchemaIntegrationTest` | instalação limpa e upgrade cobertos |
+| OpenAPI executável | `/api/v3/api-docs`, Swagger e testes de integração | estrutura básica validada; auditoria TypeScript exaustiva não comprovada |
+| Domínio/autorização #8/#10 | círculo, primeiro gestor, autoria, feed e testes PostgreSQL | núcleo implementado; retenção/operação real pendentes |
+| Telas #63–#78 | APIs e consumidores parcialmente preparados | integração visual completa não comprovada |
+| E2E #79 | um cenário integrado real na CI | parcial para a matriz completa de fluxos |
+| Produção e IA | fora do PR #80 | #52–#61 e #15 permanecem abertas |
+
+## Histórico incremental — não normativo
+
+As seções abaixo registram o caminho até V16. Menções a “parcial”, “pendente de revalidação” ou contratos anteriores descrevem apenas aquela etapa e não substituem o estado consolidado acima.
 
 Atualizada em 10/10/2026 a partir da matriz local não rastreada fornecida no workspace e da inspeção visual das 15 referências. Esta cópia registra o estado real desta branch; a entrega não declara integração visual React concluída.
 
@@ -15,7 +61,7 @@ Atualizada em 10/10/2026 a partir da matriz local não rastreada fornecida no wo
 - Instantes persistem em UTC. Indicadores usam localidade; fallback MVP `America/Bahia`, semana segunda–segunda com fim exclusivo.
 - Retenção automática não foi definida e não é executada. AWS/storage durável é etapa de implantação separada.
 
-## Cobertura das 15 telas
+## Fotografia pré-V14 das 15 telas (histórico superado)
 
 | Tela | Endpoint principal | Dados/ações e autorização | Banco/teste | Estado |
 |---|---|---|---|---|
@@ -50,7 +96,7 @@ Validação desta tranche: `mvn clean test` executou 128 testes, sem falhas ou t
 
 ### Atualização V15
 
-### Atualização V16 — dashboards, gestão no feed e validação
+### Atualização V16 — dashboards, gestão no feed e validação (histórico de fechamento)
 
 Atualização final de 11/10/2026: os dashboards aceitam `timezone` IANA opcional e retornam o campo aditivo `fusoUtilizado`. Na ausência do parâmetro, todo o agregado usa uma única configuração backend `APP_TIME_ZONE`, cujo fallback é `America/Bahia`; não há inferência por UF nem fuso individual persistido neste MVP. Valor inválido retorna HTTP 400 (`INVALID_ARGUMENT`). A média geral de `progressoAtual` usa peso igual por meta com dado, enquanto `categorias` em `/progresso/resumo-atual` mantém médias internas por meta. O último registro desempata por `data` e depois pelo maior `id`.
 
