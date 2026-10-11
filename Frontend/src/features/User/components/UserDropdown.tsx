@@ -25,6 +25,20 @@ export function UserDropdown() {
     }
   }
 
+  const roleLabel =
+    user?.tipo === 'PROFISSIONAL'
+      ? 'Profissional'
+      : user?.tipo === 'RESPONSAVEL'
+        ? 'Responsável'
+        : 'Tipo'
+  const initials =
+    user?.name
+      ?.split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'U'
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -35,16 +49,25 @@ export function UserDropdown() {
           className='focus:outline-none p-1'
         >
           <div className='flex items-center gap-2'>
-            <img
-              src='https://randomuser.me/api/portraits/men/32.jpg'
-              alt='avatar'
-              className='size-8 rounded-full border-2 border-green-500'
-            />
+            {user?.fotoPerfilUrl ? (
+              <img
+                src={user.fotoPerfilUrl}
+                alt={`Foto de ${user.name}`}
+                className='size-8 rounded-full border-2 border-primary object-cover'
+              />
+            ) : (
+              <span
+                aria-hidden='true'
+                className='flex size-8 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-xs font-bold text-primary'
+              >
+                {initials}
+              </span>
+            )}
             <div className='hidden text-right md:block'>
               <p className='text-sm font-semibold text-gray-700'>
                 {user?.name || 'Usuário'}
               </p>
-              <p className='text-xs text-gray-500'>{user?.tipo || 'Tipo'}</p>
+              <p className='text-xs text-gray-500'>{roleLabel}</p>
             </div>
             <ChevronDown className='h-4 w-4 text-gray-500' />
           </div>

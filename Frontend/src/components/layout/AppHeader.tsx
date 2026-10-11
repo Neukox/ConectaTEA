@@ -20,7 +20,7 @@ export default function AppHeader() {
           <IoMdMenu className='size-4 font-light' />
         </Button>
         <div className='flex items-center gap-2'>
-          <div className='flex h-8 w-8 items-center justify-center rounded-full bg-green-500 font-bold text-white'>
+          <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground'>
             C
           </div>
           <span className='text-sidebar-foreground font-semibold'>
