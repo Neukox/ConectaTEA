@@ -43,8 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 var claims = jwtService.parse(token);
                 usuarios.findById(claims.id())
                         .filter(usuario -> usuario.isAtivo()
-                                && claims.issuedAt()!=null
-                                && !claims.issuedAt().isBefore(usuario.getCredentialsUpdatedAt()))
+                                && claims.credentialsVersion()!=null
+                                && claims.credentialsVersion()==usuario.getCredentialsVersion())
                         .ifPresentOrElse(usuario -> {
                             var principal = new AuthenticatedUser(
                                     usuario.getId(), usuario.getEmail(), usuario.getTipo());

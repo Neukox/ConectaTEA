@@ -38,7 +38,14 @@ class FlywaySchemaIntegrationTest extends PostgresIntegrationTest {
         List<String> userColumns=jdbc.queryForList(
                 "select column_name from information_schema.columns where table_schema='public' and table_name='usuarios'",
                 String.class);
-        assertThat(userColumns).contains("credentials_updated_at");
+        assertThat(userColumns).contains("credentials_updated_at", "credentials_version");
+
+        var credentialsVersion=jdbc.queryForMap("""
+                select is_nullable,column_default from information_schema.columns
+                where table_schema='public' and table_name='usuarios' and column_name='credentials_version'
+                """);
+        assertThat(credentialsVersion.get("is_nullable")).isEqualTo("NO");
+        assertThat(credentialsVersion.get("column_default").toString()).contains("0");
 
         var supportType = jdbc.queryForObject("""
                 select data_type from information_schema.columns
@@ -50,6 +57,31 @@ class FlywaySchemaIntegrationTest extends PostgresIntegrationTest {
                 where table_schema='public' and table_name='criancas' and column_name='uf'
                 """, String.class);
         assertThat(ufType).isEqualTo("character varying");
+    }
+
+    @Test
+    void upgradesPopulatedV16SchemaWithInitialCredentialsVersion() throws Exception {
+        var schema = "credentials_upgrade_" + UUID.randomUUID().toString().replace("-", "");
+        Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .schemas(schema).defaultSchema(schema).createSchemas(true).target("16").load().migrate();
+
+        try (var connection = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("set search_path to " + schema);
+            statement.execute("insert into usuarios(nome,email,password_hash,tipo) values ('Existente','existente@teste.local','hash','RESPONSAVEL')");
+        }
+
+        Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .schemas(schema).defaultSchema(schema).load().migrate();
+
+        try (var connection = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("set search_path to " + schema);
+            var result=statement.executeQuery("select credentials_version from usuarios where email='existente@teste.local'");
+            assertThat(result.next()).isTrue();assertThat(result.getLong(1)).isZero();
+        }
     }
 
     @Test
