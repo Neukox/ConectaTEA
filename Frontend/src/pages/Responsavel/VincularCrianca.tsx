@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, QrCode, Type } from 'lucide-react'
+import { PageLayout } from '~/components/layout/PageLayout'
+import Header from '~/components/layout/Header'
 import QRCodeScanner from '~/components/VinculacaoCrianca/QRCodeScanner'
 import CodigoInput from '~/components/VinculacaoCrianca/CodigoInput'
 import ConfirmacaoVinculo from '~/components/VinculacaoCrianca/ConfirmacaoVinculo'
@@ -293,7 +295,11 @@ export default function VincularCrianca() {
   }
 
   return (
-    <div className='min-h-screen bg-linear-to-br from-blue-50 via-green-50 to-blue-50 px-4 py-12 sm:px-6 lg:px-8'>
+    <PageLayout>
+      <Header
+        title='Vincular criança'
+        description='Conecte a criança à sua conta com código ou QR'
+      />
       <div className='mx-auto max-w-4xl'>
         {/* Stepper */}
         {step !== 'selecao' && (
@@ -305,6 +311,6 @@ export default function VincularCrianca() {
 
         {renderContent()}
       </div>
-    </div>
+    </PageLayout>
   )
 }

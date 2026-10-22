@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
+  Bell,
   Grid,
   Smile,
   Target,
@@ -77,6 +78,11 @@ const AppSidebar: React.FC = () => {
       icon: NotebookPen,
       path: '/profissional/anotacoes',
     },
+    {
+      title: 'Notificações',
+      icon: Bell,
+      path: '/profissional/notificacoes',
+    },
   ]
 
   const responsibleMenuItems: AppSidebarNavItem[] = [
@@ -88,6 +94,7 @@ const AppSidebar: React.FC = () => {
       path: '/responsavel/vincular-crianca',
     },
     { title: 'Anotações', icon: NotebookPen, path: '/responsavel/anotacoes' },
+    { title: 'Notificações', icon: Bell, path: '/responsavel/notificacoes' },
   ]
 
   const menuItems =
@@ -109,6 +116,18 @@ const AppSidebar: React.FC = () => {
         ]
       : []
 
+  const isActivePath = (pathname: string, itemPath: string) =>
+    pathname === itemPath ||
+    pathname.startsWith(`${itemPath}/`) ||
+    (itemPath === '/profissional/criancas' &&
+      pathname.startsWith('/profissional/criancas/')) ||
+    (itemPath === '/responsavel/criancas' &&
+      pathname.startsWith('/responsavel/criancas/')) ||
+    (itemPath === '/profissional/metas' &&
+      pathname.startsWith('/profissional/metas/')) ||
+    (itemPath === '/profissional/perfil' &&
+      pathname.startsWith('/profissional/perfil'))
+
   const handleLogout = async () => {
     try {
       await logout()
@@ -127,7 +146,7 @@ const AppSidebar: React.FC = () => {
       {/* Logo e título */}
       <SidebarHeader className='h-14.25 flex-row items-center justify-between border-b px-4 py-2'>
         <div className='flex items-center gap-2'>
-          <div className='flex h-8 w-8 items-center justify-center rounded-full bg-green-500 font-bold text-white'>
+          <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground'>
             C
           </div>
           <span className='text-sidebar-foreground font-semibold'>
@@ -154,7 +173,7 @@ const AppSidebar: React.FC = () => {
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location.pathname === item.path}
+                    isActive={isActivePath(location.pathname, item.path)}
                     tooltip={item.title}
                     className='font-medium [&>svg]:size-5'
                   >
@@ -179,7 +198,7 @@ const AppSidebar: React.FC = () => {
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location.pathname === item.path}
+                    isActive={isActivePath(location.pathname, item.path)}
                     tooltip={item.title}
                     className='font-medium [&>svg]:size-5'
                   >

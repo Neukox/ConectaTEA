@@ -14,6 +14,7 @@ export interface AuthUser {
   telefone?: string | null
   endereco?: string | null
   tipo: UserRole
+  fotoPerfilUrl?: string | null
 }
 
 interface AuthResponse {
