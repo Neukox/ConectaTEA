@@ -10,6 +10,7 @@ import { PageLayout } from '~/components/layout/PageLayout'
 import { anotacoesGateway } from '~/features/Anotacoes/services'
 import { StatusMeta } from '~/features/Metas/types'
 import { getSessoes } from '~/features/Sessoes/services'
+import { StatusSessao, TipoSessao } from '~/features/Sessoes/types'
 
 export default function DetalheCriancaResponsavel() {
   const { id } = useParams<{ id: string }>()
@@ -21,16 +22,19 @@ export default function DetalheCriancaResponsavel() {
     queryFn: vinculacaoAPI.obterVinculos,
   })
   const crianca = vinculos.data?.find((item) => item.id === criancaId)
+  // Consultas só rodam após confirmar o vínculo no frontend;
+  // a autorização definitiva continua no backend (requireCrianca).
+  const podeConsultar = idValido && vinculos.isSuccess && Boolean(crianca)
 
   const metas = useQuery({
     queryKey: [QUERY_KEYS.METAS, 'crianca', criancaId],
     queryFn: () => listarMetas({ criancaId }),
-    enabled: idValido,
+    enabled: podeConsultar,
   })
   const sessoes = useQuery({
     queryKey: ['sessoes', 'crianca', criancaId],
     queryFn: () => getSessoes({ criancaId }),
-    enabled: idValido,
+    enabled: podeConsultar,
   })
   const anotacoes = useQuery({
     queryKey: ['anotacoes', 'responsavel', criancaId],
@@ -44,11 +48,13 @@ export default function DetalheCriancaResponsavel() {
         },
         [criancaId],
       ),
-    enabled: idValido,
+    enabled: podeConsultar,
   })
 
   const proximasSessoes = (sessoes.data ?? [])
+    .filter((sessao) => sessao.status === 'AGENDADA')
     .filter((sessao) => new Date(sessao.dataHora).getTime() >= Date.now())
+    .sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime())
     .slice(0, 3)
   const metasEmAndamento = (metas.data ?? []).filter(
     (meta) => meta.status === 'EM_ANDAMENTO',
@@ -105,29 +111,72 @@ export default function DetalheCriancaResponsavel() {
             <div className='rounded-xl bg-white p-5 shadow-sm'>
               <p className='text-xs font-medium text-gray-500'>Metas</p>
               <p className='mt-1 text-2xl font-bold text-gray-900'>
-                {metas.data?.length ?? 0}
+                {metas.isLoading ? '…' : metas.isError ? '—' : (metas.data?.length ?? 0)}
               </p>
-              <p className='mt-1 text-xs text-gray-500'>
-                {metasEmAndamento} em andamento • {metasConcluidas} concluídas
-              </p>
+              {metas.isLoading && (
+                <p role='status' className='mt-1 text-xs text-gray-400'>
+                  Carregando…
+                </p>
+              )}
+              {metas.isError && (
+                <p role='alert' className='mt-1 text-xs text-red-600'>
+                  Não foi possível carregar as metas.
+                </p>
+              )}
+              {metas.isSuccess && (
+                <p className='mt-1 text-xs text-gray-500'>
+                  {metasEmAndamento} em andamento • {metasConcluidas} concluídas
+                  {metas.data.some((meta) => meta.status === 'PAUSADA')
+                    ? ` • ${metas.data.filter((meta) => meta.status === 'PAUSADA').length} pausadas`
+                    : ''}
+                </p>
+              )}
             </div>
             <div className='rounded-xl bg-white p-5 shadow-sm'>
               <p className='text-xs font-medium text-gray-500'>Sessões</p>
               <p className='mt-1 text-2xl font-bold text-gray-900'>
-                {sessoes.data?.length ?? 0}
+                {sessoes.isLoading ? '…' : sessoes.isError ? '—' : (sessoes.data?.length ?? 0)}
               </p>
-              <p className='mt-1 text-xs text-gray-500'>
-                {proximasSessoes.length} próxima(s)
-              </p>
+              {sessoes.isLoading && (
+                <p role='status' className='mt-1 text-xs text-gray-400'>
+                  Carregando…
+                </p>
+              )}
+              {sessoes.isError && (
+                <p role='alert' className='mt-1 text-xs text-red-600'>
+                  Não foi possível carregar as sessões.
+                </p>
+              )}
+              {sessoes.isSuccess && (
+                <p className='mt-1 text-xs text-gray-500'>
+                  {proximasSessoes.length} próxima(s) agendada(s)
+                </p>
+              )}
             </div>
             <div className='rounded-xl bg-white p-5 shadow-sm'>
               <p className='text-xs font-medium text-gray-500'>
                 Anotações compartilhadas
               </p>
               <p className='mt-1 text-2xl font-bold text-gray-900'>
-                {anotacoes.data?.length ?? 0}
+                {anotacoes.isLoading
+                  ? '…'
+                  : anotacoes.isError
+                    ? '—'
+                    : (anotacoes.data?.length ?? 0)}
               </p>
-              <p className='mt-1 text-xs text-gray-500'>Visíveis para a família</p>
+              {anotacoes.isLoading && (
+                <p role='status' className='mt-1 text-xs text-gray-400'>
+                  Carregando…
+                </p>
+              )}
+              {anotacoes.isError && (
+                <p role='alert' className='mt-1 text-xs text-red-600'>
+                  Não foi possível carregar as anotações.
+                </p>
+              )}
+              {anotacoes.isSuccess && (
+                <p className='mt-1 text-xs text-gray-500'>Visíveis para a família</p>
+              )}
             </div>
           </div>
 
@@ -204,11 +253,11 @@ export default function DetalheCriancaResponsavel() {
                       {format(parseISO(sessao.dataHora), "dd/MM/yyyy 'às' HH:mm")}
                     </p>
                     <p className='text-xs text-gray-500'>
-                      {sessao.tipo} • {sessao.duracao} min
+                      {TipoSessao[sessao.tipo]} • {sessao.duracao} min
                     </p>
                   </div>
                   <span className='rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700'>
-                    {sessao.status}
+                    {StatusSessao[sessao.status]}
                   </span>
                 </li>
               ))}
