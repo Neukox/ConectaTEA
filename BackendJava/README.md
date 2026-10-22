@@ -44,7 +44,9 @@ Configure `PASSWORD_RESET_TOKEN_TTL` (padrão `PT30M`), `FRONTEND_PASSWORD_RESET
 
 Para habilitar a Brevo, configure `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` e, opcionalmente, `BREVO_SENDER_NAME`. A aplicação falha ao iniciar se a integração estiver ativa sem chave ou remetente. `BREVO_CONNECT_TIMEOUT` e `BREVO_READ_TIMEOUT` têm padrões de 3 e 5 segundos. `BREVO_SANDBOX=true` adiciona `X-Sib-Sandbox: drop` aos headers transacionais do payload: a Brevo valida a chamada sem entregar a mensagem. Nenhuma chave deve entrar no Git; o Gmail indicado no exemplo é apenas um remetente verificado de desenvolvimento, e produção deve preferir domínio próprio autenticado.
 
-Redefinir a senha atualiza `credentialsUpdatedAt`. Como o filtro JWT já consulta o usuário, tokens cujo `iat` seja anterior a esse instante deixam de autenticar; o usuário precisa realizar novo login. A comparação usa segundos, precisão do NumericDate do JWT, para não rejeitar um token novo por diferenças de nanossegundos.
+Redefinir a senha atualiza `credentialsUpdatedAt` para histórico e incrementa `credentialsVersion` na mesma transação que consome o token. O login inclui essa versão no JWT; como o filtro consulta o usuário, aceita somente conta ativa com correspondência exata de versão. A revogação independe do relógio e funciona mesmo quando emissão e reset ocorrem no mesmo segundo. JWTs anteriores a esta implantação, sem a claim `credentials_version`, são inválidos e exigem novo login. O contrato JSON do login, o cookie HttpOnly e `/auth/me` permanecem inalterados.
+
+Os fluxos de solicitação e consumo de recuperação adquirem locks na ordem usuário → token. Isso serializa mudanças simultâneas de senha por usuário, preserva todos os incrementos da versão e mantém cada token de recuperação como uso único.
 
 ## Segurança
 

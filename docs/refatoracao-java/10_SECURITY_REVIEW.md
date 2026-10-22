@@ -34,9 +34,11 @@ Swagger expõe metadados da API quando habilitado; em produção sua exposição
 
 ## Revogação lógica de sessões
 
-`usuarios.credentials_updated_at` registra a última mudança relevante de credenciais. O reset atualiza senha, timestamp e consumo do token na mesma transação. O filtro compara o `iat` do JWT, normalizado à precisão de segundos usada pelo NumericDate, e rejeita tokens emitidos antes de `credentialsUpdatedAt`. Tokens não são apagados fisicamente: deixam de ser aceitos porque toda autenticação continua consultando o estado atual do usuário no banco. Um novo login emite JWT válido sem autenticação automática no reset.
+`usuarios.credentials_version` é incluído no JWT no login. Toda autenticação consulta o usuário atual e só aceita a sessão quando a conta está ativa e a versão do token corresponde exatamente à versão persistida. A mudança de senha incrementa essa versão na mesma transação que atualiza o hash e consome o token de recuperação. Assim, a revogação é determinística mesmo quando login e reset ocorrem no mesmo segundo. `credentials_updated_at` permanece como histórico, sem participar da autorização.
 
-Usuários migrados recebem inicialmente o `created_at` truncado para segundos, preservando sessões posteriores à criação. A estratégia cobre revogação por alteração de credenciais sem criar blacklist de JWT; continua dependente da consulta ao banco já existente.
+Usuários migrados recebem a versão inicial `0`. JWTs emitidos antes da implantação não possuem a claim `credentials_version` e são rejeitados; esses usuários precisam fazer login novamente. Tokens não são apagados fisicamente: deixam de ser aceitos sem blacklist, usando a consulta ao banco já existente. Um novo login após a troca de senha emite JWT com a nova versão; o reset não autentica automaticamente.
+
+Solicitação e consumo de recuperação seguem a ordem de bloqueio pessimista usuário → token. Mudanças simultâneas de senha do mesmo usuário são serializadas, evitando incremento perdido; cada token continua sendo consumido no máximo uma vez.
 
 ## Password reset pós-commit
 

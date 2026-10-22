@@ -8,4 +8,6 @@ public interface CriancaRepository extends JpaRepository<Crianca,Long>{
  boolean existsByIdAndArquivadaFalse(Long id);
  @Query("select c from Crianca c where c.arquivada=false and c.id in (select v.criancaId from VinculoProfissionalCrianca v where v.profissionalId=:id and v.status=br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO)") List<Crianca> findLinkedToProfessional(@Param("id")Long id);
  @Query("select c from Crianca c where c.arquivada=false and c.id in (select v.criancaId from VinculoResponsavelCrianca v where v.responsavelId=:id and v.status=br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO)") List<Crianca> findLinkedToGuardian(@Param("id")Long id);
+ @Query("select c from Crianca c where c.id in (select v.criancaId from VinculoProfissionalCrianca v where v.profissionalId=:id and v.status=br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO)") List<Crianca> findAllLinkedToProfessional(@Param("id")Long id);
+ @Query("select c from Crianca c where c.id in (select v.criancaId from VinculoResponsavelCrianca v where v.responsavelId=:id and v.status=br.com.conectatea.vinculo.domain.StatusVinculo.VINCULADO)") List<Crianca> findAllLinkedToGuardian(@Param("id")Long id);
 }

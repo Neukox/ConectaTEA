@@ -31,6 +31,12 @@ public class VinculoResponsavelCrianca extends AuditableEntity {
     private boolean principal;
 
     @Enumerated(EnumType.STRING)
+    private PapelCirculo papel;
+
+    @jakarta.persistence.Version
+    private long version;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusVinculo status;
 
@@ -46,12 +52,23 @@ public class VinculoResponsavelCrianca extends AuditableEntity {
     public VinculoResponsavelCrianca(Long guardianId, Long childId) {
         responsavelId = guardianId;
         criancaId = childId;
+        papel = PapelCirculo.RESPONSAVEL;
         vincular();
     }
 
     public Long getResponsavelId() {
         return responsavelId;
     }
+
+    public Long getId() { return id; }
+    public String getParentesco() { return parentesco; }
+    public PapelCirculo getPapel() { return papel; }
+    public void informarParentesco(String parentesco) {
+        this.parentesco = parentesco == null || parentesco.isBlank() ? null : parentesco.trim();
+    }
+    public void tornarGestor() { papel = PapelCirculo.RESPONSAVEL_GESTOR; }
+    public void tornarResponsavel() { papel = PapelCirculo.RESPONSAVEL; }
+    public boolean isGestor() { return papel == PapelCirculo.RESPONSAVEL_GESTOR; }
 
     public Long getCriancaId() {
         return criancaId;
@@ -65,6 +82,15 @@ public class VinculoResponsavelCrianca extends AuditableEntity {
         status = StatusVinculo.VINCULADO;
         dataVinculo = Instant.now();
         dataDesvinculo = null;
+    }
+
+    public void vincularComo(PapelCirculo papelAutorizado) {
+        if (papelAutorizado != PapelCirculo.RESPONSAVEL
+                && papelAutorizado != PapelCirculo.RESPONSAVEL_GESTOR) {
+            throw new IllegalArgumentException("Papel inválido para vínculo de responsável");
+        }
+        papel = papelAutorizado;
+        vincular();
     }
 
     public void desvincular() {

@@ -1,0 +1,1 @@
+package br.com.conectatea.crianca.infrastructure; import br.com.conectatea.crianca.domain.HistoricoCrianca; import org.springframework.data.jpa.repository.JpaRepository; public interface HistoricoCriancaRepository extends JpaRepository<HistoricoCrianca,Long>{}

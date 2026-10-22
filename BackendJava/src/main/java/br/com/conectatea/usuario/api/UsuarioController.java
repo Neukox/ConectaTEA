@@ -6,6 +6,8 @@ import br.com.conectatea.security.AuthenticatedUser;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import br.com.conectatea.usuario.domain.Usuario;
 import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
+import br.com.conectatea.vinculo.application.CirculoService;
+import br.com.conectatea.emailverification.application.EmailVerificationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/users")
@@ -32,14 +35,20 @@ public class UsuarioController {
     private final UsuarioRepository users;
     private final PasswordEncoder encoder;
     private final ProfissionalRepository professionals;
+    private final CirculoService circle;
+    private final EmailVerificationService emailVerification;
 
     public UsuarioController(
             UsuarioRepository users,
             PasswordEncoder encoder,
-            ProfissionalRepository professionals) {
+            ProfissionalRepository professionals,
+            CirculoService circle,
+            EmailVerificationService emailVerification) {
         this.users = users;
         this.encoder = encoder;
         this.professionals = professionals;
+        this.circle = circle;
+        this.emailVerification = emailVerification;
     }
 
     @PostMapping("/register")
@@ -60,6 +69,7 @@ public class UsuarioController {
             professionals.save(new Profissional(
                     user.getId(), "PROF" + String.format("%06d", user.getId())));
         }
+        emailVerification.issueForRegistration(user);
         return new RegisterResponse("Usuário cadastrado", UserResponse.from(user));
     }
 
@@ -82,6 +92,12 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     public void deactivate(Authentication authentication) {
+        var principal = (AuthenticatedUser) authentication.getPrincipal();
+        if (principal.tipo() == TipoUsuario.RESPONSAVEL) {
+            circle.deactivateGuardian(principal.id());
+        } else {
+            circle.deactivateProfessional(principal.id());
+        }
         current(authentication).desativar();
     }
 
@@ -114,7 +130,9 @@ public class UsuarioController {
             String email,
             String telefone,
             String endereco,
-            TipoUsuario tipo) {
+            TipoUsuario tipo,
+            boolean emailConfirmado,
+            Instant emailConfirmadoEm) {
         static UserResponse from(Usuario user) {
             return new UserResponse(
                     user.getId(),
@@ -122,7 +140,7 @@ public class UsuarioController {
                     user.getEmail(),
                     user.getTelefone(),
                     user.getEndereco(),
-                    user.getTipo());
+                    user.getTipo(), user.isEmailConfirmado(), user.getEmailConfirmadoEm());
         }
     }
 }

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarClock, Smile, Target, TrendingUp } from 'lucide-react'
+import { Bell, CalendarClock, Smile, Target, TrendingUp } from 'lucide-react'
 import { QUERY_KEYS } from '~/api/query-client'
 import SummaryCard from '~/components/common/SummaryCard'
 import { ErrorContainer } from '~/components/common/ErrorContainer'
@@ -39,11 +39,13 @@ export default function DashboardResponsavel() {
       )}
 
       {data && (
-        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
           <SummaryCard icon={Smile} label='Crianças' value={data.totalCriancas} color='green' iconColor='green' />
-          <SummaryCard icon={Target} label='Metas' value={data.totalMetas} color='blue' iconColor='blue' />
+          <SummaryCard icon={Target} label='Metas ativas' value={data.metasAtivas} color='blue' iconColor='blue' />
+          <SummaryCard icon={CalendarClock} label='Sessões da semana' value={data.sessoesSemana} color='violet' iconColor='violet' />
           <SummaryCard icon={CalendarClock} label='Próximas sessões' value={data.sessoesProximas} color='violet' iconColor='violet' />
-          <SummaryCard icon={TrendingUp} label='Progresso médio' value={`${data.taxaProgresso}%`} color='orange' iconColor='orange' />
+          <SummaryCard icon={Bell} label='Notificações não lidas' value={data.notificacoesNaoLidas} color='blue' iconColor='blue' />
+          <SummaryCard icon={TrendingUp} label='Progresso médio' value={data.progressoAtual.media == null ? 'Indisponível' : `${Math.round(data.progressoAtual.media)}%`} color='orange' iconColor='orange' />
         </div>
       )}
     </PageLayout>

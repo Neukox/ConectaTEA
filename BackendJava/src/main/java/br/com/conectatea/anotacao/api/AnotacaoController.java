@@ -52,7 +52,7 @@ public class AnotacaoController {
             @PathVariable Long criancaId,
             @Valid @RequestBody AnotacaoDtos.CreateRequest request) {
         return AnotacaoDtos.Response.from(service.criar(
-                principal(authentication), criancaId, request.conteudo(), request.visibilidade()));
+                principal(authentication), criancaId, request.tituloResolvido(), request.conteudo(), request.visibilidade(), request.temas(), request.sessaoId()));
     }
 
     @GetMapping
@@ -95,8 +95,16 @@ public class AnotacaoController {
             @Valid @RequestBody AnotacaoDtos.UpdateRequest request) {
         return AnotacaoDtos.Response.from(service.atualizar(
                 principal(authentication), criancaId, anotacaoId,
-                request.conteudo(), request.visibilidade()));
+                request.titulo(), request.conteudo(), request.visibilidade(), request.temas(), request.motivoCorrecao()));
     }
+
+    @GetMapping("/{anotacaoId}/versoes")
+    @Operation(summary = "Consultar versões autorizadas da anotação")
+    public List<AnotacaoDtos.VersaoResponse> versoes(Authentication authentication,@PathVariable Long criancaId,@PathVariable Long anotacaoId){
+        return service.versoes(principal(authentication),criancaId,anotacaoId).stream().map(AnotacaoDtos.VersaoResponse::from).toList();
+    }
+
+
 
     @DeleteMapping("/{anotacaoId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

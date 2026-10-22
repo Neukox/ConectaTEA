@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.conectatea.profissional.domain.Profissional;
+import br.com.conectatea.profissional.application.ProfileImageService;
+import br.com.conectatea.profissional.application.ProfileImageUrlResolver;
 import br.com.conectatea.profissional.infrastructure.ProfissionalRepository;
 import br.com.conectatea.shared.api.ApiExceptionHandler;
 import br.com.conectatea.usuario.domain.TipoUsuario;
@@ -23,12 +25,15 @@ class ProfissionalControllerWebMvcTest {
     private final ProfissionalRepository professionals =
             org.mockito.Mockito.mock(ProfissionalRepository.class);
     private final UsuarioRepository users = org.mockito.Mockito.mock(UsuarioRepository.class);
+    private final ProfileImageUrlResolver profileImageUrls =
+            org.mockito.Mockito.mock(ProfileImageUrlResolver.class);
     private MockMvc mockMvc;
 
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new ProfissionalController(professionals, users))
+                .standaloneSetup(new ProfissionalController(professionals, users,
+                        org.mockito.Mockito.mock(ProfileImageService.class), profileImageUrls))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
     }
@@ -64,6 +69,21 @@ class ProfissionalControllerWebMvcTest {
         mockMvc.perform(get("/profissionais/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void profileResponseUsesSharedPresentationUrlRule() throws Exception {
+        var professional = professional();
+        professional.setFotoPerfilUrl("profile-image:photo.png");
+        when(professionals.findById(20L)).thenReturn(Optional.of(professional));
+        when(users.findById(10L)).thenReturn(Optional.of(user(true)));
+        when(profileImageUrls.resolve("profile-image:photo.png"))
+                .thenReturn("https://api.example.test/api/profissionais/fotos/photo.png");
+
+        mockMvc.perform(get("/profissionais/20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fotoPerfilUrl")
+                        .value("https://api.example.test/api/profissionais/fotos/photo.png"));
     }
 
     private Profissional professional() {

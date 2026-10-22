@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import br.com.conectatea.config.AppProperties;
 import br.com.conectatea.usuario.domain.TipoUsuario;
 import br.com.conectatea.usuario.domain.Usuario;
 import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
 import jakarta.servlet.http.Cookie;
 import java.util.Optional;
+import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +31,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void inactiveUserCannotReuseValidJwt() throws Exception {
-        var claims = new AuthenticatedUser(42L, "responsavel@example.com", TipoUsuario.RESPONSAVEL,Instant.parse("2026-10-05T12:00:00Z"));
+        var claims = claims(0L);
         var usuario = user(false);
         when(jwt.parse("valid-token")).thenReturn(claims);
         when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));
@@ -41,9 +43,8 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void activeUserIsLoadedFromDatabaseBeforeAuthentication() throws Exception {
-        var claims = new AuthenticatedUser(42L, "stale@example.com", TipoUsuario.PROFISSIONAL,Instant.parse("2026-10-05T12:00:00Z"));
+        var claims = new AuthenticatedUser(42L, "stale@example.com", TipoUsuario.PROFISSIONAL,Instant.parse("2026-10-05T12:00:00Z"),0L);
         var usuario = user(true);
-        ReflectionTestUtils.setField(usuario,"credentialsUpdatedAt",Instant.parse("2026-10-05T11:59:59Z"));
         when(jwt.parse("valid-token")).thenReturn(claims);
         when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));
 
@@ -56,26 +57,61 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void jwtIssuedBeforeCredentialsUpdateIsRejected() throws Exception {
-        var claims=new AuthenticatedUser(42L,"responsavel@example.com",TipoUsuario.RESPONSAVEL,Instant.parse("2026-10-05T11:59:59Z"));
-        var usuario=user(true);ReflectionTestUtils.setField(usuario,"credentialsUpdatedAt",Instant.parse("2026-10-05T12:00:00Z"));
+    void divergentCredentialsVersionIsRejected() throws Exception {
+        var claims=claims(0L);
+        var usuario=user(true);ReflectionTestUtils.setField(usuario,"credentialsVersion",1L);
         when(jwt.parse("valid-token")).thenReturn(claims);when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));executeFilter();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test
-    void jwtIssuedAtOrAfterCredentialsUpdateIsAccepted() throws Exception {
-        var claims=new AuthenticatedUser(42L,"responsavel@example.com",TipoUsuario.RESPONSAVEL,Instant.parse("2026-10-05T12:00:00Z"));
-        var usuario=user(true);ReflectionTestUtils.setField(usuario,"credentialsUpdatedAt",Instant.parse("2026-10-05T12:00:00Z"));
+    void matchingCredentialsVersionIsAccepted() throws Exception {
+        var claims=claims(0L);
+        var usuario=user(true);
         when(jwt.parse("valid-token")).thenReturn(claims);when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));executeFilter();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
     }
 
-    private void executeFilter() throws Exception {
-        var request = new MockHttpServletRequest();
-        request.setCookies(new Cookie("jwt", "valid-token"));
-        filter.doFilter(request, new MockHttpServletResponse(), (req, res) -> { });
+    @Test
+    void missingCredentialsVersionIsRejected() throws Exception {
+        when(jwt.parse("valid-token")).thenReturn(new AuthenticatedUser(42L,"responsavel@example.com",TipoUsuario.RESPONSAVEL));
+        when(usuarios.findById(42L)).thenReturn(Optional.of(user(true)));
+        executeFilter();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
+
+    @Test
+    void invalidJwtIsRejected() throws Exception {
+        when(jwt.parse("valid-token")).thenThrow(new IllegalArgumentException("invalid"));
+        executeFilter();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void passwordChangeRevokesOldJwtEvenInSameSecondAndNewLoginIsAccepted() throws Exception {
+        var properties=new AppProperties(new AppProperties.Jwt("0123456789012345678901234567890123456789",Duration.ofHours(1)),new AppProperties.Cors("http://localhost:5173"),new AppProperties.Cookie(false,"Lax"));
+        var realJwt=new JwtService(properties);var usuario=user(true);var oldToken=realJwt.issue(usuario);var issuedAt=realJwt.parse(oldToken).issuedAt();
+        usuario.atualizarSenha("new-hash",issuedAt);
+        when(usuarios.findById(42L)).thenReturn(Optional.of(usuario));
+        var realFilter=new JwtAuthenticationFilter(realJwt,usuarios);
+        executeFilter(realFilter,oldToken);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        executeFilter(realFilter,realJwt.issue(usuario));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+    }
+
+    private void executeFilter() throws Exception {
+        executeFilter(filter,"valid-token");
+    }
+
+    private void executeFilter(JwtAuthenticationFilter target,String token) throws Exception {
+        SecurityContextHolder.clearContext();
+        var request = new MockHttpServletRequest();
+        request.setCookies(new Cookie("jwt", token));
+        target.doFilter(request, new MockHttpServletResponse(), (req, res) -> { });
+    }
+
+    private AuthenticatedUser claims(long credentialsVersion){return new AuthenticatedUser(42L,"responsavel@example.com",TipoUsuario.RESPONSAVEL,Instant.parse("2026-10-05T12:00:00Z"),credentialsVersion);}
 
     private Usuario user(boolean active) {
         var usuario = new Usuario(

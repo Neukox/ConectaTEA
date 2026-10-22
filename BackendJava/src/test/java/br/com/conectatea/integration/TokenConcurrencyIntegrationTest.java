@@ -13,9 +13,9 @@ import br.com.conectatea.usuario.domain.Usuario;
 import br.com.conectatea.usuario.infrastructure.UsuarioRepository;
 import br.com.conectatea.vinculo.application.VinculoService;
 import br.com.conectatea.vinculo.domain.StatusToken;
-import br.com.conectatea.vinculo.domain.StatusVinculo;
 import br.com.conectatea.vinculo.domain.TokenVinculo;
 import br.com.conectatea.vinculo.infrastructure.TokenVinculoRepository;
+import br.com.conectatea.vinculo.infrastructure.SolicitacaoTokenVinculoRepository;
 import br.com.conectatea.vinculo.infrastructure.VinculoResponsavelRepository;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -44,9 +44,11 @@ class TokenConcurrencyIntegrationTest extends PostgresIntegrationTest {
     private TokenVinculoRepository tokens;
     @Autowired
     private VinculoResponsavelRepository links;
+    @Autowired
+    private SolicitacaoTokenVinculoRepository requests;
 
     @Test
-    void onlyOneSimultaneousConfirmationConsumesTokenAndCreatesCoherentLink() throws Exception {
+    void onlyOneSimultaneousConfirmationConsumesTokenAndCreatesOnePendingRequest() throws Exception {
         var code = "CONCURRENT-TOKEN-01";
         var guardian = users.save(new Usuario(
                 "Responsável", "concorrente@example.com", "hash", null, null,
@@ -95,12 +97,13 @@ class TokenConcurrencyIntegrationTest extends PostgresIntegrationTest {
         assertThat(gone.get()).isEqualTo(1);
         assertThat(tokens.findById(token.getId()).orElseThrow().getStatus())
                 .isEqualTo(StatusToken.USADO);
-        assertThat(links.findAll())
-                .filteredOn(link -> link.getResponsavelId().equals(guardian.getId())
-                        && link.getCriancaId().equals(child.getId()))
+        assertThat(links.findAll()).isEmpty();
+        assertThat(requests.findAll())
+                .filteredOn(request -> request.getSolicitanteUsuarioId().equals(guardian.getId())
+                        && request.getCriancaId().equals(child.getId()))
                 .singleElement()
-                .extracting(link -> link.getStatus())
-                .isEqualTo(StatusVinculo.VINCULADO);
+                .extracting(request -> request.getStatus())
+                .isEqualTo("PENDENTE");
 
         assertThatThrownBy(() -> service.confirm(
                 code, true, principal, "127.0.0.1", "replay-test"))

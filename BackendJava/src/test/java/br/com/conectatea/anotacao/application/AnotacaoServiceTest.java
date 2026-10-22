@@ -49,6 +49,9 @@ class AnotacaoServiceTest {
     @Mock AuthorizationService autorizacaoCrianca;
     @Mock AuditLogService auditoria;
     @Mock NotificationService notificacoes;
+    @Mock br.com.conectatea.sessao.infrastructure.SessaoRepository sessoes;
+    @Mock br.com.conectatea.dashboard.application.FeedService feedService;
+    @Mock br.com.conectatea.anotacao.infrastructure.VersaoAnotacaoRepository versoes;
 
     private final AnotacaoAuthorizationService autorizacaoAnotacao =
             new AnotacaoAuthorizationService();
@@ -62,7 +65,7 @@ class AnotacaoServiceTest {
     void setup() {
         service = new AnotacaoService(
                 anotacoes, criancas, profissionais, usuarios,
-                autorizacaoCrianca, autorizacaoAnotacao, auditoria, notificacoes);
+                autorizacaoCrianca, autorizacaoAnotacao, auditoria, notificacoes, sessoes, feedService, versoes);
         crianca = child(10L);
         autor = professional(20L, 1L);
         outro = professional(21L, 2L);
@@ -126,26 +129,25 @@ class AnotacaoServiceTest {
     @Test
     void editarCompartilhadaGeraNotificacaoDeEdicao() {
         ownedSetup(annotation(30L, autor, COMPARTILHADA));
-        service.atualizar(professionalUser(1L), 10L, 30L,
-                "Conteúdo compartilhado atualizado", COMPARTILHADA);
+        service.atualizar(professionalUser(1L), 10L, 30L, null,
+                "Conteúdo compartilhado atualizado", COMPARTILHADA, null, "Correção justificada");
         verify(notificacoes).registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_EDITADA,
                 10L, "Lia", 30L, 1L, "Dra. Autora");
     }
 
     @Test
-    void tornarCompartilhadaPrivadaInformaAntigosDestinatarios() {
-        ownedSetup(annotation(30L, autor, COMPARTILHADA));
-        service.atualizar(professionalUser(1L), 10L, 30L,
-                "Conteúdo agora privado e protegido", PRIVADA);
-        verify(notificacoes).registrarAlteracaoAnotacao(
-                TipoNotificacao.ANOTACAO_TORNADA_PRIVADA, 10L, "Lia", 30L,
-                1L, "Dra. Autora");
+    void compartilhadaNaoVoltaAPrivada() {
+        when(profissionais.findByUsuarioId(1L)).thenReturn(Optional.of(autor));
+        when(anotacoes.findByIdAndCriancaIdForUpdate(30L, 10L)).thenReturn(Optional.of(annotation(30L, autor, COMPARTILHADA)));
+        assertThatThrownBy(() -> service.atualizar(professionalUser(1L), 10L, 30L,
+                "Conteúdo agora privado e protegido", PRIVADA))
+                .isInstanceOf(br.com.conectatea.shared.domain.BusinessRuleException.class);
     }
 
     @Test
     void outroProfissionalNaoEdita() {
         when(profissionais.findByUsuarioId(2L)).thenReturn(Optional.of(outro));
-        when(anotacoes.findByIdAndCriancaId(30L, 10L))
+        when(anotacoes.findByIdAndCriancaIdForUpdate(30L, 10L))
                 .thenReturn(Optional.of(annotation(30L, autor, COMPARTILHADA)));
 
         assertThatThrownBy(() -> service.atualizar(
@@ -179,16 +181,13 @@ class AnotacaoServiceTest {
     }
 
     @Test
-    void excluirCompartilhadaGeraNotificacao() {
+    void compartilhadaNaoAdmiteExclusaoComum() {
         var anotacao = annotation(30L, autor, COMPARTILHADA);
         when(profissionais.findByUsuarioId(1L)).thenReturn(Optional.of(autor));
         when(anotacoes.findByIdAndCriancaId(30L, 10L)).thenReturn(Optional.of(anotacao));
-        when(usuarios.findById(1L)).thenReturn(Optional.of(autorUsuario));
-
-        service.excluir(professionalUser(1L), 10L, 30L);
-
-        verify(notificacoes).registrarAlteracaoAnotacao(TipoNotificacao.ANOTACAO_EXCLUIDA,
-                10L, "Lia", 30L, 1L, "Dra. Autora");
+        assertThatThrownBy(() -> service.excluir(professionalUser(1L), 10L, 30L))
+                .isInstanceOf(br.com.conectatea.shared.domain.BusinessRuleException.class);
+        verify(anotacoes, never()).delete(any());
     }
 
     @Test
@@ -280,7 +279,7 @@ class AnotacaoServiceTest {
 
     private void ownedSetup(Anotacao anotacao) {
         when(profissionais.findByUsuarioId(1L)).thenReturn(Optional.of(autor));
-        when(anotacoes.findByIdAndCriancaId(30L, 10L)).thenReturn(Optional.of(anotacao));
+        when(anotacoes.findByIdAndCriancaIdForUpdate(30L, 10L)).thenReturn(Optional.of(anotacao));
         when(usuarios.findById(1L)).thenReturn(Optional.of(autorUsuario));
     }
 

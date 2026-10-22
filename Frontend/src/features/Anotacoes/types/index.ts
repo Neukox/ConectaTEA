@@ -7,7 +7,10 @@ export type Anotacao = {
   autorProfissionalId: number
   autorNome: string
   autorEspecialidade?: string
+  titulo: string
   conteudo: string
+  temas?: string | null
+  sessaoId?: number | null
   visibilidade: VisibilidadeAnotacao
   createdAt: string
   updatedAt: string
@@ -32,14 +35,17 @@ export type AutorAnotacao = { id: number; nome: string; especialidade?: string }
 
 export type CriarAnotacaoInput = {
   criancaId: number
+  titulo: string
   conteudo: string
   visibilidade: VisibilidadeAnotacao
+  temas?: string
+  sessaoId?: number
 }
 
-export type AtualizarAnotacaoInput = Pick<
-  CriarAnotacaoInput,
-  'conteudo' | 'visibilidade'
->
+export type AtualizarAnotacaoInput = Pick<CriarAnotacaoInput,'titulo'|'conteudo'|'visibilidade'|'temas'> & { motivoCorrecao?: string }
+
+export type ArquivoAnotacao = Pick<Anotacao,'id'|'criancaId'|'criancaNome'|'titulo'|'conteudo'|'temas'|'sessaoId'|'visibilidade'|'createdAt'|'updatedAt'> & {snapshotCapturadoEm:string;snapshotOrigem:'CRIACAO'|'MIGRACAO_V15';snapshotHistoricoConfiavel:boolean}
+export type VersaoAnotacao = {id:number;numero:number;titulo:string;conteudo:string;temas?:string|null;motivoCorrecao:string;autorUsuarioId:number;criadoEm:string}
 
 export type ContextoNotificacaoAnotacao = {
   annotationId: number

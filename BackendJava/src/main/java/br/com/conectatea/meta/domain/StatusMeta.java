@@ -1,1 +1,7 @@
-package br.com.conectatea.meta.domain; public enum StatusMeta { EM_ANDAMENTO,VENCENDO,QUASE_CONCLUIDA,CONCLUIDA }
+package br.com.conectatea.meta.domain;
+
+public enum StatusMeta {
+    EM_ANDAMENTO,
+    PAUSADA,
+    CONCLUIDA
+}

@@ -50,7 +50,7 @@ export class ApiAnotacoesGateway implements AnotacoesGateway {
   async criar(input: CriarAnotacaoInput): Promise<Anotacao> {
     const response = await api.post<Anotacao>(
       `/criancas/${input.criancaId}/anotacoes`,
-      { conteudo: input.conteudo, visibilidade: input.visibilidade },
+      { titulo:input.titulo, conteudo: input.conteudo, visibilidade: input.visibilidade, temas:input.temas, sessaoId:input.sessaoId },
     )
     return response.data
   }
