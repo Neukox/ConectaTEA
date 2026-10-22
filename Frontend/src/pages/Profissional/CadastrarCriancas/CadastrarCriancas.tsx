@@ -22,6 +22,8 @@ import LayoutCriancaCadastrada from './LayoutCriancaCadastrada'
 import { CadastrarCriancaDialog } from '~/features/CadastrarCrianca'
 import { queryClient, QUERY_KEYS } from '~/api/query-client'
 
+type FiltroDiagnostico = 'TODOS' | 'COM_DIAGNOSTICO' | 'SEM_DIAGNOSTICO'
+
 export default function CadastrarCriancas() {
   const navigate = useNavigate()
   const { notificarSucesso, notificarErro } = useNotificacoesContext()
@@ -38,6 +40,8 @@ export default function CadastrarCriancas() {
   const [nomeCriancaVinculo, setNomeCriancaVinculo] = useState('')
   const [expiracaoVinculo, setExpiracaoVinculo] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [filtroDiagnostico, setFiltroDiagnostico] =
+    useState<FiltroDiagnostico>('TODOS')
 
   // Função para criar um estado inicial limpo do formulário
   const getInitialFormData = (): CadastroCriancaFormData => ({
@@ -90,20 +94,21 @@ export default function CadastrarCriancas() {
 
   // Filtrar crianças baseado no termo de busca
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setCriancasFiltradas(criancas)
-      return
-    }
-
-    const filtered = criancas.filter(
-      (crianca) =>
-        crianca.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (crianca.diagnostico ?? '')
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()),
-    )
+    const termo = searchTerm.trim().toLowerCase()
+    const filtered = criancas.filter((crianca) => {
+      const combinaBusca =
+        !termo ||
+        crianca.nome.toLowerCase().includes(termo) ||
+        (crianca.diagnostico ?? '').toLowerCase().includes(termo)
+      const temDiagnostico = Boolean(crianca.diagnostico?.trim())
+      const combinaFiltro =
+        filtroDiagnostico === 'TODOS' ||
+        (filtroDiagnostico === 'COM_DIAGNOSTICO' && temDiagnostico) ||
+        (filtroDiagnostico === 'SEM_DIAGNOSTICO' && !temDiagnostico)
+      return combinaBusca && combinaFiltro
+    })
     setCriancasFiltradas(filtered)
-  }, [searchTerm, criancas])
+  }, [filtroDiagnostico, searchTerm, criancas])
 
   useEffect(() => {
     fetchCriancas()
@@ -265,24 +270,38 @@ export default function CadastrarCriancas() {
 
         {/* Conteúdo principal */}
         <div className='p-6'>
-          {/* Filtros adicionais */}
-          <div className='mb-6 flex items-center gap-2'>
-            <button className='flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-600 transition-colors hover:bg-gray-50'>
-              <svg
-                className='h-4 w-4'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
+          {/* Busca e filtros */}
+          <div className='mb-6 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 md:flex-row md:items-center'>
+            <div className='w-full md:max-w-xl'>
+              <label htmlFor='busca-criancas-profissional' className='sr-only'>
+                Buscar crianças por nome ou diagnóstico
+              </label>
+              <input
+                id='busca-criancas-profissional'
+                type='search'
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder='Buscar por nome ou diagnóstico...'
+                className='w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100'
+              />
+            </div>
+            <div>
+              <label htmlFor='filtro-criancas-profissional' className='sr-only'>
+                Filtrar por diagnóstico
+              </label>
+              <select
+                id='filtro-criancas-profissional'
+                value={filtroDiagnostico}
+                onChange={(event) =>
+                  setFiltroDiagnostico(event.target.value as FiltroDiagnostico)
+                }
+                className='w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 md:w-auto'
               >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z'
-                />
-              </svg>
-              Filtros
-            </button>
+                <option value='TODOS'>Todos</option>
+                <option value='COM_DIAGNOSTICO'>Com diagnóstico</option>
+                <option value='SEM_DIAGNOSTICO'>Sem diagnóstico</option>
+              </select>
+            </div>
           </div>
 
           {/* Lista de Crianças */}
@@ -299,9 +318,9 @@ export default function CadastrarCriancas() {
             </div>
           ) : criancasFiltradas.length === 0 ? (
             <div className='py-8 text-center'>
-              {searchTerm ? (
+              {searchTerm || filtroDiagnostico !== 'TODOS' ? (
                 <p className='text-gray-500'>
-                  Nenhuma criança encontrada para "{searchTerm}".
+                  Nenhuma criança encontrada com a busca ou o filtro atual.
                 </p>
               ) : (
                 <>

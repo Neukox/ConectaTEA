@@ -27,10 +27,8 @@ export default function DashboardMetaCard({
             className={cn(
               'rounded-full px-3 py-1 text-xs font-bold',
               meta.status === 'EM_ANDAMENTO' && 'bg-blue-100 text-blue-600',
-              meta.status === 'QUASE_CONCLUIDA' &&
-                'bg-green-100 text-green-600',
+              meta.status === 'PAUSADA' && 'bg-amber-100 text-amber-700',
               meta.status === 'CONCLUIDA' && 'bg-green-200 text-green-800',
-              meta.status === 'VENCENDO' && 'bg-yellow-100 text-yellow-600',
             )}
           >
             {StatusMeta[meta.status]}

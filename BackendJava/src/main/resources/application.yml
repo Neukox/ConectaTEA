@@ -49,6 +49,9 @@ management:
     tags:
       application: conectatea
 app:
+  observability:
+    # Lista separada por vírgulas; vazia mantém métricas inacessíveis por HTTP.
+    allowed-emails: ${OBSERVABILITY_ALLOWED_EMAILS:}
   time-zone: ${APP_TIME_ZONE:America/Bahia}
   profile-images:
     directory: ${PROFILE_IMAGE_DIRECTORY:${java.io.tmpdir}/conectatea-profile-images}

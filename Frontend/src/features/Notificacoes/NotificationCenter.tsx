@@ -1,12 +1,13 @@
-import { Bell, CheckCheck, LoaderCircle, RefreshCw } from 'lucide-react'
+import { Bell, CheckCheck, Eraser, LoaderCircle, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '~/hooks/useAuth'
 import {
   useContadorNotificacoes,
+  useLimparSino,
   useMarcarNotificacaoLida,
   useMarcarTodasNotificacoesLidas,
-  useNotificacoesPersistentes,
+  useNotificacoesSino,
 } from './hooks'
 import type { NotificacaoPersistente } from './types'
 
@@ -32,9 +33,10 @@ export function NotificationCenter() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const count = useContadorNotificacoes(Boolean(user))
-  const list = useNotificacoesPersistentes(Boolean(user) && open)
+  const list = useNotificacoesSino(Boolean(user) && open)
   const readOne = useMarcarNotificacaoLida()
   const readAll = useMarcarTodasNotificacoesLidas()
+  const clearBell = useLimparSino()
   const unread = count.data ?? 0
 
   const openNotification = async (notification: NotificacaoPersistente) => {
@@ -68,17 +70,32 @@ export function NotificationCenter() {
               <h2 className='font-semibold text-gray-900'>Notificações</h2>
               <p className='text-xs text-gray-500'>{unread} não lida{unread === 1 ? '' : 's'}</p>
             </div>
-            {unread > 0 && (
-              <button
-                type='button'
-                disabled={readAll.isPending}
-                onClick={() => readAll.mutate()}
-                className='flex items-center gap-1 text-xs font-medium text-green-700 hover:text-green-800 disabled:opacity-50'
-              >
-                <CheckCheck className='h-4 w-4' />
-                Marcar todas como lidas
-              </button>
-            )}
+            <div className='flex items-center gap-3'>
+              {(list.data?.length ?? 0) > 0 && (
+                <button
+                  type='button'
+                  disabled={clearBell.isPending}
+                  onClick={() => clearBell.mutate()}
+                  aria-label='Limpar notificações do sino sem marcar como lidas'
+                  className='flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50'
+                >
+                  <Eraser className='h-4 w-4' />
+                  Limpar
+                </button>
+              )}
+              {unread > 0 && (
+                <button
+                  type='button'
+                  disabled={readAll.isPending}
+                  onClick={() => readAll.mutate()}
+                  aria-label='Marcar todas as notificações como lidas'
+                  className='flex items-center gap-1 text-xs font-medium text-green-700 hover:text-green-800 disabled:opacity-50'
+                >
+                  <CheckCheck className='h-4 w-4' />
+                  Ler tudo
+                </button>
+              )}
+            </div>
           </header>
 
           <div className='max-h-96 overflow-y-auto' aria-live='polite'>

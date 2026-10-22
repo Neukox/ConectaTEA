@@ -1,5 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, LogOut, Settings, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { obterMeuPerfilProfissional } from '~/api/protected/axiosProfissionais'
+import { QUERY_KEYS } from '~/api/query-client'
 import { useAuth } from '~/hooks/useAuth'
 import {
   DropdownMenu,
@@ -16,6 +19,12 @@ export function UserDropdown() {
   const { user, setUser } = useAuth()
   const navigate = useNavigate()
 
+  const { data: perfilProfissional } = useQuery({
+    queryKey: [QUERY_KEYS.PROFISSIONAL_ME],
+    queryFn: obterMeuPerfilProfissional,
+    enabled: user?.tipo === 'PROFISSIONAL',
+  })
+
   const handleLogout = async () => {
     try {
       await logout()
@@ -24,6 +33,8 @@ export function UserDropdown() {
       navigate('/login', { replace: true })
     }
   }
+
+  const fotoPerfilUrl = user?.fotoPerfilUrl ?? perfilProfissional?.fotoPerfilUrl
 
   const roleLabel =
     user?.tipo === 'PROFISSIONAL'
@@ -49,10 +60,10 @@ export function UserDropdown() {
           className='focus:outline-none p-1'
         >
           <div className='flex items-center gap-2'>
-            {user?.fotoPerfilUrl ? (
+            {fotoPerfilUrl ? (
               <img
-                src={user.fotoPerfilUrl}
-                alt={`Foto de ${user.name}`}
+                src={fotoPerfilUrl}
+                alt={`Foto de ${user?.name ?? 'usuário'}`}
                 className='size-8 rounded-full border-2 border-primary object-cover'
               />
             ) : (

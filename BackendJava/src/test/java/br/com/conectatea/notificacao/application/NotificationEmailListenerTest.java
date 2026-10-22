@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,7 @@ class NotificationEmailListenerTest {
         var sender = org.mockito.Mockito.mock(EmailNotificationSender.class);
         var email = new NotificationEmail("Ana", "ana@test.local", "Assunto", "Mensagem");
         doThrow(new NotificationEmailException("HTTP 500")).when(sender).send(email);
-        var listener = new NotificationEmailListener(sender);
+        var listener = new NotificationEmailListener(sender, new SimpleMeterRegistry());
 
         assertThatCode(() -> listener.onNotificationsPersisted(
                 new NotificationsPersistedEvent(List.of(email))))

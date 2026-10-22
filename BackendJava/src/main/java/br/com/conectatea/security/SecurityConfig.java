@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -71,7 +72,9 @@ public class SecurityConfig {
             JwtAuthenticationFilter jwt,
             RateLimitFilter rateLimit,
             RequestCorrelationFilter correlation,
-            ObjectMapper objectMapper) throws Exception {
+            ObjectMapper objectMapper,
+            @Value("${app.observability.allowed-emails:}") String observabilityAllowedEmails)
+            throws Exception {
         var csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrf.setCookiePath("/");
 
@@ -103,6 +106,19 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/actuator/health/**")
                         .permitAll()
+                        .requestMatchers("/actuator/metrics/**", "/actuator/prometheus")
+                        .access((authentication, context) -> {
+                            var auth = authentication.get();
+                            if (auth == null || !auth.isAuthenticated()
+                                    || !(auth.getPrincipal() instanceof AuthenticatedUser user)) {
+                                return new AuthorizationDecision(false);
+                            }
+                            return new AuthorizationDecision(
+                                    Arrays.stream(observabilityAllowedEmails.split(","))
+                                            .map(String::trim)
+                                            .filter(email -> !email.isEmpty())
+                                            .anyMatch(email -> email.equalsIgnoreCase(user.email())));
+                        })
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
                         .anyRequest()
