@@ -20,6 +20,7 @@ import useDetalhesMeta from '~/features/Metas/hooks/useDetalhesMeta'
 import { format } from 'date-fns'
 import NotFoundData from '~/components/common/NotFoundData'
 import VerDetalhesMetaSkeleton from './VerDetalhesMetaSkeleton'
+import VerDetalhesMetaError from './VerDetalhesMetaError'
 import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
 import { useEffect } from 'react'
@@ -34,7 +35,7 @@ export default function VerDetalhesMeta() {
   const metaId = Number(id)
   const isValidId = !isNaN(metaId) && metaId > 0
 
-  const { data: meta, isLoading, isError, error } = useDetalhesMeta(metaId)
+  const { data: meta, isLoading, isError, error, refetch, isFetching } = useDetalhesMeta(metaId)
   const { data: criancas } = useCriancas()
 
   const { openAtualizarProgressoModal } = useMetasModal()
@@ -61,11 +62,8 @@ export default function VerDetalhesMeta() {
         error?.response?.data?.message ||
         'Não foi possível carregar os detalhes da meta'
 
+      // Mantém a tela de erro visível para que o usuário possa tentar novamente.
       notificarErro(errorMessage, errorDescription, { duration: 3000 })
-
-      timer = setTimeout(() => {
-        navigate('/profissional/metas')
-      }, 1000)
     }
 
     return () => clearTimeout(timer)
@@ -77,7 +75,16 @@ export default function VerDetalhesMeta() {
   }
 
   if (isError) {
-    return <VerDetalhesMetaSkeleton />
+    return (
+      <VerDetalhesMetaError
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+        errorDescription={
+          error?.response?.data?.message ||
+          'Não foi possível carregar os detalhes da meta'
+        }
+      />
+    )
   }
 
   // Caso a meta não seja encontrada ou ID seja inválido
