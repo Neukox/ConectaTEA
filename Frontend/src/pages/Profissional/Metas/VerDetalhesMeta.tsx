@@ -23,7 +23,11 @@ import VerDetalhesMetaSkeleton from './VerDetalhesMetaSkeleton'
 import VerDetalhesMetaError from './VerDetalhesMetaError'
 import { useMetasModal } from '~/features/Metas/hooks/useMetasModal'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import {
+  ModalCicloVidaMeta,
+  type ModoCicloVida,
+} from '~/features/Metas/components/ModalCicloVidaMeta'
 import useCriancas from '~/features/Criancas/hooks/useCriancas'
 import { parseISO } from 'date-fns'
 
@@ -39,6 +43,7 @@ export default function VerDetalhesMeta() {
   const { data: criancas } = useCriancas()
 
   const { openAtualizarProgressoModal } = useMetasModal()
+  const [modoAcao, setModoAcao] = useState<ModoCicloVida | null>(null)
 
   useEffect(() => {
     let timer: NodeJS.Timeout
@@ -145,19 +150,53 @@ export default function VerDetalhesMeta() {
               </h1>
             </div>
 
-            <button
-              className='flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700'
-              onClick={() =>
-                openAtualizarProgressoModal({
-                  id: meta.id,
-                  titulo: meta.titulo,
-                  progresso: meta.progresso,
-                })
-              }
-            >
-              <TrendingUp className='h-4 w-4' />
-              Atualizar Progresso
-            </button>
+            <div className='flex flex-wrap gap-2'>
+              {meta.status === 'EM_ANDAMENTO' && (
+                <>
+                  <button
+                    className='flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700'
+                    onClick={() =>
+                      openAtualizarProgressoModal({
+                        id: meta.id,
+                        titulo: meta.titulo,
+                        progresso: meta.progresso,
+                      })
+                    }
+                  >
+                    <TrendingUp className='h-4 w-4' />
+                    Atualizar Progresso
+                  </button>
+                  <button
+                    className='rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50'
+                    onClick={() => setModoAcao('PAUSAR')}
+                  >
+                    Pausar
+                  </button>
+                  <button
+                    className='rounded-lg border border-green-300 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50'
+                    onClick={() => setModoAcao('CONCLUIR')}
+                  >
+                    Concluir
+                  </button>
+                </>
+              )}
+              {meta.status === 'PAUSADA' && (
+                <button
+                  className='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700'
+                  onClick={() => setModoAcao('RETOMAR')}
+                >
+                  Retomar
+                </button>
+              )}
+              {meta.status === 'CONCLUIDA' && (
+                <button
+                  className='rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                  onClick={() => setModoAcao('REABRIR')}
+                >
+                  Reabrir
+                </button>
+              )}
+            </div>
           </div>
 
           <div className='grid grid-cols-1 gap-8 @md:grid-cols-[2fr_1fr]'>
@@ -236,6 +275,16 @@ export default function VerDetalhesMeta() {
           </div>
         </div>
       </div>
+
+      <ModalCicloVidaMeta
+        open={modoAcao !== null}
+        modo={modoAcao}
+        meta={meta}
+        onOpenChange={(open) => {
+          if (!open) setModoAcao(null)
+        }}
+        onSuccess={() => void refetch()}
+      />
     </PageLayout>
   )
 }

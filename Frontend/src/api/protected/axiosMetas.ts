@@ -31,6 +31,38 @@ export const atualizarProgresso = async (data: AtualizarProgressoData): Promise<
   return response.data
 }
 
+export const pausarMeta = async (id: number, motivo: string): Promise<Meta> => {
+  const response = await api.patch<Meta>(`/metas/${id}/pausa`, { motivo })
+  return response.data
+}
+
+export const retomarMeta = async (
+  id: number,
+  dataFim: string,
+  motivo?: string,
+): Promise<Meta> => {
+  const response = await api.patch<Meta>(`/metas/${id}/retomada`, { dataFim, motivo })
+  return response.data
+}
+
+export const concluirMeta = async (
+  id: number,
+  resumoResultado: string,
+): Promise<Meta> => {
+  const response = await api.patch<Meta>(`/metas/${id}/conclusao`, {
+    resumoResultado,
+  })
+  return response.data
+}
+
+export const reabrirMeta = async (
+  id: number,
+  dados: { motivo: string; novoPrazo: string; progressoInicial: number },
+): Promise<Meta> => {
+  const response = await api.patch<Meta>(`/metas/${id}/reabertura`, dados)
+  return response.data
+}
+
 export interface MetasFilters {
   criancaId?: number
   categoria?: string
