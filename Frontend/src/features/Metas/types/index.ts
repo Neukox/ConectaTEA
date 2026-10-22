@@ -3,11 +3,7 @@ import type { MetasFilters } from '~/api/protected/axiosMetas'
 
 export type { MetasFilters }
 
-export type StatusMeta =
-  | 'EM_ANDAMENTO'
-  | 'VENCENDO'
-  | 'QUASE_CONCLUIDA'
-  | 'CONCLUIDA'
+export type StatusMeta = 'EM_ANDAMENTO' | 'PAUSADA' | 'CONCLUIDA'
 
 export type PrioridadeMeta = 'BAIXA' | 'MEDIA' | 'ALTA'
 
@@ -40,8 +36,7 @@ export const PrioridadeMeta = {
 
 export const StatusMeta = {
   EM_ANDAMENTO: 'Em andamento',
-  VENCENDO: 'Vencendo',
-  QUASE_CONCLUIDA: 'Quase concluída',
+  PAUSADA: 'Pausada',
   CONCLUIDA: 'Concluída',
 } satisfies Record<StatusMeta, string>
 

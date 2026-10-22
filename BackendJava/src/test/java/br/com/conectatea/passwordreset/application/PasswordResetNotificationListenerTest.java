@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 import br.com.conectatea.auditoria.application.AuditLogService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.URI;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +27,7 @@ class PasswordResetNotificationListenerTest {
         doThrow(new IllegalStateException("provider failed " + TOKEN + " " + API_KEY))
                 .when(notifier).sendPasswordReset(event.recipientEmail(),event.resetUrl());
 
-        assertThatCode(() -> new PasswordResetNotificationListener(notifier,audits)
+        assertThatCode(() -> new PasswordResetNotificationListener(notifier,audits,new SimpleMeterRegistry())
                 .onPasswordResetRequested(event)).doesNotThrowAnyException();
 
         assertThat(output).contains("IllegalStateException")
@@ -44,7 +45,7 @@ class PasswordResetNotificationListenerTest {
         doThrow(new PasswordResetNotificationException("Falha do provedor (HTTP 429)"))
                 .when(notifier).sendPasswordReset(event.recipientEmail(),event.resetUrl());
 
-        new PasswordResetNotificationListener(notifier,mock(AuditLogService.class))
+        new PasswordResetNotificationListener(notifier,mock(AuditLogService.class),new SimpleMeterRegistry())
                 .onPasswordResetRequested(event);
 
         assertThat(output).contains("Falha do provedor (HTTP 429)")

@@ -32,4 +32,6 @@ export const QUERY_KEYS = {
   ANOTACOES: 'anotacoes',
   NOTIFICACOES: 'notificacoes',
   NOTIFICACOES_NAO_LIDAS: 'notificacoes-nao-lidas',
+  NOTIFICACOES_SINO: 'notificacoes-sino',
+  PROFISSIONAL_ME: 'profissional-me',
 }
