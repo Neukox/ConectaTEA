@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { vinculacaoAPI } from '~/api/protected/axiosVinculacao'
 import { QUERY_KEYS, queryClient } from '~/api/query-client'
 import { useNotificacoesContext } from '~/api/barraNotificacao'
@@ -26,6 +27,6 @@ export default function MeusVinculos() {
     {vinculos.isLoading && <p role='status'>Carregando vínculos...</p>}
     {vinculos.isError && <div role='alert' className='rounded-xl bg-red-50 p-5 text-red-700'>Não foi possível carregar os vínculos. <button onClick={() => vinculos.refetch()} className='font-semibold underline'>Tentar novamente</button></div>}
     {vinculos.data?.length === 0 && <div className='rounded-xl bg-white p-8 text-center text-gray-600'>Nenhuma criança vinculada ainda.</div>}
-    <div className='grid gap-4 md:grid-cols-2'>{vinculos.data?.map((crianca) => <article key={crianca.id} className='rounded-xl bg-white p-6 shadow-sm'><h2 className='text-lg font-bold'>{crianca.nome}</h2><p className='text-sm text-gray-600'>{crianca.idade} anos • {crianca.diagnostico || 'Diagnóstico não informado'}</p><div className='mt-4 flex gap-3'><a href={`/responsavel/criancas/${crianca.id}`} className='rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90'>Ver detalhes</a><button disabled={desvincular.isPending} onClick={() => desvincular.mutate(crianca.id)} className='rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50'>Desvincular</button></div></article>)}</div>
+    <div className='grid gap-4 md:grid-cols-2'>{vinculos.data?.map((crianca) => <article key={crianca.id} className='rounded-xl bg-white p-6 shadow-sm'><h2 className='text-lg font-bold'>{crianca.nome}</h2><p className='text-sm text-gray-600'>{crianca.idade} anos • {crianca.diagnostico || 'Diagnóstico não informado'}</p><div className='mt-4 flex gap-3'><Link to={`/responsavel/criancas/${crianca.id}`} className='rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90'>Ver detalhes</Link><button disabled={desvincular.isPending} onClick={() => desvincular.mutate(crianca.id)} className='rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50'>Desvincular</button></div></article>)}</div>
   </PageLayout>
 }
