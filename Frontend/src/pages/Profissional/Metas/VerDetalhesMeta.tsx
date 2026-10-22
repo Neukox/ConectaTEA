@@ -62,11 +62,8 @@ export default function VerDetalhesMeta() {
         error?.response?.data?.message ||
         'Não foi possível carregar os detalhes da meta'
 
+      // Mantém a tela de erro visível para que o usuário possa tentar novamente.
       notificarErro(errorMessage, errorDescription, { duration: 3000 })
-
-      timer = setTimeout(() => {
-        navigate('/profissional/metas')
-      }, 1000)
     }
 
     return () => clearTimeout(timer)
