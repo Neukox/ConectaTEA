@@ -37,6 +37,22 @@ class RequestCorrelationFilterTest {
     }
 
     @Test
+    void replacesUnsafeIncomingRequestId() throws Exception {
+        var request = new MockHttpServletRequest();
+        request.addHeader(RequestCorrelationFilter.REQUEST_ID_HEADER, "forged id with spaces");
+        var response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, chain);
+
+        var requestId = (String) request.getAttribute(RequestCorrelationFilter.REQUEST_ATTRIBUTE);
+        assertThat(requestId).isNotEqualTo("forged id with spaces");
+        assertThat(requestId).matches("[A-Za-z0-9._-]{1,128}");
+        assertThat(response.getHeader(RequestCorrelationFilter.REQUEST_ID_HEADER))
+                .isEqualTo(requestId);
+        assertThat(MDC.get(RequestCorrelationFilter.MDC_KEY)).isNull();
+    }
+
+    @Test
     void generatesRequestIdWhenAbsent() throws Exception {
         var request = new MockHttpServletRequest();
         var response = new MockHttpServletResponse();
